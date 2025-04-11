@@ -88,8 +88,6 @@ const RantList = ({ newRant }) => {
 
         query = query.order(currentFilter === 'latest' ? 'created_at' : 'likes', { ascending: false });
 
-        // Simulate network delay for demo purposes (remove in production)
-        // await new Promise(resolve => setTimeout(resolve, 1500));
 
         const { data, error } = await query;
 

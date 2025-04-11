@@ -1,5 +1,5 @@
 import React, { useState, useEffect, forwardRef, useRef } from 'react';
-import { motion, useInView } from 'framer-motion';
+import { motion, useInView, AnimatePresence } from 'framer-motion';
 import { Heart, MessageSquare, Share2 } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
 import '../pages/Rant.css';
@@ -79,13 +79,43 @@ const RantCard = forwardRef(({ id, moodName, likes, text, authorInitial = "R", i
     const [currentLikes, setCurrentLikes] = useState(likes);
     const [isLiking, setIsLiking] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
+    const [contentHeight, setContentHeight] = useState(0);
 
     const cardRef = useRef(null);
-    const isInView = useInView(cardRef, { once: true, amount: 0.3 });
+    const contentRef = useRef(null);
+    const textRef = useRef(null);
 
-    const MAX_VISIBLE_LENGTH = isMobile ? 140 : isTablet ? 200 : 280;
+    const isInView = useInView(cardRef, {
+        once: false,
+        amount: 0.3,
+        onChange: (inView) => {
+            // Auto-collapse when scrolled out of view
+            if (!inView && isExpanded) {
+                setIsExpanded(false);
+            }
+        }
+    });
+
+    // Calculate appropriate text length for different screen sizes
+    const MAX_VISIBLE_LENGTH = isMobile ? 100 : isTablet ? 160 : 220;
     const needsTruncation = text.length > MAX_VISIBLE_LENGTH;
-    const displayText = needsTruncation && !isExpanded ? text.substring(0, MAX_VISIBLE_LENGTH) : text;
+
+    // Ensure we don't cut words in half when truncating
+    const getTruncatedText = () => {
+        if (!needsTruncation) return text;
+
+        let truncated = text.substring(0, MAX_VISIBLE_LENGTH);
+        // Find the last space to avoid cutting words
+        const lastSpaceIndex = truncated.lastIndexOf(' ');
+        if (lastSpaceIndex > MAX_VISIBLE_LENGTH * 0.7) {
+            truncated = truncated.substring(0, lastSpaceIndex);
+        }
+        return truncated;
+    };
+
+    const displayText = !isExpanded && needsTruncation
+        ? getTruncatedText()
+        : text;
 
     // Generate a dynamic alias based on the index
     const alias = generateAlias(index);
@@ -108,6 +138,30 @@ const RantCard = forwardRef(({ id, moodName, likes, text, authorInitial = "R", i
             }
         }
     };
+
+    // Measure content height for animations
+    useEffect(() => {
+        if (textRef.current) {
+            // Add a small delay to ensure the DOM has updated
+            setTimeout(() => {
+                setContentHeight(textRef.current.scrollHeight);
+            }, 10);
+        }
+    }, [text, isExpanded]);
+
+    // Add click outside listener to collapse expanded cards
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (cardRef.current && !cardRef.current.contains(event.target) && isExpanded) {
+                setIsExpanded(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isExpanded]);
 
     useEffect(() => {
         const liked = getLikedRants();
@@ -223,6 +277,13 @@ const RantCard = forwardRef(({ id, moodName, likes, text, authorInitial = "R", i
         });
     };
 
+    // Calculate max height based on screen size for better proportions
+    const getMaxExpandedHeight = () => {
+        if (isMobile) return 500;
+        if (isTablet) return 600;
+        return 700; // Desktop
+    };
+
     return (
         <motion.div
             ref={(node) => {
@@ -230,8 +291,19 @@ const RantCard = forwardRef(({ id, moodName, likes, text, authorInitial = "R", i
                 if (typeof ref === 'function') ref(node);
                 else if (ref) ref.current = node;
             }}
-            className="rant-card-container"
-            style={{ borderColor: color }}
+            className={`rant-card-container ${isExpanded ? 'expanded' : ''}`}
+            style={{
+                borderColor: color,
+                zIndex: isExpanded ? 5 : 'auto',
+                // Adjust padding at the bottom when expanded to prevent overlap
+                paddingBottom: isExpanded ? '70px' : '32px',
+                // Allow the card to expand in height when expanded
+                height: isExpanded ? 'auto' : undefined,
+                // Limit max height for expanded cards to prevent excessive size
+                maxHeight: isExpanded ? getMaxExpandedHeight() : undefined,
+                // Add transition for smooth height animation
+                transition: 'height 0.3s ease, max-height 0.3s ease, padding 0.3s ease, transform 0.2s ease'
+            }}
             variants={cardVariants}
             initial="hidden"
             animate={isInView ? "visible" : "hidden"}
@@ -251,21 +323,64 @@ const RantCard = forwardRef(({ id, moodName, likes, text, authorInitial = "R", i
                     </div>
                 </div>
 
-                <div className="rant-card-text-container">
-                    <span className="rant-card-text">{displayText}</span>
-                    {needsTruncation && (
-                        <button
-                            onClick={() => setIsExpanded(!isExpanded)}
-                            className="read-more-button"
-                            style={{ color: color }}
+                <AnimatePresence initial={false}>
+                    <motion.div
+                        ref={contentRef}
+                        className="rant-card-text-container"
+                        initial={false}
+                        animate={{
+                            maxHeight: isExpanded
+                                ? Math.min(contentHeight + 60, getMaxExpandedHeight() - 120) // Adjust for footer
+                                : '210px'
+                        }}
+                        transition={{
+                            duration: 0.3,
+                            ease: "easeInOut"
+                        }}
+                        style={{
+                            overflowY: !isExpanded ? 'hidden' : 'auto',
+                            // Add margin at the bottom to create space for the "Show less" button
+                            marginBottom: isExpanded ? '20px' : '0'
+                        }}
+                    >
+                        <div
+                            ref={textRef}
+                            className="rant-card-text"
                         >
-                            {isExpanded ? 'Show less' : 'Read more'}
-                        </button>
-                    )}
-                </div>
+                            {displayText}
+                            {!isExpanded && needsTruncation && (
+                                <span style={{ opacity: 0.7 }}>...</span>
+                            )}
+                        </div>
+
+                        {needsTruncation && (
+                            <button
+                                onClick={() => setIsExpanded(!isExpanded)}
+                                className="read-more-button"
+                                style={{
+                                    color: color,
+                                    marginTop: '8px',
+                                    display: 'inline-block',
+                                    // Add margin-bottom when expanded to prevent overlap with footer
+                                    marginBottom: isExpanded ? '10px' : '0'
+                                }}
+                            >
+                                {isExpanded ? 'Show less' : 'Read more'}
+                            </button>
+                        )}
+                    </motion.div>
+                </AnimatePresence>
             </div>
 
-            <div className="rant-card-footer">
+            <div
+                className="rant-card-footer"
+                style={{
+                    // Ensure the footer stays at the bottom
+                    bottom: '16px',
+                    // Add z-index to ensure footer is above content
+                    zIndex: 3
+                }}
+            >
                 <div className="rant-card-author-container">
                     <div className="rant-card-author-icon">
                         <span className="rant-card-author-initial">{authorInitial}</span>

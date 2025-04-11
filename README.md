@@ -11,6 +11,7 @@ Rant is a React-based web application that provides a safe, anonymous space for 
 - **Mood-Based Filtering**: Filter rants based on selected moods.
 - **Responsive Design**: Fully responsive UI for desktop, tablet, and mobile devices.
 - **Interactive Particles**: Engaging particle background for a dynamic experience.
+- **Enhanced Animations**: Smooth transitions and animations for an improved user experience.
 
 ## Technologies Used
 
@@ -100,6 +101,14 @@ rant/
 - **RantCard**: Represents individual rants with like, comment, and share actions.
 - **IntroSection**: Welcomes users and provides an overview of the app.
 - **ParticleBackground**: Adds an interactive particle effect to the background.
+- **Footer**: Provides navigation and additional information at the bottom of the page.
+
+## Recent Updates
+
+- **Enhanced Animations**: Added smooth transitions for card expansions and interactions.
+- **Responsive Enhancements**: Improved layout and styles for better usability on smaller screens.
+- **Dynamic Overlays**: Subtle overlay effects for expanded cards on desktop.
+- **Custom Scrollbars**: Styled scrollbars for a consistent look across browsers.
 
 ## Contributing
 

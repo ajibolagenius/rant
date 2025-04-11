@@ -5,7 +5,7 @@ import '../pages/Rant.css';
 
 const Footer = () => {
     return (
-        <footer className="footer-container">
+        <footer className="footer-container" id="footer">
             <div className="footer-logo-container">
                 <Logo />
                 <span className="footer-description">
@@ -13,7 +13,8 @@ const Footer = () => {
                 </span>
             </div>
             <span className="footer-note">
-                Made with 💚 for the chronically online.
+                Made with 💚 for the chronically online. ||
+                © {new Date().getFullYear()} Rant. All rights reserved.
             </span>
         </footer>
     );

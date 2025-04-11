@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Navbar from "../components/Navbar";
 import Logo from "../components/Logo";
 import IntroSection from "../components/IntroSection";
 import RantForm from "../components/RantForm";
@@ -17,6 +18,7 @@ const Rant = () => {
     return (
         <div className="rant-page-container">
             <ParticleBackground />
+            {/* <Navbar /> */}
             <main className="main-container">
                 <Logo />
                 <section className="content-container">
