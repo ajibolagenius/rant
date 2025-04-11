@@ -9,7 +9,10 @@ export const isLightColor = (hexColor) => {
 
 // Generate a unique alias based on the index
 const usedAliases = new Set();
-export const generateAlias = (index = 0) => {
+export const generateAlias = (authorIdOrIndex) => {
+    if (typeof authorIdOrIndex === 'string') {
+        return `Anonymous #${authorIdOrIndex.slice(-3).toUpperCase()}`;
+    }
     const pseudonyms = [
         'Anon Falcon', 'Mystery Cat', 'Silent Echo', 'Shadow Leaf',
         'Whisper Wolf', 'Crimson Bloom', 'Hidden Panda', 'Night Raven',
@@ -38,21 +41,23 @@ export const generateAlias = (index = 0) => {
         'Radiant Panther', 'Celestial Otter', 'Dusk Swan', 'Dawn Wolf'
     ];
 
-    const getRandomAlias = () => {
-        const randomIndex = Math.floor(Math.random() * pseudonyms.length);
-        return pseudonyms[randomIndex];
-    };
+    return pseudonyms[authorIdOrIndex % pseudonyms.length];
 
-    let alias = pseudonyms[index % pseudonyms.length];
-    let counter = 1;
+    // const getRandomAlias = () => {
+    //     const randomIndex = Math.floor(Math.random() * pseudonyms.length);
+    //     return pseudonyms[randomIndex];
+    // };
 
-    while (usedAliases.has(alias)) {
-        alias = `${getRandomAlias()} ${counter}`;
-        counter++;
-    }
+    // let alias = pseudonyms[index % pseudonyms.length];
+    // let counter = 1;
 
-    usedAliases.add(alias);
-    return alias;
+    // while (usedAliases.has(alias)) {
+    //     alias = `${getRandomAlias()} ${counter}`;
+    //     counter++;
+    // }
+
+    // usedAliases.add(alias);
+    // return alias;
 };
 
 // Clear used aliases (can be called when component unmounts or page refreshes)

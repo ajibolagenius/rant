@@ -70,7 +70,8 @@ const removeLikedRant = (rantId) => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(liked));
 };
 
-const RantCard = forwardRef(({ id, moodName, likes, text, authorInitial = "R", index = 0, onLike }, ref) => {
+const RantCard = forwardRef(({ id, moodName, likes, text, authorId, index = 0, onLike }, ref) => {
+
     const { enqueueSnackbar } = useSnackbar();
     const { isMobile, isTablet } = useScreenSize();
     const { emoji, color } = getMoodProps(moodName);
@@ -118,7 +119,8 @@ const RantCard = forwardRef(({ id, moodName, likes, text, authorInitial = "R", i
         : text;
 
     // Generate a dynamic alias based on the index
-    const alias = generateAlias(index);
+    const alias = generateAlias(authorId || index);
+
 
     // Animation variants for scroll-based animations
     const cardVariants = {
@@ -295,13 +297,9 @@ const RantCard = forwardRef(({ id, moodName, likes, text, authorInitial = "R", i
             style={{
                 borderColor: color,
                 zIndex: isExpanded ? 5 : 'auto',
-                // Adjust padding at the bottom when expanded to prevent overlap
                 paddingBottom: isExpanded ? '70px' : '32px',
-                // Allow the card to expand in height when expanded
                 height: isExpanded ? 'auto' : undefined,
-                // Limit max height for expanded cards to prevent excessive size
                 maxHeight: isExpanded ? getMaxExpandedHeight() : undefined,
-                // Add transition for smooth height animation
                 transition: 'height 0.3s ease, max-height 0.3s ease, padding 0.3s ease, transform 0.2s ease'
             }}
             variants={cardVariants}
@@ -330,7 +328,7 @@ const RantCard = forwardRef(({ id, moodName, likes, text, authorInitial = "R", i
                         initial={false}
                         animate={{
                             maxHeight: isExpanded
-                                ? Math.min(contentHeight + 60, getMaxExpandedHeight() - 120) // Adjust for footer
+                                ? Math.min(contentHeight + 60, getMaxExpandedHeight() - 120)
                                 : '210px'
                         }}
                         transition={{
@@ -339,7 +337,6 @@ const RantCard = forwardRef(({ id, moodName, likes, text, authorInitial = "R", i
                         }}
                         style={{
                             overflowY: !isExpanded ? 'hidden' : 'auto',
-                            // Add margin at the bottom to create space for the "Show less" button
                             marginBottom: isExpanded ? '20px' : '0'
                         }}
                     >
@@ -361,7 +358,6 @@ const RantCard = forwardRef(({ id, moodName, likes, text, authorInitial = "R", i
                                     color: color,
                                     marginTop: '8px',
                                     display: 'inline-block',
-                                    // Add margin-bottom when expanded to prevent overlap with footer
                                     marginBottom: isExpanded ? '10px' : '0'
                                 }}
                             >
@@ -375,16 +371,32 @@ const RantCard = forwardRef(({ id, moodName, likes, text, authorInitial = "R", i
             <div
                 className="rant-card-footer"
                 style={{
-                    // Ensure the footer stays at the bottom
                     bottom: '16px',
-                    // Add z-index to ensure footer is above content
                     zIndex: 3
                 }}
             >
                 <div className="rant-card-author-container">
-                    <div className="rant-card-author-icon">
-                        <span className="rant-card-author-initial">{authorInitial}</span>
-                    </div>
+                    <motion.div
+                        className="rant-card-author-icon"
+                        style={{
+                            backgroundColor: color,
+                            boxShadow: `0 0 8px ${color}`
+                        }}
+                        animate={{
+                            scale: [1, 1.1, 1],
+                            opacity: [1, 0.8, 1],
+                            transition: { duration: 0.6, repeat: 4, ease: 'easeInOut' }
+                        }}
+                    >
+                        <span
+                            className="rant-card-author-initial"
+                            style={{ color: isLightColor(color) ? '#333' : '#fff' }}
+                        >
+                            {alias.charAt(0)}
+                        </span>
+                    </motion.div>
+
+
                     <span className="rant-card-author-text">{alias}</span>
                 </div>
 

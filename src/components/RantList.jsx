@@ -26,9 +26,9 @@ const RantCardSkeleton = () => {
     return (
         <motion.div
             className="rant-card-container skeleton"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.3 }}
         >
             <div className="rant-card-content">
@@ -62,6 +62,7 @@ const RantCardSkeleton = () => {
     );
 };
 
+
 const RantList = ({ newRant }) => {
     const [filter, setFilter] = useState('latest');
     const [selectedMoods, setSelectedMoods] = useState([]);
@@ -71,7 +72,59 @@ const RantList = ({ newRant }) => {
     const [hasMore, setHasMore] = useState(true);
     const [page, setPage] = useState(0);
     const [showMoodFilter, setShowMoodFilter] = useState(false);
+    const [urlParsed, setUrlParsed] = useState(false);
+
     const observer = useRef();
+
+    // --- Handle Popstate for browser navigation
+    useEffect(() => {
+        const handlePopState = () => {
+            const params = new URLSearchParams(window.location.search);
+            const moodParam = params.get('moods');
+            const sortParam = params.get('sort');
+
+            setSelectedMoods(moodParam ? moodParam.split(',') : []);
+            setFilter(sortParam === 'popular' ? 'popular' : 'latest');
+        };
+
+        window.addEventListener('popstate', handlePopState);
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+        };
+    }, []);
+
+    // --- Parse URL on initial load
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const moodParam = params.get('moods');
+        const sortParam = params.get('sort');
+
+        if (moodParam) {
+            setSelectedMoods(moodParam.split(','));
+        }
+
+        if (sortParam === 'popular' || sortParam === 'latest') {
+            setFilter(sortParam);
+        }
+
+        setUrlParsed(true);
+    }, []);
+
+    // --- Push current state to URL when filter/moods change
+    useEffect(() => {
+        const params = new URLSearchParams();
+
+        if (selectedMoods.length > 0) {
+            params.set('moods', selectedMoods.join(','));
+        }
+
+        if (filter !== 'latest') {
+            params.set('sort', filter);
+        }
+
+        const newUrl = `${window.location.pathname}?${params.toString()}`;
+        window.history.pushState({}, '', newUrl);
+    }, [selectedMoods, filter]);
 
     const fetchRants = useCallback(async (currentPage, currentFilter, reset = false) => {
         setLoading(true);
@@ -89,7 +142,6 @@ const RantList = ({ newRant }) => {
 
         query = query.order(currentFilter === 'latest' ? 'created_at' : 'likes', { ascending: false });
 
-
         const { data, error } = await query;
 
         if (error) {
@@ -104,26 +156,49 @@ const RantList = ({ newRant }) => {
         setInitialLoading(false);
     }, [selectedMoods]);
 
+    // --- Fetch once URL is parsed
     useEffect(() => {
+        if (!urlParsed) return;
+
         setRants([]);
         setPage(0);
         setHasMore(true);
         setInitialLoading(true);
         fetchRants(0, filter, true);
-    }, [filter, selectedMoods, fetchRants]);
+    }, [urlParsed, filter, selectedMoods, fetchRants]);
 
-    useEffect(() => {
-        const savedMoods = localStorage.getItem('selectedMoods');
-        if (savedMoods) {
-            setSelectedMoods(JSON.parse(savedMoods));
-        }
-    }, []);
+    // --- Infinite Scroll
+    const lastRantElementRef = useCallback(node => {
+        if (loading) return;
+        if (observer.current) observer.current.disconnect();
+        observer.current = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && hasMore) {
+                fetchRants(page, filter);
+            }
+        });
+        if (node) observer.current.observe(node);
+    }, [loading, hasMore, page, filter, fetchRants]);
 
-    useEffect(() => {
-        localStorage.setItem('selectedMoods', JSON.stringify(selectedMoods));
-    }, [selectedMoods]);
+    // --- Handle mood selection
+    const toggleMoodFilter = (mood) => {
+        setSelectedMoods(prev =>
+            prev.includes(mood) ? prev.filter(m => m !== mood) : [...prev, mood]
+        );
+    };
 
-    // Inject local new rant if passed from parent
+    const clearMoodFilters = () => {
+        setSelectedMoods([]);
+        const params = new URLSearchParams(window.location.search);
+        params.delete('moods');
+        const newUrl = `${window.location.pathname}?${params.toString()}`;
+        window.history.pushState({}, '', newUrl);
+    };
+
+    const toggleFilterDisplay = () => {
+        setShowMoodFilter(!showMoodFilter);
+    };
+
+    // --- Inject new local rant
     useEffect(() => {
         if (newRant) {
             setRants(prev => {
@@ -133,7 +208,7 @@ const RantList = ({ newRant }) => {
         }
     }, [newRant]);
 
-    // Supabase real-time listener for INSERT, UPDATE (likes), DELETE
+    // --- Realtime Supabase updates
     useEffect(() => {
         const channel = supabase
             .channel('rants-realtime')
@@ -158,31 +233,6 @@ const RantList = ({ newRant }) => {
             supabase.removeChannel(channel);
         };
     }, []);
-
-    const lastRantElementRef = useCallback(node => {
-        if (loading) return;
-        if (observer.current) observer.current.disconnect();
-        observer.current = new IntersectionObserver(entries => {
-            if (entries[0].isIntersecting && hasMore) {
-                fetchRants(page, filter);
-            }
-        });
-        if (node) observer.current.observe(node);
-    }, [loading, hasMore, page, filter, fetchRants]);
-
-    const toggleMoodFilter = (mood) => {
-        setSelectedMoods(prev =>
-            prev.includes(mood) ? prev.filter(m => m !== mood) : [...prev, mood]
-        );
-    };
-
-    const clearMoodFilters = () => {
-        setSelectedMoods([]);
-    };
-
-    const toggleFilterDisplay = () => {
-        setShowMoodFilter(!showMoodFilter);
-    };
 
     return (
         <div className="rants-section-container">
@@ -285,7 +335,20 @@ const RantList = ({ newRant }) => {
             )}
 
             {/* Rants List */}
-            <motion.div className="rants-list-container" initial="hidden" animate="visible">
+            <motion.div
+                className="rants-list-container"
+                initial="hidden"
+                animate="visible"
+                variants={{
+                    hidden: {},
+                    visible: {
+                        transition: {
+                            staggerChildren: 0.07,
+                            delayChildren: 0.1,
+                        }
+                    }
+                }}
+            >
                 <AnimatePresence>
                     {/* Show skeletons during initial loading */}
                     {initialLoading ? (
@@ -298,10 +361,11 @@ const RantList = ({ newRant }) => {
                             return (
                                 <motion.div
                                     key={rant.id}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -20 }}
-                                    transition={{ duration: 0.4 }}
+                                    variants={{
+                                        hidden: { opacity: 0, y: 20 },
+                                        visible: { opacity: 1, y: 0 }
+                                    }}
+                                    transition={{ type: "spring", damping: 18, stiffness: 150 }}
                                     ref={isLast ? lastRantElementRef : null}
                                 >
                                     <RantCard
@@ -309,9 +373,11 @@ const RantList = ({ newRant }) => {
                                         moodName={rant.mood}
                                         likes={rant.likes}
                                         text={rant.content}
+                                        authorId={rant.author_id}
                                         index={index}
                                     />
                                 </motion.div>
+
                             );
                         })
                     )}

@@ -76,7 +76,6 @@ const RantForm = ({ onRantSubmitted }) => {
     // Make handleSubmit async
     const handleSubmit = async (event) => {
         event.preventDefault();
-        // Basic validation
         if (!rantText.trim() || !selectedMood || isSubmitting || isOverLimit) {
             alert(!rantText.trim() ? "Please enter your rant!" :
                 !selectedMood ? "Please select your current mood!" :
@@ -86,37 +85,42 @@ const RantForm = ({ onRantSubmitted }) => {
         }
 
         setIsSubmitting(true);
-        // console.log("Submitting Rant to Supabase:", { content: rantText, mood: selectedMood.name }); // Debugging log
 
-        // --- Actual Supabase Insert ---
-        const { error } = await supabase
-            .from('rants') // Your table name
+        // 🔐 Generate or retrieve anonymous author ID
+        const deviceId = localStorage.getItem('deviceId') || (() => {
+            const newId = crypto.randomUUID();
+            localStorage.setItem('deviceId', newId);
+            return newId;
+        })();
+
+        const { data, error } = await supabase
+            .from('rants')
             .insert([
                 {
                     content: rantText,
                     mood: selectedMood.name,
                     likes: 0,
+                    author_id: deviceId
                 }
-            ]);
+            ])
+            .select()
+            .single(); // Get the inserted rant back for real-time update
 
         setIsSubmitting(false);
-        // --- End Supabase Insert ---
 
         if (error) {
-            // Handle Supabase error
             console.error('Error submitting rant:', error);
-            console.error('Error details:', error.message, error.details, error.hint);
             alert(`Error submitting rant: ${error.message || 'Please try again.'}`);
         } else {
-            // Handle success
-            setIsModalOpen(true); // Open the success modal
-            setRantText(""); // Clear form
-            setSelectedMood(null); // Reset mood
-            if (onRantSubmitted) { // Optional: Notify parent component
-                onRantSubmitted();
+            setIsModalOpen(true);
+            setRantText("");
+            setSelectedMood(null);
+            if (onRantSubmitted) {
+                onRantSubmitted(data); // Pass newly created rant back
             }
         }
     };
+
 
     const handleCloseModal = () => {
         setIsModalOpen(false);
