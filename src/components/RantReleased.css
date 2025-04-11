@@ -1,0 +1,181 @@
+/* src/components/RantReleased.css */
+
+/* Full-screen overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(15, 15, 25, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000; /* Ensure it's on top */
+  padding: 20px;
+  box-sizing: border-box;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+/* Wrapper for positioning modal content (used by Framer Motion) */
+.modal-content-wrapper {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 1001;
+  width: calc(100% - 40px);
+  max-width: 550px;
+}
+
+/* Styles for the inner content block, based on user's original CSS */
+.rant-released {
+  text-align: center;
+  font-family: 'DM Sans', sans-serif;
+  padding: 30px 40px;
+  background-color: #f9f9f9;
+  color: #333;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Header section inside modal */
+.rant-released-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+/* Icon styling */
+.rant-released-icon {
+  font-size: 28px;
+  display: inline-block;
+}
+
+/* Modal title */
+.rant-released h1 {
+  font-size: 24px;
+  color: #333;
+  font-weight: 600;
+  font-family: 'Space Grotesk', sans-serif;
+  margin: 0;
+}
+
+/* Modal paragraph text */
+.rant-released p {
+  font-size: 16px;
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+/* Quote block */
+.rant-released-quote {
+  font-style: italic;
+  color: #666;
+  margin-bottom: 20px;
+  padding: 15px;
+  border-left: 3px solid #007bff;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  text-align: left;
+}
+
+/* Quote attribution */
+.rant-released-quote span {
+  display: block;
+  margin-top: 5px;
+  font-weight: bold;
+  font-style: normal;
+  color: #333;
+  text-align: right;
+}
+
+/* Container for action buttons */
+.rant-released-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+/* General button style within modal */
+.rant-released-button {
+  padding: 10px 25px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  color: white;
+  transition: background-color 0.3s, transform 0.1s;
+  font-family: 'DM Sans', sans-serif;
+  flex-shrink: 0;
+}
+
+/* Primary action button (Return Home) */
+.rant-released-button:first-of-type {
+  background-color: #007bff;
+}
+
+.rant-released-button:first-of-type:hover {
+  background-color: #0056b3;
+}
+
+/* Share button style */
+.rant-released-button.share {
+  background-color: #6f42c1;
+}
+
+.rant-released-button.share:hover {
+  background-color: #4a2a8a;
+}
+
+/* Footer text inside modal */
+.rant-released-footer {
+  font-size: 12px;
+  color: #888;
+  margin-top: 10px;
+}
+
+/* Responsive adjustments for the modal content */
+@media (max-width: 600px) {
+    .rant-released {
+        padding: 25px 20px;
+    }
+
+    .rant-released h1 {
+        font-size: 22px;
+    }
+
+    .rant-released-icon {
+        font-size: 24px;
+    }
+
+     .rant-released p {
+        font-size: 15px;
+     }
+
+     .rant-released-quote {
+         padding: 12px;
+         font-size: 14px;
+     }
+
+    .rant-released-actions {
+        gap: 10px;
+    }
+
+    .rant-released-button {
+        padding: 9px 18px;
+        font-size: 13px;
+    }
+
+    .rant-released-footer {
+        font-size: 11px;
+    }
+}
