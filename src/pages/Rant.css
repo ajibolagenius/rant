@@ -653,6 +653,9 @@ body {
     box-sizing: border-box;
     height: 380px;
     position: relative;
+    min-height: 380px;
+    max-height: 380px;
+    transition: max-height 0.3s ease, background-color 0.3s ease;
 }
 
 
@@ -1152,6 +1155,7 @@ body {
         box-shadow: 0 0 20px rgba(45, 212, 191, 0.2);
         z-index: 5;
         height: auto;
+        max-height: none;
     }
 
     .rant-card-text-container {

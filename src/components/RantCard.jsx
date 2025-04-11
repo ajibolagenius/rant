@@ -84,7 +84,7 @@ const RantCard = forwardRef(({ id, moodName, likes, text, authorId, index = 0, o
 
         const { error } = await supabase
             .from('rants')
-            .update({ likes: likes + 1 }) // likes from prop
+            .update({ likes: likes + 1 })
             .eq('id', id);
 
         if (!error) {
@@ -114,9 +114,12 @@ const RantCard = forwardRef(({ id, moodName, likes, text, authorId, index = 0, o
             className={`rant-card-container ${isExpanded ? 'expanded' : ''}`}
             style={{
                 borderColor: color,
-                paddingBottom: isExpanded ? '70px' : '32px',
                 backgroundColor: justAdded ? 'rgba(45, 212, 191, 0.05)' : 'transparent',
-                transition: 'background-color 0.4s ease'
+                height: isExpanded ? 'auto' : '380px',
+                maxHeight: isExpanded ? 'unset' : '380px',
+                paddingBottom: isExpanded ? '90px' : '32px',
+                overflow: isExpanded ? 'visible' : 'hidden',
+                transition: 'all 0.3s ease'
             }}
             variants={{
                 hidden: { opacity: 0, y: 20 },
@@ -191,7 +194,15 @@ const RantCard = forwardRef(({ id, moodName, likes, text, authorId, index = 0, o
                 </AnimatePresence>
             </div>
 
-            <div className="rant-card-footer">
+            <div
+                className="rant-card-footer"
+                style={{
+                    position: isExpanded ? 'relative' : 'absolute',
+                    bottom: isExpanded ? 'auto' : '16px',
+                    left: '16px',
+                    right: '16px'
+                }}
+            >
                 <div className="rant-card-author-container">
                     <motion.div
                         className="rant-card-author-icon"
