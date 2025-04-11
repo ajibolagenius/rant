@@ -14,17 +14,41 @@ const IntroSection = () => {
             // Fetch count using Supabase head request for efficiency
             const { count, error } = await supabase
                 .from('rants')
-                .select('*', { count: 'exact', head: true }); // Only get the count
+                .select('*', { count: 'exact', head: true });
 
             if (error) {
                 // console.error('Error fetching rant count:', error); // Debugging line
             } else {
-                setRantCount(count || 0); // Set the count, default to 0
+                setRantCount(count || 0);
             }
             setLoadingCount(false);
         };
 
         fetchCount();
+
+        // Set up real-time subscription for count updates
+        const subscription = supabase
+            .channel('rants-count-channel')
+            .on('postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'rants' },
+                () => {
+                    // Increment the count when a new rant is added
+                    setRantCount(prevCount => prevCount + 1);
+                }
+            )
+            .on('postgres_changes',
+                { event: 'DELETE', schema: 'public', table: 'rants' },
+                () => {
+                    // Decrement the count when a rant is deleted
+                    setRantCount(prevCount => Math.max(0, prevCount - 1));
+                }
+            )
+            .subscribe();
+
+        // Cleanup subscription on component unmount
+        return () => {
+            subscription.unsubscribe();
+        };
     }, []); // Empty dependency array means run once on mount
 
     const scrollToRants = () => {
@@ -106,7 +130,9 @@ const IntroSection = () => {
                         animate="pulse"
                     ></motion.div>
                     <span className="rant-count-text">
-                        {`${rantCount} people have ranted so far!`}
+                        {loadingCount
+                            ? "Counting rants..."
+                            : `${rantCount} people have ranted so far!`}
                     </span>
                 </div>
             </motion.div>

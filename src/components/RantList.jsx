@@ -70,6 +70,7 @@ const RantList = ({ newRant }) => {
     const [initialLoading, setInitialLoading] = useState(true);
     const [hasMore, setHasMore] = useState(true);
     const [page, setPage] = useState(0);
+    const [showMoodFilter, setShowMoodFilter] = useState(false);
     const observer = useRef();
 
     const fetchRants = useCallback(async (currentPage, currentFilter, reset = false) => {
@@ -179,6 +180,10 @@ const RantList = ({ newRant }) => {
         setSelectedMoods([]);
     };
 
+    const toggleFilterDisplay = () => {
+        setShowMoodFilter(!showMoodFilter);
+    };
+
     return (
         <div className="rants-section-container">
             {/* Header */}
@@ -207,32 +212,54 @@ const RantList = ({ newRant }) => {
                     >
                         <span className="rant-filter-button-text">Popular</span>
                     </motion.button>
+                    <motion.button
+                        className={`button rant-filter-button ${selectedMoods.length > 0 ? 'active' : ''}`}
+                        onClick={toggleFilterDisplay}
+                        whileHover={{ y: -2 }}
+                        whileTap={{ scale: 0.95 }}
+                        disabled={loading}
+                    >
+                        <span className="rant-filter-button-text">Filter</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                        </svg>
+                    </motion.button>
                 </div>
             </div>
 
-            {/* Mood Filter Bar */}
-            <div className="mood-filter-bar">
-                {moodFilterOptions.map(({ label, emoji }) => (
-                    <motion.button
-                        key={label}
-                        whileTap={{ scale: 0.92 }}
-                        whileHover={{ scale: 1.05 }}
-                        transition={{ type: 'spring', stiffness: 300 }}
-                        onClick={() => toggleMoodFilter(label)}
-                        className={`mood-filter-button ${selectedMoods.includes(label) ? 'selected' : ''}`}
+            {/* Mood Filter Bar - Only shown when Filter button is clicked */}
+            <AnimatePresence>
+                {showMoodFilter && (
+                    <motion.div
+                        className="mood-filter-bar"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3 }}
                     >
-                        <span>{emoji}</span>
-                        <span>{label}</span>
-                    </motion.button>
-                ))}
-                {selectedMoods.length > 0 && (
-                    <motion.button onClick={clearMoodFilters} className="clear-mood-filters">
-                        Clear Filters ✖
-                    </motion.button>
+                        {moodFilterOptions.map(({ label, emoji }) => (
+                            <motion.button
+                                key={label}
+                                whileTap={{ scale: 0.92 }}
+                                whileHover={{ scale: 1.05 }}
+                                transition={{ type: 'spring', stiffness: 300 }}
+                                onClick={() => toggleMoodFilter(label)}
+                                className={`mood-filter-button ${selectedMoods.includes(label) ? 'selected' : ''}`}
+                            >
+                                <span>{emoji}</span>
+                                <span>{label}</span>
+                            </motion.button>
+                        ))}
+                        {selectedMoods.length > 0 && (
+                            <motion.button onClick={clearMoodFilters} className="clear-mood-filters">
+                                Clear Filters ✖
+                            </motion.button>
+                        )}
+                    </motion.div>
                 )}
-            </div>
+            </AnimatePresence>
 
-            {/* Mood Filter Summary */}
+            {/* Mood Filter Summary - Always shown if filters are active */}
             {selectedMoods.length > 0 && (
                 <div className="active-filter-summary">
                     <span style={{ color: '#aaa' }}>Filtering by:</span>

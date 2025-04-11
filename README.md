@@ -1,6 +1,18 @@
 # Rant
 
-Rant is a React-based web application that provides a safe, anonymous space for users to express their unfiltered thoughts. Users can share their rants, explore others' rants, and interact with the community through likes and mood-based filtering.
+Rant is a web application that provides a safe, anonymous space for users to express their unfiltered thoughts. Think of it like a digital wall where you can write whatever is on your mind without revealing who you are. Users can share their rants, explore others' rants, and interact with the community through likes and mood-based filtering.
+
+## How It Works
+
+When you open Rant, it connects to the Supabase database to fetch existing rants. These are displayed in a scrollable list, with the newest ones typically appearing first. The app implements "infinite scrolling," which means as you scroll down, it automatically loads more rants without you having to click a "next page" button.
+
+When you write a rant, the application:
+1. Takes your text input and mood selection
+2. Sends this data to the Supabase database
+3. The database stores your rant
+4. Through Supabase's real-time features, your rant appears immediately on everyone's feed
+
+The application also includes visual elements like particle animations in the background to make the experience more engaging and dynamic.
 
 ## Features
 
@@ -12,6 +24,22 @@ Rant is a React-based web application that provides a safe, anonymous space for 
 - **Responsive Design**: Fully responsive UI for desktop, tablet, and mobile devices.
 - **Interactive Particles**: Engaging particle background for a dynamic experience.
 - **Enhanced Animations**: Smooth transitions and animations for an improved user experience.
+
+## User Flow
+
+1. **Browsing Rants**: When you first visit Rant, you'll see a feed of anonymous rants from other users. Scroll down to explore more content - the app will automatically load more rants as you reach the bottom.
+
+2. **Creating a Rant**: To share your thoughts:
+   - Click on the "Create Rant" button
+   - Type your message in the text area
+   - Select a mood that matches your rant
+   - Submit your rant to share it anonymously
+
+3. **Interacting with Rants**: You can interact with other users' rants by:
+   - Liking rants that resonate with you
+   - Filtering rants by mood to find content that matches your interests
+
+4. **Real-time Experience**: All interactions happen in real-time - when someone posts a new rant, it appears in everyone's feed immediately without requiring a page refresh.
 
 ## Technologies Used
 
@@ -96,12 +124,13 @@ rant/
 
 ## Key Components
 
-- **RantForm**: Allows users to submit their rants with mood selection.
-- **RantList**: Displays a list of rants with infinite scrolling and filtering.
-- **RantCard**: Represents individual rants with like, comment, and share actions.
+- **RantForm**: Allows users to submit their rants with mood selection. This component captures user input and sends it to the database.
+- **RantList**: Displays a list of rants with infinite scrolling and filtering. As users scroll down, it automatically fetches more content.
+- **RantCard**: Represents individual rants with like, comment, and share actions. Each card shows the rant content and associated mood.
 - **IntroSection**: Welcomes users and provides an overview of the app.
-- **ParticleBackground**: Adds an interactive particle effect to the background.
+- **ParticleBackground**: Adds an interactive particle effect to the background for visual engagement.
 - **Footer**: Provides navigation and additional information at the bottom of the page.
+- **MoodFilter**: Enables users to filter rants by specific moods, querying the database to show only matching content.
 
 ## Recent Updates
 

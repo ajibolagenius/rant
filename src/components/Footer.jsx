@@ -13,7 +13,7 @@ const Footer = () => {
                 </span>
             </div>
             <span className="footer-note">
-                Made with 💚 for the chronically online. ||
+                Made with 💚 for the chronically online.
                 © {new Date().getFullYear()} Rant. All rights reserved.
             </span>
         </footer>

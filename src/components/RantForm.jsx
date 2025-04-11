@@ -86,10 +86,10 @@ const RantForm = ({ onRantSubmitted }) => {
         }
 
         setIsSubmitting(true);
-        console.log("Submitting Rant to Supabase:", { content: rantText, mood: selectedMood.name });
+        // console.log("Submitting Rant to Supabase:", { content: rantText, mood: selectedMood.name }); // Debugging log
 
         // --- Actual Supabase Insert ---
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from('rants') // Your table name
             .insert([
                 {
@@ -97,8 +97,7 @@ const RantForm = ({ onRantSubmitted }) => {
                     mood: selectedMood.name,
                     likes: 0,
                 }
-            ])
-            .select(); // Optionally select the inserted data
+            ]);
 
         setIsSubmitting(false);
         // --- End Supabase Insert ---
@@ -110,7 +109,6 @@ const RantForm = ({ onRantSubmitted }) => {
             alert(`Error submitting rant: ${error.message || 'Please try again.'}`);
         } else {
             // Handle success
-            console.log('Submission successful!', data);
             setIsModalOpen(true); // Open the success modal
             setRantText(""); // Clear form
             setSelectedMood(null); // Reset mood
