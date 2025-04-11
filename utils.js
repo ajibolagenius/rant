@@ -7,7 +7,7 @@ export const isLightColor = (hexColor) => {
     return luminance > 0.5;
 };
 
-// ✅ Persistent alias generation based on rant ID
+// Persistent alias generation based on rant ID
 const pseudonyms = [
     'Anon Falcon', 'Mystery Cat', 'Silent Echo', 'Shadow Leaf',
     'Whisper Wolf', 'Crimson Bloom', 'Hidden Panda', 'Night Raven',
