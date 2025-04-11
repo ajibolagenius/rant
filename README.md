@@ -48,7 +48,6 @@ The application also includes visual elements like particle animations in the ba
 - **Styling**: CSS, custom animations, and gradients
 - **Build Tool**: Vite
 - **Utilities**: Floating UI, Lucide Icons
-- **Particles**: tsParticles
 
 ## Getting Started
 
@@ -166,7 +165,6 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 - [Supabase](https://supabase.com) for the backend services.
 - [Framer Motion](https://www.framer.com/motion/) for animations.
-- [tsParticles](https://particles.js.org/) for the particle effects.
 - [Lucide Icons](https://lucide.dev/) for the icons.
 
 Happy ranting! 🎉

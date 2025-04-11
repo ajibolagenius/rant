@@ -5,7 +5,6 @@ import IntroSection from "../components/IntroSection";
 import RantForm from "../components/RantForm";
 import RantList from "../components/RantList";
 import Footer from "../components/Footer";
-import ParticleBackground from '../components/ParticleBackground.jsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import "./Rant.css";
 
@@ -39,7 +38,6 @@ const Rant = () => {
 
     return (
         <div className="rant-page-container">
-            <ParticleBackground />
             {/* <Navbar /> */}
             <main className="main-container">
                 <Logo />
