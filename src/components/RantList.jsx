@@ -38,7 +38,6 @@ const RantCardSkeleton = () => {
                         <div className="skeleton-pulse" style={{ width: '40px', height: '16px', borderRadius: '4px' }}></div>
                     </div>
                 </div>
-
                 <div className="rant-card-text-container">
                     <div className="skeleton-pulse" style={{ width: randomWidth(), height: '16px', borderRadius: '4px', marginBottom: '8px' }}></div>
                     <div className="skeleton-pulse" style={{ width: randomWidth(), height: '16px', borderRadius: '4px', marginBottom: '8px' }}></div>
