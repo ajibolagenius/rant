@@ -12,6 +12,7 @@
   "dependencies": {
     "@floating-ui/react": "^0.27.6",
     "@supabase/supabase-js": "^2.49.4",
+    "animejs": "^4.0.1",
     "framer-motion": "^12.6.3",
     "lucide-react": "^0.487.0",
     "notistack": "^3.0.2",
