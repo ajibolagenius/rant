@@ -33,7 +33,16 @@ const RantCard = forwardRef(({ id, moodName, likes, text, authorId, index = 0, o
     }[moodName] || { emoji: "default.gif", color: "#cccccc" };
 
     const alias = generateAlias(id);
-    const isInView = useInView(cardRef, { once: false, amount: 0.3 });
+
+    const isInView = useInView(cardRef, {
+        once: false,
+        amount: 0.3,
+        onChange: (inView) => {
+            if (!inView && isExpanded) {
+                setIsExpanded(false);
+            }
+        }
+    });
 
     useEffect(() => {
         if (textRef.current) {
@@ -44,9 +53,45 @@ const RantCard = forwardRef(({ id, moodName, likes, text, authorId, index = 0, o
     }, [text, isExpanded]);
 
     useEffect(() => {
+        if (isExpanded && cardRef.current) {
+            cardRef.current.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+    }, [isExpanded]);
+
+    useEffect(() => {
         const liked = JSON.parse(localStorage.getItem('likedRants') || '[]');
         setIsLiked(liked.includes(id));
     }, [id]);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (cardRef.current && !cardRef.current.contains(event.target) && isExpanded) {
+                setIsExpanded(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isExpanded]);
+
+    const handleToast = (message) => {
+        const textColor = isLightColor(color) ? '#333' : '#fff';
+        enqueueSnackbar(message, {
+            variant: 'info',
+            autoHideDuration: 3000,
+            style: {
+                backgroundColor: color,
+                color: textColor,
+                fontWeight: 500,
+                fontSize: '14px'
+            }
+        });
+    };
 
     const handleLikeClick = async () => {
         if (isLiking) return;
@@ -137,8 +182,8 @@ const RantCard = forwardRef(({ id, moodName, likes, text, authorId, index = 0, o
             initial="hidden"
             animate={isInView ? "visible" : "hidden"}
             whileHover={{
-                scale: 1.02,
-                boxShadow: `0 0 12px ${color}`
+                scale: 1.01,
+                boxShadow: `0 0 6px ${color}`
             }}
         >
             <div className="rant-card-content">
@@ -200,7 +245,8 @@ const RantCard = forwardRef(({ id, moodName, likes, text, authorId, index = 0, o
                     position: isExpanded ? 'relative' : 'absolute',
                     bottom: isExpanded ? 'auto' : '16px',
                     left: '16px',
-                    right: '16px'
+                    right: '16px',
+                    transition: 'all 0.3s ease'
                 }}
             >
                 <div className="rant-card-author-container">
@@ -243,11 +289,19 @@ const RantCard = forwardRef(({ id, moodName, likes, text, authorId, index = 0, o
                         />
                     </motion.div>
 
-                    <motion.div className="rant-card-action-icon" onClick={() => alert('Comments coming soon')}>
+                    <motion.div
+                        className="rant-card-action-icon"
+                        onClick={() => handleToast('Comments feature coming soon')}
+                        whileTap={{ scale: 0.85 }}
+                    >
                         <MessageSquare size={24} strokeWidth={1.5} />
                     </motion.div>
 
-                    <motion.div className="rant-card-action-icon" onClick={() => alert('Share coming soon')}>
+                    <motion.div
+                        className="rant-card-action-icon"
+                        onClick={() => handleToast('Share feature coming soon')}
+                        whileTap={{ scale: 0.85 }}
+                    >
                         <Share2 size={24} strokeWidth={1.5} />
                     </motion.div>
                 </div>

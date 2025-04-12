@@ -357,14 +357,18 @@ const RantList = ({ newRant }) => {
                     ) : (
                         rants.map((rant, index) => {
                             const isLast = rants.length === index + 1;
+
+                            // Highlight only real new rants (from local or realtime)
+                            const isJustAdded =
+                                newRant?.id === rant.id ||
+                                (!newRant && rant.__justAdded); // optional fallback
+
                             return (
                                 <motion.div
                                     key={rant.id}
-                                    variants={{
-                                        hidden: { opacity: 0, y: 20 },
-                                        visible: { opacity: 1, y: 0 }
-                                    }}
-                                    transition={{ type: "spring", damping: 18, stiffness: 150 }}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.3, ease: 'easeOut' }}
                                     ref={isLast ? lastRantElementRef : null}
                                 >
                                     <RantCard
@@ -374,9 +378,9 @@ const RantList = ({ newRant }) => {
                                         text={rant.content}
                                         authorId={rant.author_id}
                                         index={index}
+                                        justAdded={isJustAdded}
                                     />
                                 </motion.div>
-
                             );
                         })
                     )}
@@ -402,5 +406,6 @@ const RantList = ({ newRant }) => {
         </div>
     );
 };
+
 
 export default RantList;
