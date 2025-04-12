@@ -310,4 +310,5 @@ const RantCard = forwardRef(({ id, moodName, likes, text, authorId, index = 0, o
     );
 });
 
+
 export default RantCard;

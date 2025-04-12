@@ -407,5 +407,4 @@ const RantList = ({ newRant }) => {
     );
 };
 
-
 export default RantList;
