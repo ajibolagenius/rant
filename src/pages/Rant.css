@@ -888,53 +888,43 @@ body {
 
 
 /* --- Footer Component --- */
-.fixed-footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    z-index: 100;
-    background-color: rgba(15, 15, 25, 1);
-}
-
-
 .footer-container {
     width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 24px;
     padding-top: 80px;
     margin-top: auto;
+    /* Removed display: flex and flex-direction: column unless scoped to media query */
 }
 
-.footer-logo-container {
+.footer-content {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 24px;
-}
-
-/* Re-use logo styles */
-
-.footer-description {
-    color: #cacaca;
-    font-size: 24px;
-    /* Default size */
-    font-weight: 400;
-    line-height: 130%;
-    max-width: 324px;
-}
-
-.footer-note {
-    color: #cacaca;
-    font-size: 24px;
-    /* Default size */
-    font-weight: 400;
-    line-height: 140%;
-    white-space: nowrap;
+    justify-content: space-between;
+    gap: 48px;
     width: 100%;
-    text-align: left;
-    margin-top: 40px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    .footer-content {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .footer-right {
+        flex-direction: row;
+        gap: 24px;
+        justify-content: center;
+    }
+
+    .footer-left, .footer-note {
+        align-items: center;
+    }
+
+    .footer-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
 }
 
 /* --- General Button Styles --- */
@@ -1427,34 +1417,59 @@ body {
   padding-top: 80px; /* Add space for the navbar */
 }
 
-/* --- Scroll to Top Button Styles --- */
+/* --- Scroll Buttons --- */
+.scroll-down-button {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--primary-color, #6c63ff);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    padding: 10px 16px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.scroll-down-button svg {
+    transition: transform 0.2s ease;
+}
+
+.scroll-down-button:hover svg {
+    transform: translateY(3px);
+}
+
 .scroll-top-button {
     position: fixed;
     bottom: 20px;
     right: 20px;
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 8px 12px;
-    background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+    gap: 8px;
+    background: var(--primary-color, #6c63ff);
     color: white;
     border: none;
-    border-radius: 20px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-radius: 30px;
+    padding: 10px 16px;
     cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    font-weight: 500;
     font-size: 14px;
-    font-weight: 600;
-    z-index: 1000;
-    transition: all 0.2s ease;
 }
 
 .scroll-top-button svg {
-    stroke: white;
+    transition: transform 0.2s ease;
 }
 
-.scroll-top-button:hover {
-    background: linear-gradient(135deg, #ff8e53, #ff6b6b);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+.scroll-top-button:hover svg {
+    transform: translateY(-3px);
 }
 
 /* --- Responsive Styles --- */
@@ -1476,6 +1491,16 @@ body {
   }
 
   .scroll-top-button svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .scroll-down-button {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .scroll-down-button svg {
     width: 14px;
     height: 14px;
   }

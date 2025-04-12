@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Navbar from "../components/Navbar";
 import Logo from "../components/Logo";
 import IntroSection from "../components/IntroSection";
@@ -11,15 +11,25 @@ import "./Rant.css";
 const Rant = () => {
     const [newRant, setNewRant] = useState(null);
     const [showScrollTop, setShowScrollTop] = useState(false);
+    const [showScrollDown, setShowScrollDown] = useState(true);
+    const footerRef = useRef(null);
 
     const handleRantSubmitted = (rant) => {
         setNewRant(rant);
     };
 
-    // Control visibility of scroll-to-top button
+    // Control visibility of scroll buttons
     useEffect(() => {
         const handleScroll = () => {
             setShowScrollTop(window.scrollY > 300);
+
+            // Hide the scroll down button when near the bottom
+            const windowHeight = window.innerHeight;
+            const documentHeight = document.documentElement.scrollHeight;
+            const scrollPosition = window.scrollY + windowHeight;
+
+            // Hide when within 200px of the bottom
+            setShowScrollDown(scrollPosition < documentHeight - 200);
         };
 
         window.addEventListener('scroll', handleScroll);
@@ -36,6 +46,14 @@ const Rant = () => {
         });
     };
 
+    const scrollToFooter = () => {
+        // Instead of scrolling to the footer element, scroll to the bottom of the page
+        window.scrollTo({
+            top: document.documentElement.scrollHeight,
+            behavior: 'smooth'
+        });
+    };
+
     return (
         <div className="rant-page-container">
             {/* <Navbar /> */}
@@ -47,7 +65,9 @@ const Rant = () => {
                         <RantForm onRantSubmitted={handleRantSubmitted} />
                     </header>
                     <RantList newRant={newRant} />
-                    <Footer />
+                    <div ref={footerRef}>
+                        <Footer />
+                    </div>
                 </section>
             </main>
 
@@ -67,6 +87,26 @@ const Rant = () => {
                             <path d="M12 19V5M5 12l7-7 7 7" />
                         </svg>
                         <span>Go Up</span>
+                    </motion.button>
+                )}
+            </AnimatePresence>
+
+            {/* Scroll to bottom button */}
+            <AnimatePresence>
+                {showScrollDown && (
+                    <motion.button
+                        className="scroll-down-button"
+                        onClick={scrollToFooter}
+                        initial={{ opacity: 0, scale: 0.8, y: -20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.8, y: -20 }}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 5v14M5 12l7 7 7-7" />
+                        </svg>
+                        <span>Go Down</span>
                     </motion.button>
                 )}
             </AnimatePresence>
