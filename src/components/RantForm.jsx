@@ -149,7 +149,7 @@ const RantForm = ({ onRantSubmitted }) => {
                     </div>
                     <textarea
                         className="form-input"
-                        placeholder="Type your rant here...no one will know it's from you!"
+                        placeholder="Type your rant here... No one will know it's from you! 👌🏼"
                         value={rantText}
                         onChange={(e) => setRantText(e.target.value)}
                         required
