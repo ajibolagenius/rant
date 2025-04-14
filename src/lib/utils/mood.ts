@@ -1,4 +1,3 @@
-
 export type MoodType =
     | 'sad'
     | 'crying'
@@ -38,7 +37,31 @@ export const getMoodColor = (mood: MoodType): string => {
     return moodColors[mood] || '#8B93A7';
 };
 
+// Updated to return GIF emoji paths instead of Unicode emojis
 export const getMoodEmoji = (mood: MoodType): string => {
+    const emojiMap: Record<MoodType, string> = {
+        sad: "/assets/emojis/sad.gif",
+        crying: "/assets/emojis/crying.gif",
+        angry: "/assets/emojis/angry.gif",
+        eyeRoll: "/assets/emojis/eyeRoll.gif",
+        heartbroken: "/assets/emojis/heartbroken.gif",
+        mindBlown: "/assets/emojis/mindBlown.gif",
+        speechless: "/assets/emojis/speechless.gif",
+        confused: "/assets/emojis/confused.gif",
+        tired: "/assets/emojis/tired.gif",
+        nervous: "/assets/emojis/nervous.gif",
+        smiling: "/assets/emojis/smiling.gif",
+        laughing: "/assets/emojis/laughing.gif",
+        celebratory: "/assets/emojis/celebratory.gif",
+        confident: "/assets/emojis/confident.gif",
+        loved: "/assets/emojis/loved.gif"
+    };
+
+    return emojiMap[mood] || "/assets/emojis/neutral.gif";
+};
+
+// Added a new function to get Unicode emojis for places where we can't use images
+export const getMoodUnicodeEmoji = (mood: MoodType): string => {
     const emojiMap: Record<MoodType, string> = {
         sad: "😞",
         crying: "😭",
@@ -121,8 +144,6 @@ export const getMoodAnimationProps = (mood: MoodType, index: number = 0) => {
 
     return animations[mood] || animations.default;
 };
-
-
 
 export const getMoodTailwindClass = (mood: MoodType): string => {
     const moodClasses: Record<MoodType, string> = {

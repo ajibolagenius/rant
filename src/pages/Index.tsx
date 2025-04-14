@@ -16,7 +16,8 @@ type SortOption = "latest" | "popular" | "filter";
 const Index: React.FC = () => {
     const [rantList, setRantList] = useState<Rant[]>(initialRants);
     const [sortOption, setSortOption] = useState<SortOption>("latest");
-    const [loading, setLoading] = useState(true); // NEW
+    const [selectedMoods, setSelectedMoods] = useState<string[]>([]); // Changed to array for multiple selections
+    const [loading, setLoading] = useState(true);
     const rantFormRef = useRef<HTMLDivElement>(null);
     const rantsListRef = useRef<HTMLDivElement>(null);
 
@@ -49,6 +50,11 @@ const Index: React.FC = () => {
         rantsListRef.current?.scrollIntoView({ behavior: "smooth" });
     };
 
+    // Handle filter change - now accepts an array of moods
+    const handleFilterChange = (moods: string[]) => {
+        setSelectedMoods(moods);
+    };
+
     const handleSortChange = (option: SortOption) => {
         setSortOption(option);
         let sorted = [...rantList];
@@ -65,6 +71,11 @@ const Index: React.FC = () => {
         setRantList(sorted);
     };
 
+    // Filter rants based on selected moods
+    const filteredRants = selectedMoods.length > 0
+        ? rantList.filter(rant => selectedMoods.includes(rant.mood))
+        : rantList;
+
     return (
         <div className="min-h-screen bg-background text-foreground">
             <Navbar />
@@ -77,18 +88,17 @@ const Index: React.FC = () => {
                             onExploreRants={scrollToRantsList}
                         />
                     </div>
-
                     <div className="w-full" ref={rantFormRef}>
                         <RantForm onSubmit={handleRantSubmit} />
                     </div>
                 </div>
-
                 <div className="mt-16 w-full" ref={rantsListRef}>
                     <SortingBar
                         activeOption={sortOption}
                         onOptionChange={handleSortChange}
+                        onFilterChange={handleFilterChange}
+                        selectedFilters={selectedMoods}
                     />
-
                     {/* Loader or Rant List */}
                     {loading ? (
                         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-10">
@@ -97,12 +107,10 @@ const Index: React.FC = () => {
                             ))}
                         </div>
                     ) : (
-                        <RantList rants={rantList} />
+                        <RantList rants={filteredRants} />
                     )}
                 </div>
-
             </main>
-
             <Footer />
         </div>
     );

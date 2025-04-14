@@ -20,7 +20,7 @@ interface RantCardProps {
 
 const RantCard: React.FC<RantCardProps> = ({ rant, onClick, index = 0 }) => {
     const moodColor = getMoodColor(rant.mood);
-    const moodEmoji = getMoodEmoji(rant.mood);
+    const moodEmojiPath = getMoodEmoji(rant.mood);
     const [liked, setLiked] = useState(false);
 
     // Animation based on mood
@@ -34,27 +34,33 @@ const RantCard: React.FC<RantCardProps> = ({ rant, onClick, index = 0 }) => {
                 backgroundColor: "rgba(26, 26, 46, 0.25)",
                 borderStyle: "solid",
                 borderColor: moodColor,
-                borderWidth: "0.3px 0.3px 4px 0.3px",
+                borderWidth: "1px 1px 5px 1px",
             }}
             initial={moodAnimation.initial} // Motion animation initial state
             animate={moodAnimation.animate} // Motion animation final state
             transition={{ duration: 0.35, delay: index ? index * 0.05 : 0 }}
             whileHover={{
-                borderWidth: "0.3px 0.3px 4px 0.3px",
-                boxShadow: "0 4px 20px rgba(0, 0, 0, 0.4)",
+                borderWidth: "1px  1px 5px   1px",
+                boxShadow: "0 5px 20px rgba(0, 0, 0, 0.4)",
                 scale: 1.015,
             }}
         >
             {/* Mood Tag with dynamic outline */}
             <div
-                className="w-9 h-9 flex items-center justify-center rounded-md mb-4 text-sm"
+                className="w-9 h-9 flex items-center justify-center rounded-md mb-4 text-sm overflow-hidden"
                 style={{
                     backgroundColor: moodColor,
                     outline: `1px solid ${moodColor}`,
                     outlineOffset: "2px",
                 }}
             >
-                {moodEmoji}
+                <div className="w-6 h-6 flex items-center justify-center">
+                    <img
+                        src={moodEmojiPath}
+                        alt={rant.mood}
+                        className="w-full h-full object-contain"
+                    />
+                </div>
             </div>
 
             {/* Rant content */}

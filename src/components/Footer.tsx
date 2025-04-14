@@ -1,5 +1,6 @@
 import React from 'react';
-import { Heart } from 'lucide-react';
+import { Heart, ArrowUp } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const Footer: React.FC = () => {
     // Function to scroll back to the top of the page with a slight offset
@@ -31,13 +32,15 @@ const Footer: React.FC = () => {
 
                 {/* Go Up button */}
                 <div className="flex justify-center mt-8">
-                    <button
+                    <Button
                         onClick={scrollToTop}
+                        variant="outline"
+                        className="border-[#333] bg-[#121212] hover:bg-[#1A1A1A] text-white rounded-full px-6 py-2 flex items-center gap-2"
                         aria-label="Scroll to top"
-                        className="text-xs text-gray-500 hover:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 px-3 py-1 rounded-full bg-[#1A1A1A] transition-transform transform hover:scale-105"
                     >
+                        <ArrowUp size={16} />
                         Go Up
-                    </button>
+                    </Button>
                 </div>
             </div>
         </footer>
