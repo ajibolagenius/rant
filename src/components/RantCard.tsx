@@ -10,16 +10,18 @@ import {
     Share1Icon,
 } from "@radix-ui/react-icons";
 import { v4 as uuidv4 } from "uuid"; // Importing UUID generator
+import { highlightText } from "@/lib/utils/highlight";
 
-// Update the RantCardProps interface to include the onClick handler
+// Update the RantCardProps interface to include the onClick handler and searchTerm
 interface RantCardProps {
     rant: Rant;
     index: number;
     onRemove?: (id: string) => void;
-    onClick?: () => void; // Added onClick prop
+    onClick?: () => void;
+    searchTerm?: string; // New prop for highlighting search terms
 }
 
-const RantCard: React.FC<RantCardProps> = ({ rant, onClick, index = 0 }) => {
+const RantCard: React.FC<RantCardProps> = ({ rant, onClick, index = 0, searchTerm = '' }) => {
     const moodColor = getMoodColor(rant.mood);
     const moodEmojiPath = getMoodEmoji(rant.mood);
     const [liked, setLiked] = useState(false);
@@ -79,9 +81,9 @@ const RantCard: React.FC<RantCardProps> = ({ rant, onClick, index = 0 }) => {
                 </div>
             </div>
 
-            {/* Rant content */}
+            {/* Rant content with search term highlighting */}
             <p className="text-sm text-[#d0d0d0] leading-relaxed mb-4 font-inter">
-                {rant.content}
+                {searchTerm ? highlightText(rant.content, searchTerm) : rant.content}
             </p>
 
             {/* Divider */}
@@ -180,7 +182,6 @@ const RantCard: React.FC<RantCardProps> = ({ rant, onClick, index = 0 }) => {
                             </Tooltip.Content>
                         </Tooltip.Root>
                     </Tooltip.Provider>
-
                 </div>
             </div>
         </motion.div>

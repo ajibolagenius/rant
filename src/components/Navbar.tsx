@@ -8,7 +8,7 @@ const Navbar: React.FC = () => {
             <div className="text-primary text-3xl font-bold font-outfit">rant</div>
 
             <div className="flex items-center gap-4">
-                <div className="relative">
+                {/* <div className="relative">
                     <div className="flex items-center bg-[#121212] border border-[#333] rounded-full px-4 py-2">
                         <input
                             type="text"
@@ -17,7 +17,7 @@ const Navbar: React.FC = () => {
                         />
                         <Search size={18} className="text-gray-500" />
                     </div>
-                </div>
+                </div> */}
                 {/* Add the Github icon here */}
                 {/* <button className="text-gray-400 hover:text-gray-200">
                     <Github size={20} />

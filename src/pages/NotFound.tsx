@@ -1,5 +1,5 @@
 import { useLocation, Link } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 
 const NotFound = () => {
@@ -13,7 +13,7 @@ const NotFound = () => {
     }, [location.pathname]);
 
     // Staggered text animation
-    const text = "Page not found".split("");
+    const text = useMemo(() => "Page not found".split(""), []);
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-[#09090B] text-white p-4">

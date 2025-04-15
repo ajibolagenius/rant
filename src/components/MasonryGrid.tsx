@@ -4,13 +4,12 @@ import { AnimatePresence, motion } from "framer-motion";
 import { getMoodAnimationProps } from "@/lib/utils/mood";
 import RantCard from "./RantCard";
 
-
 interface MasonryGridProps {
     rants?: Rant[];
     gap?: number;
     onRemove?: (id: string) => void;
+    searchTerm?: string;
 }
-
 
 const getColumnCount = (): number => {
     const width = window.innerWidth;
@@ -20,7 +19,7 @@ const getColumnCount = (): number => {
     return 4;
 };
 
-const MasonryGrid: React.FC<MasonryGridProps> = ({ rants = [], gap = 6 }) => {
+const MasonryGrid: React.FC<MasonryGridProps> = ({ rants = [], gap = 24, searchTerm = "" }) => {
     const [columns, setColumns] = useState(getColumnCount());
 
     useEffect(() => {
@@ -36,7 +35,17 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({ rants = [], gap = 6 }) => {
     });
 
     if (rants.length === 0) {
-        return <div>No rants available. Be the first.</div>;
+        return (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="text-6xl mb-4">🔍</div>
+                <h3 className="text-xl font-medium text-white mb-2">No rants found</h3>
+                <p className="text-gray-400 max-w-md">
+                    {searchTerm
+                        ? `No rants matching "${searchTerm}" were found. Try a different search term or filter.`
+                        : "No rants available. Be the first to share your thoughts!"}
+                </p>
+            </div>
+        );
     }
 
     return (
@@ -59,13 +68,17 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({ rants = [], gap = 6 }) => {
                                     animate={animate}
                                     exit={{ opacity: 0, scale: 0.8, y: 20 }}
                                     transition={transition}
+                                    className="mb-6" // Add margin bottom to ensure proper spacing
                                 >
-                                    <RantCard rant={rant} index={index} />
+                                    <RantCard
+                                        rant={rant}
+                                        index={index}
+                                        searchTerm={searchTerm}
+                                    />
                                 </motion.div>
                             );
                         })}
                     </AnimatePresence>
-
                 </div>
             ))}
         </div>
