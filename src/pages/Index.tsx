@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Rant } from "@/lib/types/rant";
 import { generateAlias, MoodType } from "@/lib/utils/mood";
 import { rants as initialRants } from "@/lib/data/rants";
@@ -10,6 +10,8 @@ import { toast } from "@/hooks/use-toast";
 import { useSearchParams } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { createFuzzySearcher, performFuzzySearch } from "@/lib/utils/fuzzySearch";
+import { parseSearchQuery } from "@/utils/searchParser";
 
 type SortOption = "latest" | "popular" | "filter" | "search";
 
@@ -23,6 +25,9 @@ const Index: React.FC = () => {
     const [searchMood, setSearchMood] = useState<MoodType | null>(null);
     const rantFormRef = useRef<HTMLDivElement>(null);
     const rantsListRef = useRef<HTMLDivElement>(null);
+
+    // Create fuzzy searcher with memoization
+    const fuzzySearcher = useMemo(() => createFuzzySearcher(rantList), [rantList]);
 
     // Initialize from URL params on load
     useEffect(() => {
@@ -95,11 +100,30 @@ const Index: React.FC = () => {
         // Apply search filtering
         if (sortOption === "search") {
             if (searchQuery) {
-                filtered = filtered.filter(rant =>
-                    rant.content.toLowerCase().includes(searchQuery.toLowerCase())
-                );
+                // Parse the search query for advanced operators
+                const parsed = parseSearchQuery(searchQuery);
+
+                // Use fuzzy search for the main text
+                if (parsed.text || parsed.exactPhrases.length > 0) {
+                    // Combine text and exact phrases for search
+                    const searchText = [
+                        parsed.text,
+                        ...parsed.exactPhrases.map(phrase => `"${phrase}"`)
+                    ].filter(Boolean).join(' ');
+
+                    if (searchText) {
+                        const searchResults = performFuzzySearch(fuzzySearcher, searchText);
+                        filtered = searchResults.map(result => result.item);
+                    }
+                }
+
+                // Apply mood filter from search query if present
+                if (parsed.mood) {
+                    filtered = filtered.filter(rant => rant.mood === parsed.mood);
+                }
             }
 
+            // Apply explicit mood filter if set
             if (searchMood) {
                 filtered = filtered.filter(rant => rant.mood === searchMood);
             }
@@ -159,7 +183,7 @@ const Index: React.FC = () => {
         setSortOption(option);
     };
 
-    // Handle search - now real-time
+    // Handle search - now with advanced search capabilities
     const handleSearch = (query: string, mood: MoodType | null) => {
         setSearchQuery(query);
         setSearchMood(mood);
@@ -201,6 +225,7 @@ const Index: React.FC = () => {
                         selectedFilters={selectedMoods}
                         searchQuery={searchQuery}
                         searchMood={searchMood}
+                        rants={rantList} // Pass rants for suggestions
                     />
 
                     {loading ? (

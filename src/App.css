@@ -1,42 +1,138 @@
 #root {
-  max-width: 1280px;
+  max-width: 100%;
+  width: 100%;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1rem;
   text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+@media (min-width: 640px) {
+  #root {
+    padding: 1.5rem;
+  }
 }
 
-@keyframes logo-spin {
+@media (min-width: 1024px) {
+  #root {
+    max-width: 1280px;
+    padding: 2rem;
+  }
+}
+
+.app-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.section-container {
+  width: 100%;
+  padding: 1rem;
+  border-radius: var(--radius);
+  background-color: hsl(var(--card));
+}
+
+@media (min-width: 640px) {
+  .section-container {
+    padding: 1.5rem;
+  }
+}
+
+/* Responsive grid layout */
+.masonry-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 1rem;
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .masonry-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .masonry-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .masonry-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Responsive typography */
+h1 {
+  font-size: 1.875rem; /* 30px */
+  line-height: 2.25rem; /* 36px */
+}
+
+@media (min-width: 640px) {
+  h1 {
+    font-size: 2.25rem; /* 36px */
+    line-height: 2.5rem; /* 40px */
+  }
+}
+
+@media (min-width: 1024px) {
+  h1 {
+    font-size: 3rem; /* 48px */
+    line-height: 1;
+  }
+}
+
+/* Form elements responsiveness */
+.form-container {
+  width: 100%;
+  max-width: 100%;
+}
+
+@media (min-width: 640px) {
+  .form-container {
+    max-width: 80%;
+    margin: 0 auto;
+  }
+}
+
+@media (min-width: 1024px) {
+  .form-container {
+    max-width: 60%;
+  }
+}
+
+/* Animation keyframes */
+@keyframes fadeIn {
   from {
-    transform: rotate(0deg);
+    opacity: 0;
+    transform: translateY(10px);
   }
   to {
-    transform: rotate(360deg);
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out forwards;
 }
 
-.card {
-  padding: 2em;
+/* Consistent spacing */
+.spacing-y-sm {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
-.read-the-docs {
-  color: #888;
+.spacing-y-md {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.spacing-y-lg {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
 }

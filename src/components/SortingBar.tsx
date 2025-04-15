@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { getMoodEmoji, getMoodLabel, getMoodColor, MoodType } from "@/lib/utils/mood";
+import { getMoodEmoji, getMoodLabel, getMoodColor, MoodType, allMoods } from "@/lib/utils/mood";
 import {
     ChevronDownIcon,
     ClockIcon,
@@ -10,6 +10,10 @@ import {
 } from "@radix-ui/react-icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useSearchHistory } from "@/hooks/useSearchHistory";
+import { useSearchSuggestions } from "@/hooks/useSearchSuggestions";
+import { parseSearchQuery } from "@/utils/searchParser";
+import SearchHelp from "@/components/SearchHelp";
 
 type SortOption = "latest" | "popular" | "filter" | "search";
 
@@ -21,6 +25,7 @@ interface SortingBarProps {
     selectedFilters?: string[];
     searchQuery?: string;
     searchMood?: MoodType | null;
+    rants?: any[]; // For search suggestions
 }
 
 const SortingBar: React.FC<SortingBarProps> = ({
@@ -30,22 +35,23 @@ const SortingBar: React.FC<SortingBarProps> = ({
     onSearch,
     selectedFilters = [],
     searchQuery = '',
-    searchMood = null
+    searchMood = null,
+    rants = []
 }) => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
     const [localSearchMood, setLocalSearchMood] = useState<MoodType | null>(searchMood);
+    const [showHistory, setShowHistory] = useState(false);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+
     const dropdownRef = useRef<HTMLDivElement>(null);
     const searchDropdownRef = useRef<HTMLDivElement>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
 
-    // List of all moods
-    const moods: MoodType[] = [
-        'sad', 'crying', 'angry', 'eyeRoll', 'heartbroken',
-        'mindBlown', 'speechless', 'confused', 'tired', 'nervous',
-        'smiling', 'laughing', 'celebratory', 'confident', 'loved'
-    ];
+    // Use our custom hooks for search history and suggestions
+    const { searchHistory, addToHistory, clearHistory } = useSearchHistory();
+    const suggestions = useSearchSuggestions(rants);
 
     // Update local state when props change
     useEffect(() => {
@@ -65,10 +71,8 @@ const SortingBar: React.FC<SortingBarProps> = ({
     const handleFilterDropdownToggle = () => {
         // Close search dropdown if open
         setIsSearchOpen(false);
-
         // Toggle filter dropdown
         setIsDropdownOpen(!isDropdownOpen);
-
         // If opening filter dropdown, switch to filter mode
         if (!isDropdownOpen && selectedFilters.length > 0) {
             onOptionChange("filter");
@@ -79,15 +83,12 @@ const SortingBar: React.FC<SortingBarProps> = ({
     const handleSearchDropdownToggle = () => {
         // Close filter dropdown if open
         setIsDropdownOpen(false);
-
         // Toggle search dropdown
         setIsSearchOpen(!isSearchOpen);
-
         // If opening search dropdown, switch to search mode if there's a query or mood
         if (!isSearchOpen && (localSearchQuery || localSearchMood)) {
             onOptionChange("search");
         }
-
         // Focus the search input when opening
         if (!isSearchOpen) {
             setTimeout(() => {
@@ -117,9 +118,7 @@ const SortingBar: React.FC<SortingBarProps> = ({
             const newFilters = selectedFilters.includes(mood)
                 ? selectedFilters.filter(m => m !== mood)
                 : [...selectedFilters, mood];
-
             onFilterChange(newFilters);
-
             // Only set to filter mode if we have filters selected
             if (newFilters.length > 0) {
                 onOptionChange("filter");
@@ -146,7 +145,6 @@ const SortingBar: React.FC<SortingBarProps> = ({
     const handleSearchMoodSelect = (mood: MoodType) => {
         const newMood = localSearchMood === mood ? null : mood;
         setLocalSearchMood(newMood);
-
         // Real-time search update
         if (onSearch) {
             onSearch(localSearchQuery, newMood);
@@ -162,7 +160,6 @@ const SortingBar: React.FC<SortingBarProps> = ({
     const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const query = e.target.value;
         setLocalSearchQuery(query);
-
         // Real-time search update
         if (onSearch) {
             onSearch(query, localSearchMood);
@@ -184,21 +181,91 @@ const SortingBar: React.FC<SortingBarProps> = ({
                 onOptionChange("latest");
             }
         }
-
         // Focus the search input after clearing
         searchInputRef.current?.focus();
+    };
+
+    // Handle advanced search submission
+    const handleAdvancedSearch = () => {
+        if (!localSearchQuery.trim()) return;
+
+        // Parse the search query for advanced operators
+        const parsed = parseSearchQuery(localSearchQuery);
+
+        // Update local mood state if a mood was specified in the query
+        if (parsed.mood) {
+            setLocalSearchMood(parsed.mood);
+        }
+
+        // Add to search history
+        addToHistory(localSearchQuery, parsed.mood || localSearchMood);
+
+        // Call the parent's search handler
+        if (onSearch) {
+            onSearch(
+                // If there are exact phrases, include them in the search
+                parsed.exactPhrases.length
+                    ? `${parsed.text} ${parsed.exactPhrases.map(p => `"${p}"`).join(' ')}`
+                    : parsed.text,
+                parsed.mood || localSearchMood
+            );
+        }
+
+        // Keep the search dropdown open for UX consistency
+    };
+
+    // Handle history item click
+    const handleHistoryItemClick = (item: { query: string; mood: MoodType | null }) => {
+        setLocalSearchQuery(item.query);
+        setLocalSearchMood(item.mood);
+
+        if (onSearch) {
+            onSearch(item.query, item.mood);
+            if (item.query || item.mood) {
+                onOptionChange("search");
+            }
+        }
+    };
+
+    // Handle suggestion click
+    const handleSuggestionClick = (suggestion: string) => {
+        setLocalSearchQuery(suggestion);
+
+        if (onSearch) {
+            onSearch(suggestion, localSearchMood);
+            onOptionChange("search");
+        }
+    };
+
+    // Handle input focus to show history or suggestions
+    const handleInputFocus = () => {
+        // Show history when input is focused and there's history
+        if (searchHistory.length > 0) {
+            setShowHistory(true);
+            setShowSuggestions(false);
+        }
+        // Show suggestions when input is focused and there are suggestions
+        else if (suggestions.length > 0) {
+            setShowSuggestions(true);
+            setShowHistory(false);
+        }
+    };
+
+    // Handle key down for search input
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            handleAdvancedSearch();
+        }
     };
 
     return (
         <div className="flex flex-col mt-10 mb-5 px-4">
             <div id="rant-section" className="mb-4"></div>
-
             <div className="flex items-center justify-between mb-4">
                 {/* Section Title */}
                 <h2 className="text-xl font-bold text-white">
-                    {activeOption === "search" ? "Search Results 🔍" : "Hot Rants 🔥"}
+                    {activeOption === "search" ? "Search Results 🔍" : "Hottest Rants 🔥"}
                 </h2>
-
                 {/* Buttons Section */}
                 <div className="flex gap-4 items-center">
                     {/* Search Button */}
@@ -211,7 +278,6 @@ const SortingBar: React.FC<SortingBarProps> = ({
                         <span>Search</span>
                         <ChevronDownIcon className={`transition-transform ${isSearchOpen ? 'rotate-180' : ''}`} />
                     </Button>
-
                     {/* Latest & Popular buttons */}
                     <Button
                         onClick={handleLatestClick}
@@ -231,7 +297,6 @@ const SortingBar: React.FC<SortingBarProps> = ({
                         <StarIcon className="mr-2 h-4 w-4" />
                         Popular
                     </Button>
-
                     {/* Filter button */}
                     <Button
                         onClick={handleFilterDropdownToggle}
@@ -245,7 +310,6 @@ const SortingBar: React.FC<SortingBarProps> = ({
                     </Button>
                 </div>
             </div>
-
             {/* Search Dropdown */}
             <div
                 className={`overflow-hidden transition-all duration-300 ease-in-out ${isSearchOpen ? 'opacity-100' : 'opacity-0 h-0'}`}
@@ -257,7 +321,6 @@ const SortingBar: React.FC<SortingBarProps> = ({
                 >
                     <div className="space-y-4">
                         <h3 className="text-lg font-medium text-white">Search Rants</h3>
-
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <MagnifyingGlassIcon className="h-4 w-4 text-gray-400" />
@@ -268,6 +331,8 @@ const SortingBar: React.FC<SortingBarProps> = ({
                                 placeholder="Type to search rants..."
                                 value={localSearchQuery}
                                 onChange={handleSearchInputChange}
+                                onFocus={handleInputFocus}
+                                onKeyDown={handleKeyDown}
                                 className="pl-10 pr-10 bg-[#1A1A1A] border-[#333] text-white"
                             />
                             {localSearchQuery && (
@@ -280,10 +345,64 @@ const SortingBar: React.FC<SortingBarProps> = ({
                             )}
                         </div>
 
+                        {/* Search history */}
+                        {showHistory && searchHistory.length > 0 && (
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <h4 className="text-sm font-medium text-gray-400">Recent searches:</h4>
+                                    <button
+                                        onClick={clearHistory}
+                                        className="text-xs text-gray-400 hover:text-white"
+                                    >
+                                        Clear
+                                    </button>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    {searchHistory.slice(0, 5).map((item, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => handleHistoryItemClick(item)}
+                                            className="inline-flex items-center gap-2 px-2 py-1 text-xs rounded-full
+                                                bg-[#1A1A1A] border border-[#333] hover:bg-[#252525] text-gray-300"
+                                        >
+                                            <MagnifyingGlassIcon className="h-3 w-3 text-gray-400" />
+                                            {item.query}
+                                            {item.mood && (
+                                                <img
+                                                    src={getMoodEmoji(item.mood)}
+                                                    alt={getMoodLabel(item.mood)}
+                                                    className="w-3 h-3 ml-1"
+                                                />
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Search suggestions */}
+                        {showSuggestions && suggestions.length > 0 && (
+                            <div className="space-y-2">
+                                <h4 className="text-sm font-medium text-gray-400">Suggestions:</h4>
+                                <div className="flex flex-wrap gap-2">
+                                    {suggestions.map((suggestion, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => handleSuggestionClick(suggestion)}
+                                            className="inline-flex items-center gap-2 px-2 py-1 text-xs rounded-full
+                                                bg-[#1A1A1A] border border-[#333] hover:bg-[#252525] text-gray-300"
+                                        >
+                                            {suggestion}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         <div className="space-y-2">
                             <h4 className="text-sm font-medium text-gray-400">Filter by mood:</h4>
                             <div className="flex flex-wrap gap-2">
-                                {moods.map((mood) => (
+                                {allMoods.map((mood) => (
                                     <button
                                         key={mood}
                                         type="button"
@@ -331,10 +450,19 @@ const SortingBar: React.FC<SortingBarProps> = ({
                                 </div>
                             </div>
                         )}
+
+                        {/* Advanced search help */}
+                        <div className="text-xs text-gray-500 pt-2 border-t border-[#333] flex items-center justify-between">
+                            <div>
+                                <p className="font-semibold mb-1">Advanced search:</p>
+                                <p>• Use <code className="bg-[#252525] px-1 rounded">mood:angry</code> to filter by mood</p>
+                                <p>• Use <code className="bg-[#252525] px-1 rounded">"exact phrase"</code> for exact matching</p>
+                            </div>
+                            <SearchHelp />
+                        </div>
                     </div>
                 </div>
             </div>
-
             {/* Filter Dropdown */}
             <div
                 className={`overflow-hidden transition-all duration-300 ease-in-out ${isDropdownOpen ? 'opacity-100' : 'opacity-0 h-0'}`}
@@ -345,10 +473,9 @@ const SortingBar: React.FC<SortingBarProps> = ({
                     className="bg-[#121212] border border-[#333] rounded-lg p-4 shadow-lg w-full"
                 >
                     <h3 className="text-lg font-medium text-white mb-3">Filter by Mood</h3>
-
                     {/* Mood Options - Using smaller rounded pills like search */}
                     <div className="mb-4 flex flex-wrap gap-2">
-                        {moods.map((mood) => (
+                        {allMoods.map((mood) => (
                             <button
                                 key={mood}
                                 type="button"
@@ -369,7 +496,6 @@ const SortingBar: React.FC<SortingBarProps> = ({
                                 {getMoodLabel(mood)}
                             </button>
                         ))}
-
                         {/* Clear Filter Option */}
                         {selectedFilters.length > 0 && (
                             <button
@@ -382,7 +508,6 @@ const SortingBar: React.FC<SortingBarProps> = ({
                             </button>
                         )}
                     </div>
-
                     {/* Display selected filters inside the filter panel */}
                     {selectedFilters.length > 0 && (
                         <div className="text-sm text-gray-400 pt-2 border-t border-[#333]">
@@ -391,11 +516,11 @@ const SortingBar: React.FC<SortingBarProps> = ({
                                 {selectedFilters.map(mood => (
                                     <span key={mood} className="inline-flex items-center gap-2 bg-[#1A1A1A] border border-[#333] px-2 py-1 rounded-full">
                                         <img
-                                            src={getMoodEmoji(mood)}
-                                            alt={getMoodLabel(mood)}
+                                            src={getMoodEmoji(mood as MoodType)}
+                                            alt={getMoodLabel(mood as MoodType)}
                                             className="w-4 h-4 object-cover"
                                         />
-                                        {getMoodLabel(mood)}
+                                        {getMoodLabel(mood as MoodType)}
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
@@ -412,7 +537,6 @@ const SortingBar: React.FC<SortingBarProps> = ({
                     )}
                 </div>
             </div>
-
             {/* Displaying Selected Filters outside the dropdown (only when dropdown is closed) */}
             {selectedFilters.length > 0 && activeOption === "filter" && !isDropdownOpen && (
                 <div className="text-sm text-gray-400 flex flex-wrap gap-2 mb-4">
@@ -420,11 +544,11 @@ const SortingBar: React.FC<SortingBarProps> = ({
                     {selectedFilters.map(mood => (
                         <span key={mood} className="inline-flex items-center gap-2 bg-[#121212] border border-[#333] px-2 py-1 rounded-full">
                             <img
-                                src={getMoodEmoji(mood)}
-                                alt={getMoodLabel(mood)}
+                                src={getMoodEmoji(mood as MoodType)}
+                                alt={getMoodLabel(mood as MoodType)}
                                 className="w-4 h-4 object-cover"
                             />
-                            {getMoodLabel(mood)}
+                            {getMoodLabel(mood as MoodType)}
                             <button
                                 onClick={() => handleFilterSelect(mood)}
                                 className="ml-1 text-gray-400 hover:text-white"
@@ -435,7 +559,6 @@ const SortingBar: React.FC<SortingBarProps> = ({
                     ))}
                 </div>
             )}
-
             {/* Display active search query outside the dropdown (only when dropdown is closed) */}
             {activeOption === "search" && (searchQuery || searchMood) && !isSearchOpen && (
                 <div className="text-sm text-gray-400 flex flex-wrap gap-2 mb-4">

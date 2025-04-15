@@ -1,10 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { getMoodColor, MoodType, getMoodUnicodeEmoji } from '@/lib/utils/mood';
 import MoodSelector from './MoodSelector';
 import { MessageCircle, Send, AlertCircle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+// Constants for the typewriter effect
+const PLACEHOLDER_TEXTS = [
+    "Type your rant here. No one will know it's from you! 🤐",
+    "Let it all out! Your secrets are safe with us...",
+    "Frustrated? Angry? Annoyed? Tell us about it...",
+    "What's on your mind? Vent freely and anonymously!",
+    "Go ahead, we're listening. Rant away..."
+];
+const TYPEWRITER_SPEED = 50;
+const PLACEHOLDER_DISPLAY_TIME = 5000;
 
 interface RantFormProps {
     onSubmit: (content: string, mood: MoodType) => void;
@@ -15,6 +26,9 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
     const [selectedMood, setSelectedMood] = useState<MoodType | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
+    const [placeholder, setPlaceholder] = useState('');
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
     const maxLength = 560;
     const minLength = 10;
 
@@ -37,6 +51,57 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
             localStorage.setItem('rantDraft', JSON.stringify({ content, mood: selectedMood }));
         }
     }, [content, selectedMood]);
+
+    // Improved typewriter effect for placeholder
+    useEffect(() => {
+        if (content) {
+            // Don't show placeholder when there's content
+            setPlaceholder('');
+            return () => { };
+        }
+
+        let currentTextIndex = 0;
+        let isTyping = true;
+        let charIndex = 0;
+        let timeoutId: NodeJS.Timeout;
+
+        const animatePlaceholder = () => {
+            const currentText = PLACEHOLDER_TEXTS[currentTextIndex];
+
+            if (isTyping) {
+                // Typing phase
+                if (charIndex <= currentText.length) {
+                    setPlaceholder(currentText.substring(0, charIndex));
+                    charIndex++;
+                    timeoutId = setTimeout(animatePlaceholder, TYPEWRITER_SPEED);
+                } else {
+                    // Finished typing, pause before erasing
+                    isTyping = false;
+                    timeoutId = setTimeout(animatePlaceholder, PLACEHOLDER_DISPLAY_TIME);
+                }
+            } else {
+                // Erasing phase
+                if (charIndex > 0) {
+                    charIndex--;
+                    setPlaceholder(currentText.substring(0, charIndex));
+                    timeoutId = setTimeout(animatePlaceholder, TYPEWRITER_SPEED / 2);
+                } else {
+                    // Move to next text
+                    isTyping = true;
+                    currentTextIndex = (currentTextIndex + 1) % PLACEHOLDER_TEXTS.length;
+                    timeoutId = setTimeout(animatePlaceholder, TYPEWRITER_SPEED * 2);
+                }
+            }
+        };
+
+        // Start the animation
+        timeoutId = setTimeout(animatePlaceholder, 500);
+
+        // Cleanup
+        return () => {
+            clearTimeout(timeoutId);
+        };
+    }, [content]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -73,15 +138,16 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
     return (
         <Card className="bg-[#09090B] border border-[#222] rounded-2xl overflow-hidden">
             <div className="text-xl font-medium p-6 pb-0 flex items-center gap-2">
-                <MessageCircle className="text-cyan-400" size={20} />
                 What's bothering you?
+                <MessageCircle className="text-cyan-400" size={20} />
             </div>
             <CardContent className="p-6">
                 <form>
                     <textarea
+                        ref={textareaRef}
                         value={content}
                         onChange={(e) => setContent(e.target.value.substring(0, maxLength))}
-                        placeholder="Type your rant here. No one will know it's from you! 🤐"
+                        placeholder={placeholder}
                         className="w-full p-3 bg-transparent border border-[#333] focus:outline-none focus:ring-1 focus:ring-primary min-h-[120px] text-base rounded-lg"
                         maxLength={maxLength}
                         disabled={isSubmitting}
@@ -151,7 +217,6 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
                                 {selectedMood && content.trim() ? (
                                     <>
                                         Rant {getMoodUnicodeEmoji(selectedMood)} Anonymously
-                                        {/* <Send size={16} className="ml-1" /> */}
                                     </>
                                 ) : (
                                     'Rant Anonymously 🔥'
