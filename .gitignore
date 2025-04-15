@@ -23,7 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 
+source
 PROJECT_DESCRIPTION.md
 PROJECT_RECOMMENDED_FIXES_CHECKLIST.md
 Rant_App_Enhancement_Plan.md
-source
+Project_Misc_Code.md

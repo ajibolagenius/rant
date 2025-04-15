@@ -211,6 +211,13 @@ export const getMoodLabel = (mood: MoodType): string => {
     return labels[mood] || 'Sad';
 };
 
+// This is the list of all moods available in the app
+export const allMoods: MoodType[] = [
+  'sad', 'crying', 'angry', 'eyeRoll', 'heartbroken',
+  'mindBlown', 'speechless', 'confused', 'tired', 'nervous',
+  'smiling', 'laughing', 'celebratory', 'confident', 'loved'
+];
+
 export const generateAlias = (): string => {
     const adjectives = [
         'Anonymous',

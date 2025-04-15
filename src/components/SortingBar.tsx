@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { getMoodEmoji, getMoodLabel, getMoodUnicodeEmoji } from "@/lib/utils/mood";
+import { getMoodEmoji, getMoodLabel, getMoodUnicodeEmoji, getMoodColor } from "@/lib/utils/mood";
 import {
     ChevronDownIcon,
     ClockIcon,
@@ -76,7 +76,8 @@ const SortingBar: React.FC<SortingBarProps> = ({
     };
 
     return (
-        <div id="rant-section" className="flex flex-col mt-10 mb-5 px-4">
+        <div className="flex flex-col mt-10 mb-5 px-4">
+            <div id="rant-section" className="mb-4"></div>
             <div className="flex items-center justify-between mb-4">
                 {/* Section Title */}
                 <h2 className="text-xl font-bold text-white">Hot Rants 🔥</h2>
@@ -126,30 +127,51 @@ const SortingBar: React.FC<SortingBarProps> = ({
                     ref={dropdownRef}
                     className="bg-[#121212] border border-[#333] rounded-lg p-4 shadow-lg w-full"
                 >
-                    {/* Mood Options */}
+                    {/* Mood Options - Using the enhanced UI from MoodSelector */}
                     <div className="mb-4 flex flex-wrap gap-3">
                         {moods.map((mood) => (
                             <button
                                 key={mood}
+                                type="button"
                                 onClick={() => handleFilterSelect(mood)}
-                                className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 transition-colors ${selectedFilters.includes(mood)
-                                    ? "bg-[#1A1A1A] border border-[#333] text-white"
-                                    : "bg-[#121212] border border-[#333] hover:bg-[#1A1A1A] text-gray-200"
-                                    }`}
+                                className={`
+                                    relative overflow-hidden transition-all duration-200 ease-in-out
+                                    flex items-center gap-2 py-2 px-4 text-sm
+                                    ${selectedFilters.includes(mood)
+                                        ? 'scale-110 shadow-lg z-10'
+                                        : 'hover:scale-105 hover:shadow-md'}
+                                    rounded-xl
+                                `}
+                                style={{
+                                    backgroundColor: selectedFilters.includes(mood)
+                                        ? getMoodColor(mood)
+                                        : `${getMoodColor(mood)}15`,
+                                    color: selectedFilters.includes(mood)
+                                        ? '#fff'
+                                        : getMoodColor(mood),
+                                    border: `1px solid ${getMoodColor(mood)}`,
+                                }}
                             >
                                 <img
                                     src={getMoodEmoji(mood)}
                                     alt={getMoodLabel(mood)}
-                                    className="w-5 h-5 object-cover"
+                                    className={`w-5 h-5 ${selectedFilters.includes(mood) ? 'animate-bounce' : ''}`}
                                 />
-                                {getMoodLabel(mood)}
+                                <span className="font-medium">{getMoodLabel(mood)}</span>
+                                {selectedFilters.includes(mood) && (
+                                    <span className="absolute -right-1 -top-1 bg-white rounded-full p-0.5 shadow-sm">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke={getMoodColor(mood)} strokeWidth={3}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </span>
+                                )}
                             </button>
                         ))}
                         {/* Clear Filter Option */}
                         <Button
                             onClick={clearAllFilters}
                             variant="outline"
-                            className="border-[#333] bg-[#121212] hover:bg-[#1A1A1A] text-red-400 rounded-full px-4 py-2 text-sm"
+                            className="border-[#333] bg-[#121212] hover:bg-[#1A1A1A] text-red-400 rounded-xl px-4 py-2 text-sm"
                             disabled={selectedFilters.length === 0}
                         >
                             Clear All Filters

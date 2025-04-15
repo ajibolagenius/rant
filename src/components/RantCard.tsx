@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Rant } from "@/lib/types/rant";
 import { getMoodColor, getMoodEmoji, getMoodAnimation } from "@/lib/utils/mood";
 import { motion } from "framer-motion";
@@ -9,6 +9,7 @@ import {
     ChatBubbleIcon,
     Share1Icon,
 } from "@radix-ui/react-icons";
+import { v4 as uuidv4 } from "uuid"; // Importing UUID generator
 
 // Update the RantCardProps interface to include the onClick handler
 interface RantCardProps {
@@ -26,6 +27,21 @@ const RantCard: React.FC<RantCardProps> = ({ rant, onClick, index = 0 }) => {
     // Animation based on mood
     const moodAnimation = getMoodAnimation(rant.mood);
 
+    // Generate authorId and store in localStorage if not present
+    const [authorId, setAuthorId] = useState<string>("");
+
+    useEffect(() => {
+        // Check if authorId exists in localStorage
+        let storedAuthorId = localStorage.getItem("authorId");
+        if (!storedAuthorId) {
+            // If not, generate and store a new UUID
+            storedAuthorId = uuidv4();
+            localStorage.setItem("authorId", storedAuthorId);
+        }
+        // Set the authorId to the state
+        setAuthorId(storedAuthorId);
+    }, []);
+
     return (
         <motion.div
             onClick={onClick} // Added onClick to handle click events
@@ -36,11 +52,11 @@ const RantCard: React.FC<RantCardProps> = ({ rant, onClick, index = 0 }) => {
                 borderColor: moodColor,
                 borderWidth: "1px 1px 5px 1px",
             }}
-            initial={moodAnimation.initial} // Motion animation initial state
-            animate={moodAnimation.animate} // Motion animation final state
+            initial={moodAnimation.initial}
+            animate={moodAnimation.animate}
             transition={{ duration: 0.35, delay: index ? index * 0.05 : 0 }}
             whileHover={{
-                borderWidth: "1px  1px 5px   1px",
+                borderWidth: "1px 1px 5px 1px",
                 boxShadow: "0 5px 20px rgba(0, 0, 0, 0.4)",
                 scale: 1.015,
             }}
@@ -73,7 +89,10 @@ const RantCard: React.FC<RantCardProps> = ({ rant, onClick, index = 0 }) => {
 
             {/* Footer */}
             <div className="flex items-center justify-between text-xs text-[#a0a0a0] font-urbanist">
-                <span className="flex items-center gap-1">👤 Anonymous</span>
+                <span className="flex items-center gap-1">
+                    {/* Display Anonymous with the last 3 characters of authorId */}
+                    Anonymous #{authorId.slice(-3).toUpperCase()}
+                </span>
 
                 <div className="flex gap-4 items-center">
                     {/* Like */}
