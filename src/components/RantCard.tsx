@@ -18,10 +18,11 @@ interface RantCardProps {
     index: number;
     onRemove?: (id: string) => void;
     onClick?: () => void;
-    searchTerm?: string; // New prop for highlighting search terms
+    searchTerm?: string;
+    onLike?: () => void;
 }
 
-const RantCard: React.FC<RantCardProps> = ({ rant, onClick, index = 0, searchTerm = '' }) => {
+const RantCard: React.FC<RantCardProps> = ({ rant, onClick, index = 0, searchTerm = '', onLike }) => {
     const moodColor = getMoodColor(rant.mood);
     const moodEmojiPath = getMoodEmoji(rant.mood);
     const [liked, setLiked] = useState(false);
@@ -46,8 +47,16 @@ const RantCard: React.FC<RantCardProps> = ({ rant, onClick, index = 0, searchTer
 
     return (
         <motion.div
-            onClick={onClick} // Added onClick to handle click events
-            className="rounded-2xl p-6 cursor-pointer relative backdrop-blur-sm"
+            onClick={onClick}
+            role="article"
+            aria-label={`Rant with ${rant.mood} mood`}
+            tabIndex={0}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    onClick?.();
+                }
+            }}
+            className="rounded-2xl p-6 cursor-pointer relative backdrop-blur-sm overflow-hidden"
             style={{
                 backgroundColor: "rgba(26, 26, 46, 0.25)",
                 borderStyle: "solid",
@@ -58,9 +67,9 @@ const RantCard: React.FC<RantCardProps> = ({ rant, onClick, index = 0, searchTer
             animate={moodAnimation.animate}
             transition={{ duration: 0.35, delay: index ? index * 0.05 : 0 }}
             whileHover={{
-                borderWidth: "1px 1px 5px 1px",
                 boxShadow: "0 5px 20px rgba(0, 0, 0, 0.4)",
-                scale: 1.015,
+                border: `2px solid ${moodColor}`,
+                transformOrigin: "center bottom",
             }}
         >
             {/* Mood Tag with dynamic outline */}
@@ -77,12 +86,15 @@ const RantCard: React.FC<RantCardProps> = ({ rant, onClick, index = 0, searchTer
                         src={moodEmojiPath}
                         alt={rant.mood}
                         className="w-full h-full object-contain"
+                        onError={(e) => {
+                            e.currentTarget.src = "public/assets/emojis/neautral.gif"; // Fallback emoji
+                        }}
                     />
                 </div>
             </div>
 
             {/* Rant content with search term highlighting */}
-            <p className="text-sm text-[#d0d0d0] leading-relaxed mb-4 font-inter">
+            <p className="text-sm text-[#d0d0d0] leading-relaxed mb-4 font-inter break-words">
                 {searchTerm ? highlightText(rant.content, searchTerm) : rant.content}
             </p>
 
@@ -105,6 +117,9 @@ const RantCard: React.FC<RantCardProps> = ({ rant, onClick, index = 0, searchTer
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         setLiked(!liked);
+                                        if (onLike && !liked) {
+                                            onLike();
+                                        }
                                     }}
                                     aria-label={liked ? "Unlike" : "Like"}
                                     className="hover:scale-110 transition-transform flex items-center gap-1"
@@ -188,4 +203,5 @@ const RantCard: React.FC<RantCardProps> = ({ rant, onClick, index = 0, searchTer
     );
 };
 
-export default RantCard;
+// export default RantCard; // Export the RantCard component
+export default React.memo(RantCard); // Use React.memo to optimize rendering

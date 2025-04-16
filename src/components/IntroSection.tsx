@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { headingContents, colorSchemes } from '@/utils/introContent';
 import TypewriterText from '@/components/TypewriterText';
 import { cn } from '@/lib/utils';
+import { useRantCount } from '@/hooks/useRantCount';
 
 // Constants for animation and display values
 const ANIMATION = {
@@ -17,10 +18,6 @@ const ANIMATION = {
     ITEM_SPRING_STIFFNESS: 100,
     ITEM_SPRING_DAMPING: 10,
     ONLINE_INDICATOR_DURATION: 2
-};
-
-const MOCK_DATA = {
-    ACTIVE_USERS: 126
 };
 
 // Animation variants defined outside the component
@@ -88,6 +85,7 @@ const IntroSection: React.FC<IntroSectionProps> = ({ onStartRanting, onExploreRa
     const [showContent, setShowContent] = useState(true);
     const [contentHeight, setContentHeight] = useState(240); // Default height
     const [typingComplete, setTypingComplete] = useState(false);
+    const { count: activeUsers, loading: countLoading } = useRantCount();
 
     // Memoize the hasSubheading value
     const hasSubheading = useMemo(() =>
@@ -281,7 +279,11 @@ const IntroSection: React.FC<IntroSectionProps> = ({ onStartRanting, onExploreRa
                 >
                     <div className="w-2 h-2 bg-green-500 rounded-full" />
                 </motion.div>
-                <span><span className="text-green-400 font-medium">{MOCK_DATA.ACTIVE_USERS}</span> people ranting now</span>
+                <span>
+                    <span className="text-green-400 font-medium">
+                        {countLoading ? '...' : activeUsers}
+                    </span> people ranting now
+                </span>
             </motion.div>
         </motion.div>
     );

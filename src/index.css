@@ -7,92 +7,151 @@
 @layer base {
     :root {
         /* Core Background & Text Colors */
-        --background: 240 5% 3.5%; /* Dark background: #09090B */
-        --foreground: 0 0% 95%; /* Light text: #F2F2F2 */
+        --background: 240 5% 3.5%;
+        /* Dark background: #09090B */
+        --foreground: 0 0% 95%;
+        /* Light text: #F2F2F2 */
 
         /* Card & UI Element Colors */
-        --card: 240 6% 10%; /* Slightly lighter than background: #18181B */
-        --card-foreground: 0 0% 95%; /* Same as foreground */
+        --card: 240 6% 10%;
+        /* Slightly lighter than background: #18181B */
+        --card-foreground: 0 0% 95%;
+        /* Same as foreground */
 
         /* Popover Colors */
-        --popover: 240 10% 3.9%; /* #0A0A0C */
-        --popover-foreground: 0 0% 98%; /* #FAFAFA */
+        --popover: 240 10% 3.9%;
+        /* #0A0A0C */
+        --popover-foreground: 0 0% 98%;
+        /* #FAFAFA */
 
         /* Primary Brand Color - Vibrant Purple */
-        --primary: 288 95% 60%; /* #D946EF */
-        --primary-foreground: 0 0% 100%; /* #FFFFFF */
+        --primary: 288 95% 60%;
+        /* #D946EF */
+        --primary-foreground: 0 0% 100%;
+        /* #FFFFFF */
 
         /* Secondary UI Colors */
-        --secondary: 240 5.9% 10%; /* #19191E */
-        --secondary-foreground: 0 0% 98%; /* #FAFAFA */
+        --secondary: 240 5.9% 10%;
+        /* #19191E */
+        --secondary-foreground: 0 0% 98%;
+        /* #FAFAFA */
 
         /* Muted Elements */
-        --muted: 240 3.7% 15.9%; /* #27272A */
-        --muted-foreground: 240 5% 64.9%; /* #A1A1AA */
+        --muted: 240 3.7% 15.9%;
+        /* #27272A */
+        --muted-foreground: 240 5% 64.9%;
+        /* #A1A1AA */
 
         /* Accent Colors - Same as Primary for Consistency */
-        --accent: 288 95% 60%; /* #D946EF */
-        --accent-foreground: 0 0% 98%; /* #FAFAFA */
+        --accent: 288 95% 60%;
+        /* #D946EF */
+        --accent-foreground: 0 0% 98%;
+        /* #FAFAFA */
 
         /* Destructive Actions */
-        --destructive: 0 62.8% 30.6%; /* #991B1B */
-        --destructive-foreground: 0 0% 98%; /* #FAFAFA */
+        --destructive: 0 62.8% 30.6%;
+        /* #991B1B */
+        --destructive-foreground: 0 0% 98%;
+        /* #FAFAFA */
 
         /* Border & Input Colors */
-        --border: 240 3.7% 15.9%; /* #27272A */
-        --input: 240 3.7% 15.9%; /* #27272A */
-        --ring: 288 95% 60%; /* #D946EF */
+        --border: 240 3.7% 15.9%;
+        /* #27272A */
+        --input: 240 3.7% 15.9%;
+        /* #27272A */
+        --ring: 288 95% 60%;
+        /* #D946EF */
 
         /* Border Radius */
         --radius: 0.5rem;
 
         /* Mood-Specific Colors */
-        --mood-sad: 210 100% 66%; /* #66B3FF - Blue */
-        --mood-angry: 0 91% 71%; /* #FF5757 - Red */
-        --mood-happy: 142 72% 50%; /* #22C55E - Green */
-        --mood-confused: 270 76% 70%; /* #A78BFA - Purple */
-        --mood-neutral: 220 14% 60%; /* #8896AB - Slate */
+        --mood-sad: 210 100% 66%;
+        /* #66B3FF - Blue */
+        --mood-angry: 0 91% 71%;
+        /* #FF5757 - Red */
+        --mood-happy: 142 72% 50%;
+        /* #22C55E - Green */
+        --mood-confused: 270 76% 70%;
+        /* #A78BFA - Purple */
+        --mood-neutral: 220 14% 60%;
+        /* #8896AB - Slate */
 
         /* Sidebar Colors */
-        --sidebar-background: 240 5.9% 10%; /* #19191E */
-        --sidebar-foreground: 240 4.8% 95.9%; /* #F4F4F5 */
-        --sidebar-primary: 288 95% 60%; /* #D946EF */
-        --sidebar-primary-foreground: 0 0% 100%; /* #FFFFFF */
-        --sidebar-accent: 240 3.7% 15.9%; /* #27272A */
-        --sidebar-accent-foreground: 240 4.8% 95.9%; /* #F4F4F5 */
-        --sidebar-border: 240 3.7% 15.9%; /* #27272A */
-        --sidebar-ring: 288 95% 60%; /* #D946EF */
+        --sidebar-background: 240 5.9% 10%;
+        /* #19191E */
+        --sidebar-foreground: 240 4.8% 95.9%;
+        /* #F4F4F5 */
+        --sidebar-primary: 288 95% 60%;
+        /* #D946EF */
+        --sidebar-primary-foreground: 0 0% 100%;
+        /* #FFFFFF */
+        --sidebar-accent: 240 3.7% 15.9%;
+        /* #27272A */
+        --sidebar-accent-foreground: 240 4.8% 95.9%;
+        /* #F4F4F5 */
+        --sidebar-border: 240 3.7% 15.9%;
+        /* #27272A */
+        --sidebar-ring: 288 95% 60%;
+        /* #D946EF */
     }
 
     /* Keep the dark theme the same as root for now */
     .dark {
-        --background: 240 5% 3.5%; /* #09090B */
-        --foreground: 0 0% 95%; /* #F2F2F2 */
-        --card: 240 6% 10%; /* #18181B */
-        --card-foreground: 0 0% 95%; /* #F2F2F2 */
-        --popover: 240 10% 3.9%; /* #0A0A0C */
-        --popover-foreground: 0 0% 98%; /* #FAFAFA */
-        --primary: 288 95% 60%; /* #D946EF */
-        --primary-foreground: 0 0% 100%; /* #FFFFFF */
-        --secondary: 240 3.7% 15.9%; /* #27272A */
-        --secondary-foreground: 0 0% 95%; /* #F2F2F2 */
-        --muted: 240 3.7% 15.9%; /* #27272A */
-        --muted-foreground: 240 5% 64.9%; /* #A1A1AA */
-        --accent: 288 95% 60%; /* #D946EF */
-        --accent-foreground: 0 0% 95%; /* #F2F2F2 */
-        --destructive: 0 62.8% 30.6%; /* #991B1B */
-        --destructive-foreground: 210 40% 98%; /* #E1E7EF */
-        --border: 240 3.7% 15.9%; /* #27272A */
-        --input: 240 3.7% 15.9%; /* #27272A */
-        --ring: 288 95% 60%; /* #D946EF */
-        --sidebar-background: 240 5.9% 10%; /* #19191E */
-        --sidebar-foreground: 240 4.8% 95.9%; /* #F4F4F5 */
-        --sidebar-primary: 288 95% 60%; /* #D946EF */
-        --sidebar-primary-foreground: 0 0% 100%; /* #FFFFFF */
-        --sidebar-accent: 240 3.7% 15.9%; /* #27272A */
-        --sidebar-accent-foreground: 240 4.8% 95.9%; /* #F4F4F5 */
-        --sidebar-border: 240 3.7% 15.9%; /* #27272A */
-        --sidebar-ring: 288 95% 60%; /* #D946EF */
+        --background: 240 5% 3.5%;
+        /* #09090B */
+        --foreground: 0 0% 95%;
+        /* #F2F2F2 */
+        --card: 240 6% 10%;
+        /* #18181B */
+        --card-foreground: 0 0% 95%;
+        /* #F2F2F2 */
+        --popover: 240 10% 3.9%;
+        /* #0A0A0C */
+        --popover-foreground: 0 0% 98%;
+        /* #FAFAFA */
+        --primary: 288 95% 60%;
+        /* #D946EF */
+        --primary-foreground: 0 0% 100%;
+        /* #FFFFFF */
+        --secondary: 240 3.7% 15.9%;
+        /* #27272A */
+        --secondary-foreground: 0 0% 95%;
+        /* #F2F2F2 */
+        --muted: 240 3.7% 15.9%;
+        /* #27272A */
+        --muted-foreground: 240 5% 64.9%;
+        /* #A1A1AA */
+        --accent: 288 95% 60%;
+        /* #D946EF */
+        --accent-foreground: 0 0% 95%;
+        /* #F2F2F2 */
+        --destructive: 0 62.8% 30.6%;
+        /* #991B1B */
+        --destructive-foreground: 210 40% 98%;
+        /* #E1E7EF */
+        --border: 240 3.7% 15.9%;
+        /* #27272A */
+        --input: 240 3.7% 15.9%;
+        /* #27272A */
+        --ring: 288 95% 60%;
+        /* #D946EF */
+        --sidebar-background: 240 5.9% 10%;
+        /* #19191E */
+        --sidebar-foreground: 240 4.8% 95.9%;
+        /* #F4F4F5 */
+        --sidebar-primary: 288 95% 60%;
+        /* #D946EF */
+        --sidebar-primary-foreground: 0 0% 100%;
+        /* #FFFFFF */
+        --sidebar-accent: 240 3.7% 15.9%;
+        /* #27272A */
+        --sidebar-accent-foreground: 240 4.8% 95.9%;
+        /* #F4F4F5 */
+        --sidebar-border: 240 3.7% 15.9%;
+        /* #27272A */
+        --sidebar-ring: 288 95% 60%;
+        /* #D946EF */
     }
 }
 
@@ -125,27 +184,69 @@
 /* Add new utility classes for consistent UI elements */
 @layer components {
     .rant-card {
-        @apply rounded-2xl p-6 backdrop-blur-sm transition-all duration-300
-               bg-card border border-border hover:shadow-lg;
+        @apply rounded-2xl p-6 backdrop-blur-sm transition-all duration-300 bg-card border border-border hover:shadow-lg relative;
+        transform-origin: center center;
     }
 
+    .rant-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border: 1px solid hsl(var(--border));
+        border-radius: 1rem;
+        pointer-events: none;
+        z-index: 10;
+        transition: all 0.3s ease;
+    }
+
+    .rant-card:hover::before {
+        border-color: hsl(var(--border));
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    }
+
+
     .rant-button {
-        @apply px-4 py-2 rounded-xl font-medium transition-all duration-200
-               bg-primary text-primary-foreground hover:bg-primary/90
-               focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none;
+        @apply px-4 py-2 rounded-xl font-medium transition-all duration-200 bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none;
     }
 
     .rant-input {
-        @apply w-full p-3 rounded-xl bg-input text-foreground border border-border
-               focus:ring-2 focus:ring-ring focus:outline-none;
+        @apply w-full p-3 rounded-xl bg-input text-foreground border border-border focus:ring-2 focus:ring-ring focus:outline-none;
     }
 
     .mood-button {
-        @apply flex items-center gap-2 py-2 px-4 text-sm rounded-xl transition-all
-               duration-200 border hover:scale-105;
+        @apply flex items-center gap-2 py-2 px-4 text-sm rounded-xl transition-all duration-200 border hover:scale-105;
     }
 
     .mood-button-active {
         @apply scale-110 shadow-lg z-10;
+    }
+
+    /* Fix for content overflow in rant cards */
+    .rant-card {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        word-break: break-word;
+        hyphens: auto;
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    .rant-card p,
+    .rant-card div,
+    .rant-card span {
+        max-width: 100%;
+        overflow-wrap: break-word;
+    }
+
+    /* Ensure pre and code blocks don't overflow */
+    .rant-card pre,
+    .rant-card code {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        max-width: 100%;
+        overflow-x: auto;
     }
 }
