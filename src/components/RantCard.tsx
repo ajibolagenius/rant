@@ -45,7 +45,6 @@ const RantCard: React.FC<RantCardProps> = ({ rant, onClick, index = 0, searchTer
         setAuthorId(storedAuthorId);
     }, []);
 
-    // console.log("Rendering Rant:", rant); // Debugging line to check the rant being rendered
     return (
         <motion.div
             onClick={onClick}

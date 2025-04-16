@@ -34,9 +34,6 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({
     const containerRef = useRef<HTMLDivElement>(null);
     const loadMoreRef = useRef<HTMLDivElement>(null);
 
-    // Debug output
-    console.log("MasonryGrid received rants:", rants.length);
-
     // Handle window resize to adjust column count
     useEffect(() => {
         const handleResize = () => {

@@ -217,11 +217,6 @@ const Index: React.FC = () => {
         }
     };
 
-    // Debug output
-    console.log("Current rants:", rantList);
-    console.log("Loading state:", loading);
-    console.log("Error state:", error);
-
     return (
         <div className="min-h-screen bg-[#09090B]">
             <Navbar />
