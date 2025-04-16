@@ -1,3 +1,124 @@
+<!-- RantCard AI Version 1.0.0 -->
+import React, { useState } from "react";
+import { Rant } from "@/lib/types/rant";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { getMoodColor, getMoodEmoji, getMoodUnicodeEmoji } from "@/lib/utils/mood";
+import { formatDistanceToNow } from "date-fns";
+import { motion } from "framer-motion";
+import { HeartIcon } from "@radix-ui/react-icons";
+import { Button } from "@/components/ui/button";
+import { MessageCircle } from "lucide-react";
+
+interface RantCardProps {
+    rant: Rant;
+    index: number;
+    onRemove?: (id: string) => void;
+    onClick?: () => void;
+    searchTerm?: string;
+    onLike?: () => void;
+}
+
+const RantCard: React.FC<RantCardProps> = ({
+    rant,
+    index,
+    onClick,
+    searchTerm = "",
+    onLike
+}) => {
+    const [isLiked, setIsLiked] = useState(false);
+
+    // Debug output
+    console.log("RantCard rendering rant:", rant.id, rant);
+
+    const handleLike = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!isLiked && onLike) {
+            setIsLiked(true);
+            onLike();
+        }
+    };
+
+    // Format the date
+    let formattedDate;
+    try {
+        formattedDate = formatDistanceToNow(new Date(rant.createdAt), {
+            addSuffix: true
+        });
+    } catch (error) {
+        console.error("Date formatting error:", error);
+        formattedDate = "some time ago";
+    }
+
+    // Get content with highlighted search term
+    const contentWithHighlight = searchTerm && searchTerm.trim() !== ""
+        ? rant.content.replace(
+            new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'),
+            '<mark class="bg-yellow-500/30 text-white">$1</mark>'
+          )
+        : rant.content;
+
+    return (
+        <Card
+            className={`bg-[#121212] border-[#222] hover:border-[#333] transition-all overflow-hidden ${
+                onClick ? "cursor-pointer" : ""
+            }`}
+            onClick={onClick}
+        >
+            <CardContent className="p-5">
+                <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                        <div
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-lg"
+                            style={{ backgroundColor: `${getMoodColor(rant.mood)}33` }}
+                        >
+                            {getMoodUnicodeEmoji(rant.mood)}
+                        </div>
+                        <span className="text-sm font-medium text-gray-300">
+                            {rant.mood.charAt(0).toUpperCase() + rant.mood.slice(1)}
+                        </span>
+                    </div>
+                    <span className="text-xs text-gray-500">{formattedDate}</span>
+                </div>
+
+                <div className="text-gray-200 leading-relaxed">
+                    {searchTerm && searchTerm.trim() !== "" ? (
+                        <p dangerouslySetInnerHTML={{ __html: contentWithHighlight }} />
+                    ) : (
+                        <p>{rant.content}</p>
+                    )}
+                </div>
+            </CardContent>
+
+            <CardFooter className="px-5 py-3 border-t border-[#222] flex justify-between">
+                <div className="flex items-center gap-4">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`flex items-center gap-1 text-xs ${
+                            isLiked ? "text-red-400" : "text-gray-400"
+                        } hover:text-red-400 hover:bg-transparent p-0`}
+                        onClick={handleLike}
+                        disabled={isLiked}
+                    >
+                        <HeartIcon className="w-4 h-4" />
+                        <span>{rant.likes + (isLiked ? 1 : 0)}</span>
+                    </Button>
+
+                    <div className="flex items-center gap-1 text-xs text-gray-400">
+                        <MessageCircle className="w-4 h-4" />
+                        <span>{rant.comments || 0}</span>
+                    </div>
+                </div>
+
+                <div className="text-xs text-gray-500">{rant.userAlias || "Anonymous"}</div>
+            </CardFooter>
+        </Card>
+    );
+};
+
+export default RantCard;
+
+<!-- RantCard.tsx Old Version -->
 import React, { useState, useEffect } from "react";
 import { Rant } from "@/lib/types/rant";
 import { getMoodColor, getMoodEmoji, getMoodAnimation } from "@/lib/utils/mood";

@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Rant } from '@/lib/types/rant';
+import React, { useEffect, useState, useRef, useCallback } from "react";
+import { Rant } from "@/lib/types/rant";
+import { motion } from "framer-motion";
+import { getMoodAnimation } from "@/lib/utils/mood";
+import RantCard from "./RantCard";
 
-// Function to determine column count based on viewport width
-function getColumnCount() {
-    if (typeof window === 'undefined') return 3; // Default for SSR
-
-    const width = window.innerWidth;
+// Helper function to determine column count based on screen width
+const getColumnCount = (width: number) => {
     if (width < 640) return 1; // Mobile
-    if (width < 1024) return 2; // Tablet
+    if (width < 768) return 2; // Tablet
     if (width < 1280) return 3; // Small desktop
     return 4; // Large desktop
 }
@@ -18,7 +18,7 @@ interface MasonryGridProps {
     onRemove?: (id: string) => void;
     searchTerm?: string;
     onLike?: (id: string) => void;
-    onLoadMore?: () => Promise<void>;
+    onLoadMore?: () => void;
     renderItem?: (rant: Rant, index: number) => React.ReactNode;
 }
 
@@ -30,108 +30,113 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({
     onLoadMore,
     renderItem
 }) => {
-    const [columns, setColumns] = useState(getColumnCount());
-    const observerRef = useRef<IntersectionObserver | null>(null);
-    const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
-    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [columns, setColumns] = useState(getColumnCount(window.innerWidth));
+    const containerRef = useRef<HTMLDivElement>(null);
+    const loadMoreRef = useRef<HTMLDivElement>(null);
 
+    // Debug output
+    console.log("MasonryGrid received rants:", rants.length);
+
+    // Handle window resize to adjust column count
     useEffect(() => {
-        const handleResize = () => setColumns(getColumnCount());
+        const handleResize = () => {
+            setColumns(getColumnCount(window.innerWidth));
+        };
+
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
     }, []);
 
-    // Set up intersection observer for infinite scrolling
-    const setupObserver = useCallback(() => {
-        if (observerRef.current) {
-            observerRef.current.disconnect();
-        }
-
-        observerRef.current = new IntersectionObserver(async entries => {
-            const [entry] = entries;
-            if (entry.isIntersecting && onLoadMore && !isLoadingMore) {
-                setIsLoadingMore(true);
-                try {
-                    await onLoadMore();
-                } finally {
-                    setIsLoadingMore(false);
-                }
-            }
-        }, { rootMargin: '200px' });
-
-        if (loadMoreTriggerRef.current) {
-            observerRef.current.observe(loadMoreTriggerRef.current);
-        }
-    }, [onLoadMore, isLoadingMore]);
-
+    // Simple intersection observer for load more functionality
     useEffect(() => {
-        setupObserver();
+        if (!onLoadMore || !loadMoreRef.current) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) {
+                    onLoadMore();
+                }
+            },
+            { threshold: 0.1 }
+        );
+
+        observer.observe(loadMoreRef.current);
+
         return () => {
-            if (observerRef.current) {
-                observerRef.current.disconnect();
+            if (loadMoreRef.current) {
+                observer.unobserve(loadMoreRef.current);
             }
         };
-    }, [setupObserver]);
+    }, [onLoadMore]);
 
-    // Filter rants by search term if provided
-    const filteredRants = searchTerm
-        ? rants.filter(rant =>
-            rant.content.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-        : rants;
-
-    // Distribute rants across columns
-    const columnArrays: Rant[][] = Array.from({ length: columns }, () => []);
-    filteredRants.forEach((rant, index) => {
-        const columnIndex = index % columns;
-        columnArrays[columnIndex].push(rant);
-    });
-
-    if (filteredRants.length === 0) {
+    // If no rants, show a message
+    if (!rants || rants.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="text-6xl mb-4">🔍</div>
-                <h3 className="text-xl font-medium text-white mb-2">No rants found</h3>
-                <p className="text-gray-400 max-w-md">
-                    {searchTerm
-                        ? `No rants matching "${searchTerm}". Try a different search term.`
-                        : "Be the first to share your thoughts!"}
-                </p>
+            <div className="text-center text-gray-400 py-10">
+                No rants found. Be the first to post one!
             </div>
         );
     }
 
+    // Create column arrays
+    const columnRants: Rant[][] = Array.from({ length: columns }, () => []);
+
+    // Distribute rants across columns
+    rants.forEach((rant, index) => {
+        const columnIndex = index % columns;
+        columnRants[columnIndex].push(rant);
+    });
+
     return (
-        <div className="w-full">
+        <div ref={containerRef} className="w-full">
             <div
-                className="w-full grid"
-                style={{
-                    gridTemplateColumns: `repeat(${columns}, 1fr)`,
-                    gap: `${gap}px`
-                }}
+                className="flex"
+                style={{ gap: `${gap}px` }}
             >
-                {columnArrays.map((columnRants, columnIndex) => (
-                    <div key={columnIndex} className="flex flex-col gap-6">
-                        {columnRants.map((rant, index) => (
-                            renderItem ? renderItem(rant, index) : null
-                        ))}
+                {columnRants.map((columnRants, columnIndex) => (
+                    <div
+                        key={columnIndex}
+                        className="flex-1 flex flex-col"
+                        style={{ gap: `${gap}px` }}
+                    >
+                        {columnRants.map((rant, rantIndex) => {
+                            const globalIndex = columnIndex + rantIndex * columns;
+
+                            if (renderItem) {
+                                return renderItem(rant, globalIndex);
+                            }
+
+                            const moodAnim = getMoodAnimation(rant.mood);
+
+                            return (
+                                <motion.div
+                                    key={rant.id}
+                                    initial={{ opacity: 0, scale: moodAnim.scale, y: moodAnim.y }}
+                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                    transition={{
+                                        delay: globalIndex * 0.08,
+                                        duration: 1.2,
+                                        ease: moodAnim.ease as any
+                                    }}
+                                    className="w-full overflow-hidden"
+                                >
+                                    <RantCard
+                                        rant={rant}
+                                        index={globalIndex}
+                                        searchTerm={searchTerm}
+                                        onLike={onLike ? () => onLike(rant.id) : undefined}
+                                    />
+                                </motion.div>
+                            );
+                        })}
                     </div>
                 ))}
             </div>
 
             {/* Load more trigger element */}
-            <div
-                ref={loadMoreTriggerRef}
-                className="w-full h-10 mt-8 flex justify-center"
-            >
-                {isLoadingMore && (
-                    <div className="flex items-center space-x-2">
-                        <div className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                        <div className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                        <div className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                    </div>
-                )}
-            </div>
+            {onLoadMore && (
+                <div ref={loadMoreRef} className="h-10 mt-8" />
+            )}
         </div>
     );
 };

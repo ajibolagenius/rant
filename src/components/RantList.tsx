@@ -48,6 +48,7 @@ const RantList: React.FC<RantListProps> = ({
                     renderItem={(rant, index) => {
                         const moodAnim = getMoodAnimation(rant.mood);
                         return (
+
                             <motion.div
                                 key={rant.id}
                                 initial={{ opacity: 0, scale: moodAnim.scale, y: moodAnim.y }}

@@ -5,7 +5,6 @@ import { getMoodColor, MoodType, getMoodUnicodeEmoji } from '@/lib/utils/mood';
 import MoodSelector from './MoodSelector';
 import { MessageCircle, Send, AlertCircle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useRants } from '@/components/RantContext.tsx';
 
 // Constants for the typewriter effect
 const PLACEHOLDER_TEXTS = [
@@ -19,7 +18,7 @@ const TYPEWRITER_SPEED = 50;
 const PLACEHOLDER_DISPLAY_TIME = 5000;
 
 interface RantFormProps {
-    onSubmit?: (content: string, mood: MoodType) => void;
+    onSubmit: (content: string, mood: MoodType) => void;
 }
 
 const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
@@ -29,7 +28,6 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [placeholder, setPlaceholder] = useState('');
     const textareaRef = useRef<HTMLTextAreaElement>(null);
-    const { addRant } = useRants();
 
     const maxLength = 560;
     const minLength = 30;
@@ -105,7 +103,7 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
         };
     }, [content]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
         if (content.trim().length < minLength) {
@@ -121,25 +119,15 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
 
             setIsSubmitting(true);
 
-            try {
-                // Submit to Supabase via context
-                await addRant(content.trim(), selectedMood);
-
-                // Also call the onSubmit prop if provided (for backward compatibility)
-                if (onSubmit) {
-                    onSubmit(content.trim(), selectedMood);
-                }
-
-                // Reset form
+            // Simulate network delay
+            setTimeout(() => {
+                onSubmit(content.trim(), selectedMood);
                 setContent('');
                 setSelectedMood(null);
+                setIsSubmitting(false);
                 setShowConfirmation(false);
                 localStorage.removeItem('rantDraft');
-            } catch (error) {
-                console.error('Error submitting rant:', error);
-            } finally {
-                setIsSubmitting(false);
-            }
+            }, 1000);
         }
     };
 

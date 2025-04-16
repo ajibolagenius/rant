@@ -35,18 +35,17 @@ export const RantProvider: React.FC<RantProviderProps> = ({ children }) => {
         const subscription = supabase
             .channel('public:rants')
             .on('INSERT', payload => {
-                // Add the new rant to the list if it's not already there
                 const newRant = payload.new as Rant;
+                console.log("New rant added:", newRant); // Debugging log
                 setRants(prevRants => {
-                    if (!prevRants.some(rant => rant.id === newRant.id)) {
-                        return [newRant, ...prevRants];
-                    }
-                    return prevRants;
+                    // Avoid duplicates
+                    const newRantsList = prevRants.filter(rant => rant.id !== newRant.id);
+                    return [...newRantsList, newRant]; // Add new rant to the end
                 });
             })
             .on('UPDATE', payload => {
-                // Update rant in the list
                 const updatedRant = payload.new as Rant;
+                console.log("Rant updated:", updatedRant); // Debugging log
                 setRants(prevRants =>
                     prevRants.map(rant =>
                         rant.id === updatedRant.id ? updatedRant : rant
@@ -75,7 +74,6 @@ export const RantProvider: React.FC<RantProviderProps> = ({ children }) => {
             };
 
             const data = await fetchRantsFromSupabase(options);
-
             setRants(data || []);
             setPage(1);
             setHasMore(data.length === LIMIT);
