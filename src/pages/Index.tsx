@@ -86,10 +86,17 @@ const Index: React.FC = () => {
     const [page, setPage] = useState(0);
     const [showConfetti, setShowConfetti] = useState(false);
     const [shortcutsDialogOpen, setShortcutsDialogOpen] = useState(false);
-    const [retryCount, setRetryCount] = useState(0); // Track retry attempts
+    const [retryCount, setRetryCount] = useState(0);
 
-    // Increase the limit to load more rants at once
-    const LIMIT = 50;
+    // State for auto-loading rants
+    const [autoLoadFailed, setAutoLoadFailed] = useState(false);
+    const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
+    const observerRef = useRef<IntersectionObserver | null>(null);
+
+    // Increase the initial batch size for faster first load
+    const INITIAL_LIMIT = 30; // More rants on first load
+    const SUBSEQUENT_LIMIT = 20; // Fewer on subsequent loads to maintain performance
+
     const rantFormRef = useRef<HTMLDivElement>(null);
     const rantsListRef = useRef<HTMLDivElement>(null);
     const submittedRantIds = useRef<Set<string>>(new Set());
@@ -149,6 +156,46 @@ const Index: React.FC = () => {
         },
     ]);
 
+    // Fetch rants when the component mounts
+    useEffect(() => {
+        if (observerRef.current) {
+            observerRef.current.disconnect();
+        }
+
+        // Create a new observer
+        observerRef.current = new IntersectionObserver(
+            async (entries) => {
+                const [entry] = entries;
+                if (entry.isIntersecting && !loading && hasMore) {
+                    try {
+                        setAutoLoadFailed(false);
+                        await loadMoreRants();
+                    } catch (error) {
+                        console.error("Error auto-loading more rants:", error);
+                        setAutoLoadFailed(true);
+                    }
+                }
+            },
+            {
+                // Increase rootMargin to start loading even earlier
+                rootMargin: '500px', // Increased from 300px to 500px
+                threshold: 0.1
+            }
+        );
+
+        // Start observing the trigger element
+        if (loadMoreTriggerRef.current) {
+            observerRef.current.observe(loadMoreTriggerRef.current);
+        }
+
+        // Clean up on unmount
+        return () => {
+            if (observerRef.current) {
+                observerRef.current.disconnect();
+            }
+        };
+    }, [loading, hasMore, page]); // Re-create observer when these dependencies change
+
     // Initialize from URL params on load
     useEffect(() => {
         try {
@@ -195,6 +242,18 @@ const Index: React.FC = () => {
         }
     }, [searchParams]);
 
+    // Load more rants when the page changes
+    useEffect(() => {
+        return () => {
+            if (loadMoreRantsTimeoutRef.current) {
+                clearTimeout(loadMoreRantsTimeoutRef.current);
+            }
+            if (observerRef.current) {
+                observerRef.current.disconnect();
+            }
+        };
+    }, []);
+
     // Function to safely get author ID with fallback
     const getSafeAuthorId = (): string => {
         try {
@@ -228,26 +287,50 @@ const Index: React.FC = () => {
         setError(null);
 
         try {
-            const offset = reset ? 0 : page * LIMIT;
+            const offset = reset ? 0 : page * SUBSEQUENT_LIMIT;
+            const limit = reset ? INITIAL_LIMIT : SUBSEQUENT_LIMIT;
+            const from = offset;
+            const to = offset + limit - 1;
 
-            const options = {
-                limit: LIMIT,
-                offset,
-                sortBy: sortOption === "popular" ? "popular" : "latest",
-                moods: sortOption === "filter" ? selectedMoods : [],
-                searchQuery: sortOption === "search" ? searchQuery : "",
-                searchMood: sortOption === "search" ? searchMood : null
-            };
+            let query = supabase
+                .from('rants')
+                .select('id, content, mood, author_id, likes, created_at')
+                .range(from, to);
 
-            // console.log("Fetching rants with options:", options);
-            const data = await fetchRants(options);
-            // console.log("Fetched rants:", data);
+            // Apply filters based on sort option
+            if (sortOption === "popular") {
+                query = query.order('likes', { ascending: false });
+            } else {
+                query = query.order('created_at', { ascending: false });
+            }
+
+            // Apply mood filters if in filter mode
+            if (sortOption === "filter" && selectedMoods.length > 0) {
+                query = query.in('mood', selectedMoods);
+            }
+
+            // Apply search filters if in search mode
+            if (sortOption === "search") {
+                if (searchQuery) {
+                    query = query.ilike('content', `%${searchQuery}%`);
+                }
+
+                if (searchMood) {
+                    query = query.eq('mood', searchMood);
+                }
+            }
+
+            const { data, error: supabaseError } = await query;
+
+            if (supabaseError) {
+                throw new Error(supabaseError.message);
+            }
 
             if (!Array.isArray(data)) {
                 throw new Error("Invalid response format from server");
             }
 
-            if (data.length < LIMIT) {
+            if (data.length < limit) {
                 setHasMore(false);
             } else {
                 setHasMore(true);
@@ -286,12 +369,37 @@ const Index: React.FC = () => {
         }
     };
 
-    // Load more rants when user scrolls to bottom
+    // Load more rants when user scrolls to bottom with debounce
+    const loadMoreRantsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    // Update the loadMoreRants function:
     const loadMoreRants = async () => {
-        if (!loading && hasMore) {
-            await loadRants();
+        if (loading || !hasMore) return;
+
+        // Clear any existing timeout
+        if (loadMoreRantsTimeoutRef.current) {
+            clearTimeout(loadMoreRantsTimeoutRef.current);
+        }
+
+        try {
+            // Reduce debounce time for faster response
+            loadMoreRantsTimeoutRef.current = setTimeout(async () => {
+                await loadRants();
+                setAutoLoadFailed(false); // Reset failure state on success
+            }, 150); // Reduced from 300ms to 150ms
+        } catch (error) {
+            console.error("Failed to load more rants:", error);
+            setAutoLoadFailed(true); // Set failure state to show manual button
         }
     };
+
+    // Make sure to clean up the timeout in a useEffect
+    useEffect(() => {
+        return () => {
+            if (loadMoreRantsTimeoutRef.current) {
+                clearTimeout(loadMoreRantsTimeoutRef.current);
+            }
+        };
+    }, []);
 
     // Update URL when filters or search change
     useEffect(() => {
@@ -742,6 +850,8 @@ const Index: React.FC = () => {
                                                 onLike={handleLikeRant}
                                                 onLoadMore={loadMoreRants}
                                                 renderItem={renderRantItem}
+                                                isLoading={loading}
+                                                hasMore={hasMore}
                                             />
                                         </RantErrorBoundary>
                                     </section>
@@ -776,28 +886,29 @@ const Index: React.FC = () => {
                             )}
                         </AnimatePresence>
 
-                        {loading && page > 0 && (
-                            <div className="flex justify-center py-6">
-                                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
-                            </div>
-                        )}
-
+                        {/* This div serves as the intersection target for infinite scrolling */}
                         {!loading && hasMore && rantList.length > 0 && (
-                            <div className="flex justify-center py-6 mt-4">
-                                <button
-                                    onClick={() => loadMoreRants()}
-                                    className="px-6 py-2 bg-cyan-700 hover:bg-cyan-600 text-white rounded-md transition-colors"
-                                >
-                                    Load More Rants
-                                </button>
+                            <div
+                                ref={loadMoreTriggerRef}
+                                className="h-20 w-full flex items-center justify-center mt-4"
+                            >
+                                {/* Only show button if auto-loading failed */}
+                                {autoLoadFailed && (
+                                    <button
+                                        onClick={() => loadMoreRants()}
+                                        className="px-6 py-2 bg-cyan-700 hover:bg-cyan-600 text-white rounded-md transition-colors"
+                                    >
+                                        Load More Rants
+                                    </button>
+                                )}
                             </div>
                         )}
 
-                        {!loading && !hasMore && rantList.length > 0 && (
+                        {/* {!loading && !hasMore && rantList.length > 0 && (
                             <div className="text-center text-gray-400 py-6">
                                 No more rants to load
                             </div>
-                        )}
+                        )} */}
                     </div>
                 </div>
 

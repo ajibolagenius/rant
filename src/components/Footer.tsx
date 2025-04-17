@@ -31,7 +31,7 @@ const Footer: React.FC = () => {
                 </div>
 
                 {/* Go Up button */}
-                <div className="flex justify-center mt-8">
+                {/* <div className="flex justify-center mt-8">
                     <Button
                         onClick={scrollToTop}
                         variant="outline"
@@ -41,7 +41,7 @@ const Footer: React.FC = () => {
                         <ArrowUp size={16} />
                         Go Up
                     </Button>
-                </div>
+                </div> */}
             </div>
         </footer>
     );

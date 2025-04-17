@@ -20,6 +20,8 @@ interface MasonryGridProps {
     onLike?: (id: string) => void;
     onLoadMore?: () => Promise<void>;
     renderItem?: (rant: Rant, index: number) => React.ReactNode;
+    isLoading?: boolean;
+    hasMore?: boolean;
 }
 
 const MasonryGrid: React.FC<MasonryGridProps> = ({
@@ -28,12 +30,16 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({
     searchTerm = "",
     onLike,
     onLoadMore,
-    renderItem
+    renderItem,
+    isLoading = false,
+    hasMore = true
 }) => {
     const [columns, setColumns] = useState(getColumnCount());
     const observerRef = useRef<IntersectionObserver | null>(null);
     const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
         const handleResize = () => {
@@ -47,29 +53,57 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({
         return () => window.removeEventListener("resize", handleResize);
     }, [columns]);
 
-    // Set up intersection observer for infinite scrolling
+    // Set up intersection observer for infinite scrolling with debounce
     const setupObserver = useCallback(() => {
         if (observerRef.current) {
             observerRef.current.disconnect();
         }
 
-        observerRef.current = new IntersectionObserver(entries => {
-            const [entry] = entries;
-            if (entry.isIntersecting && onLoadMore) {
-                onLoadMore();
+        // Create a new observer with improved options
+        observerRef.current = new IntersectionObserver(
+            async (entries) => {
+                const [entry] = entries;
+                if (entry.isIntersecting && onLoadMore && !isLoadingMore && hasMore) {
+                    try {
+                        setIsLoadingMore(true);
+
+                        if (loadingTimeoutRef.current) {
+                            clearTimeout(loadingTimeoutRef.current);
+                        }
+
+                        // Reduce debounce time for faster response
+                        loadingTimeoutRef.current = setTimeout(async () => {
+                            await onLoadMore();
+                            setIsLoadingMore(false);
+                        }, 150); // Reduced from 300ms to 150ms
+                    } catch (error) {
+                        console.error("Error loading more rants:", error);
+                        setIsLoadingMore(false);
+                    }
+                }
+            },
+            {
+                // Increase rootMargin to start loading even earlier
+                rootMargin: '500px', // Increased from 300px to 500px
+                threshold: 0.1
             }
-        }, { rootMargin: '200px' });
+        );
 
         if (loadMoreTriggerRef.current) {
             observerRef.current.observe(loadMoreTriggerRef.current);
         }
-    }, [onLoadMore]);
+    }, [onLoadMore, isLoadingMore, hasMore]);
 
     useEffect(() => {
         setupObserver();
         return () => {
             if (observerRef.current) {
                 observerRef.current.disconnect();
+            }
+
+            // Clear any pending timeouts
+            if (loadingTimeoutRef.current) {
+                clearTimeout(loadingTimeoutRef.current);
             }
         };
     }, [setupObserver]);
@@ -102,7 +136,7 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({
         columnArrays[columnIndex].push(rant);
     });
 
-    if (rants.length === 0) {
+    if (rants.length === 0 && !isLoading) {
         return (
             <div className="flex flex-col items-center justify-center py-16 text-center">
                 <div className="text-6xl mb-4">🔍</div>
@@ -136,9 +170,25 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({
                     </div>
                 ))}
             </div>
-            <div ref={loadMoreTriggerRef} className="h-10 w-full" />
+
+            {/* Loading indicator and trigger for infinite scroll */}
+            <div
+                ref={loadMoreTriggerRef}
+                className="h-20 w-full flex items-center justify-center mt-4"
+                aria-hidden="true"
+            >
+                {isLoadingMore && (
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
+                )}
+
+                {!isLoading && !hasMore && rants.length > 0 && (
+                    <div className="text-center text-gray-400 py-2">
+                        No more rants to load
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
 
-export default MasonryGrid;
+export default React.memo(MasonryGrid);

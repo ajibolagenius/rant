@@ -13,6 +13,7 @@ import { getAuthorId } from "@/utils/authorId";
 import { highlightText } from "@/lib/utils/highlight";
 import { formatDistanceToNow } from "date-fns";
 import { useLikeStatus } from "@/hooks/useLikeStatus"; // Import the custom hook
+import { toast } from "@/hooks/use-toast";
 
 // Update the RantCardProps interface to include the onClick handler and searchTerm
 interface RantCardProps {
@@ -23,6 +24,18 @@ interface RantCardProps {
     searchTerm?: string;
     onLike?: () => void;
 }
+
+// Custom comparison function for React.memo to prevent unnecessary re-renders
+const arePropsEqual = (prevProps: RantCardProps, nextProps: RantCardProps) => {
+    // Only re-render if these props change
+    return (
+        prevProps.rant.id === nextProps.rant.id &&
+        prevProps.rant.likes === nextProps.rant.likes &&
+        prevProps.rant.content === nextProps.rant.content &&
+        prevProps.searchTerm === nextProps.searchTerm &&
+        prevProps.index === nextProps.index
+    );
+};
 
 const RantCard: React.FC<RantCardProps> = ({
     rant,
@@ -67,6 +80,9 @@ const RantCard: React.FC<RantCardProps> = ({
         if (!isLiked) {
             // Update the backend to reflect the like
             await setLikeStatus(true); // Call the function to update the backend
+            if (onLike) {
+                onLike();
+            }
         }
     };
 
@@ -263,4 +279,4 @@ const RantCard: React.FC<RantCardProps> = ({
 };
 
 // Export the RantCard component with React.memo for performance optimization
-export default React.memo(RantCard);
+export default React.memo(RantCard, arePropsEqual);
