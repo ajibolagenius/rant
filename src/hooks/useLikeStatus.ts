@@ -14,15 +14,16 @@ export function useLikeStatus(rantId: string) {
 
             // Check if the current user has liked this rant
             const { data: likeData } = await supabase
-                .from('likes')
+                .from('likes_log')
                 .select('*')
                 .eq('rant_id', rantId)
                 .eq('author_id', authorId)
                 .single();
 
             // Get the total like count
+            // Changed 'likes' to 'likes_log'
             const { count } = await supabase
-                .from('likes')
+                .from('likes_log')
                 .select('*', { count: 'exact', head: true })
                 .eq('rant_id', rantId);
 

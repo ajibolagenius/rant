@@ -24,8 +24,54 @@ import Confetti from "@/components/Confetti";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import KeyboardShortcutsDialog from "@/components/KeyboardShortcutsDialog";
 import { QuestionMarkCircledIcon } from "@radix-ui/react-icons";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 
 type SortOption = "latest" | "popular" | "filter" | "search";
+
+// Error boundary component for catching rendering errors
+class RantErrorBoundary extends React.Component<
+    { children: React.ReactNode, fallback?: React.ReactNode },
+    { hasError: boolean, error: Error | null }
+> {
+    constructor(props: { children: React.ReactNode, fallback?: React.ReactNode }) {
+        super(props);
+        this.state = { hasError: false, error: null };
+    }
+
+    static getDerivedStateFromError(error: Error) {
+        return { hasError: true, error };
+    }
+
+    componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+        console.error("Error caught by RantErrorBoundary:", error, errorInfo);
+    }
+
+    render() {
+        if (this.state.hasError) {
+            if (this.props.fallback) {
+                return this.props.fallback;
+            }
+            return (
+                <Alert className="my-4 border-red-200 bg-red-50">
+                    <AlertTitle className="text-red-800">Something went wrong</AlertTitle>
+                    <AlertDescription className="text-red-600">
+                        {this.state.error?.message || "An unexpected error occurred"}
+                    </AlertDescription>
+                    <Button
+                        variant="outline"
+                        className="mt-2"
+                        onClick={() => this.setState({ hasError: false, error: null })}
+                    >
+                        <RefreshCw className="mr-2 h-4 w-4" /> Try again
+                    </Button>
+                </Alert>
+            );
+        }
+        return this.props.children;
+    }
+}
 
 const Index: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -40,6 +86,7 @@ const Index: React.FC = () => {
     const [page, setPage] = useState(0);
     const [showConfetti, setShowConfetti] = useState(false);
     const [shortcutsDialogOpen, setShortcutsDialogOpen] = useState(false);
+    const [retryCount, setRetryCount] = useState(0); // Track retry attempts
 
     // Increase the limit to load more rants at once
     const LIMIT = 50;
@@ -104,40 +151,76 @@ const Index: React.FC = () => {
 
     // Initialize from URL params on load
     useEffect(() => {
-        const query = searchParams.get('q');
-        const mood = searchParams.get('mood') as MoodType | null;
-        const moodsParam = searchParams.get('moods');
-        const moods = moodsParam ? moodsParam.split(',').filter(Boolean) : [];
-        const sort = searchParams.get('sort') as SortOption;
+        try {
+            const query = searchParams.get('q');
+            const mood = searchParams.get('mood') as MoodType | null;
+            const moodsParam = searchParams.get('moods');
+            const moods = moodsParam ? moodsParam.split(',').filter(Boolean) : [];
+            const sort = searchParams.get('sort') as SortOption;
 
-        if (query) {
-            setSearchQuery(query);
-            setSortOption("search");
+            if (query) {
+                setSearchQuery(query);
+                setSortOption("search");
+            }
+
+            if (mood) {
+                setSearchMood(mood);
+                setSortOption("search");
+            }
+
+            if (moods.length > 0) {
+                setSelectedMoods(moods);
+                setSortOption("filter");
+            }
+
+            if (sort && !query && !mood && moods.length === 0) {
+                setSortOption(sort);
+            }
+
+            // Reset pagination when filters change
+            setPage(0);
+            setHasMore(true);
+
+            // Load initial rants
+            loadRants(true);
+        } catch (err) {
+            console.error("Error initializing from URL params:", err);
+            setError("Failed to initialize filters. Using defaults.");
+            // Fall back to default settings
+            setSortOption("latest");
+            setSelectedMoods([]);
+            setSearchQuery("");
+            setSearchMood(null);
+            loadRants(true);
         }
-
-        if (mood) {
-            setSearchMood(mood);
-            setSortOption("search");
-        }
-
-        if (moods.length > 0) {
-            setSelectedMoods(moods);
-            setSortOption("filter");
-        }
-
-        if (sort && !query && !mood && moods.length === 0) {
-            setSortOption(sort);
-        }
-
-        // Reset pagination when filters change
-        setPage(0);
-        setHasMore(true);
-
-        // Load initial rants
-        loadRants(true);
     }, [searchParams]);
 
-    // Function to load rants from Supabase
+    // Function to safely get author ID with fallback
+    const getSafeAuthorId = (): string => {
+        try {
+            const authorId = getAuthorId();
+            if (!authorId) {
+                console.warn("Author ID is missing, using anonymous");
+                return "anonymous";
+            }
+            return authorId;
+        } catch (error) {
+            console.error("Failed to get author ID:", error);
+            return "anonymous";
+        }
+    };
+
+    // Function to safely handle mood values
+    const getSafeMood = (mood: MoodType | null): MoodType => {
+        if (!mood) {
+            return "neutral" as MoodType;
+        }
+
+        const validMoods = ["happy", "sad", "angry", "surprised", "neutral"];
+        return validMoods.includes(mood) ? mood : "neutral" as MoodType;
+    };
+
+    // Function to load rants from Supabase with error handling
     const loadRants = async (reset = false) => {
         if (loading && !reset) return;
 
@@ -160,6 +243,10 @@ const Index: React.FC = () => {
             const data = await fetchRants(options);
             // console.log("Fetched rants:", data);
 
+            if (!Array.isArray(data)) {
+                throw new Error("Invalid response format from server");
+            }
+
             if (data.length < LIMIT) {
                 setHasMore(false);
             } else {
@@ -179,9 +266,21 @@ const Index: React.FC = () => {
                 });
                 setPage(prev => prev + 1);
             }
+
+            // Reset retry count on successful fetch
+            setRetryCount(0);
         } catch (err) {
             console.error("Failed to fetch rants:", err);
             setError("Failed to load rants. Please try again later.");
+
+            // Only show toast if this is the first error
+            if (retryCount === 0) {
+                toast({
+                    title: "Error",
+                    description: "Failed to load rants. Please try again later.",
+                    variant: "destructive",
+                });
+            }
         } finally {
             setLoading(false);
         }
@@ -196,91 +295,110 @@ const Index: React.FC = () => {
 
     // Update URL when filters or search change
     useEffect(() => {
-        const params = new URLSearchParams();
+        try {
+            const params = new URLSearchParams();
 
-        // Add search params if in search mode
-        if (sortOption === "search") {
-            if (searchQuery) {
-                params.set('q', searchQuery);
+            // Add search params if in search mode
+            if (sortOption === "search") {
+                if (searchQuery) {
+                    params.set('q', searchQuery);
+                }
+
+                if (searchMood) {
+                    params.set('mood', searchMood);
+                }
             }
 
-            if (searchMood) {
-                params.set('mood', searchMood);
+            // Add mood filters if in filter mode
+            if (sortOption === "filter" && selectedMoods.length > 0) {
+                params.set('moods', selectedMoods.join(','));
             }
-        }
 
-        // Add mood filters if in filter mode
-        if (sortOption === "filter" && selectedMoods.length > 0) {
-            params.set('moods', selectedMoods.join(','));
-        }
+            // Only include sort option if it's not the default or if other params exist
+            if (sortOption !== "latest" || params.toString()) {
+                params.set('sort', sortOption);
+            }
 
-        // Only include sort option if it's not the default or if other params exist
-        if (sortOption !== "latest" || params.toString()) {
-            params.set('sort', sortOption);
+            // Update URL without reloading the page
+            setSearchParams(params, { replace: true });
+        } catch (err) {
+            console.error("Error updating URL params:", err);
+            // Don't set error state here to avoid UI disruption
         }
-
-        // Update URL without reloading the page
-        setSearchParams(params, { replace: true });
     }, [sortOption, selectedMoods, searchQuery, searchMood, setSearchParams]);
 
     // Set up real-time subscription for new rants
     useEffect(() => {
         // console.log("Setting up real-time subscription");
-        const subscription = supabase
-            .channel('public:rants')
-            .on('INSERT', payload => {
-                // Add the new rant to the list if it matches current filters
-                const newRant = payload.new as Rant;
-                console.log("New rant received:", newRant);
+        let subscription;
 
-                // Skip if this is a rant we just submitted to prevent duplicates
-                if (submittedRantIds.current.has(newRant.id)) {
-                    // Remove from the set after a short delay to allow for potential
-                    // network race conditions
-                    setTimeout(() => {
-                        submittedRantIds.current.delete(newRant.id);
-                    }, 5000);
-                    return;
-                }
+        try {
+            subscription = supabase
+                .channel('public:rants')
+                .on('INSERT', payload => {
+                    // Add the new rant to the list if it matches current filters
+                    const newRant = payload.new as Rant;
+                    console.log("New rant received:", newRant);
 
-                // Only add if it matches current filters
-                let shouldAdd = true;
+                    // Skip if this is a rant we just submitted to prevent duplicates
+                    if (submittedRantIds.current.has(newRant.id)) {
+                        // Remove from the set after a short delay to allow for potential
+                        // network race conditions
+                        setTimeout(() => {
+                            submittedRantIds.current.delete(newRant.id);
+                        }, 5000);
+                        return;
+                    }
 
-                if (sortOption === "filter" && selectedMoods.length > 0) {
-                    shouldAdd = selectedMoods.includes(newRant.mood);
-                }
+                    // Only add if it matches current filters
+                    let shouldAdd = true;
 
-                if (shouldAdd) {
-                    setRantList(prev => {
-                        // Check if the rant is already in the list to prevent duplicates
-                        if (prev.some(rant => rant.id === newRant.id)) {
-                            return prev;
-                        }
-                        return [newRant, ...prev];
-                    });
-                }
-            })
-            .on('UPDATE', payload => {
-                // Update existing rant (e.g., when likes change)
-                const updatedRant = payload.new as Rant;
-                console.log("Rant updated:", updatedRant);
-                setRantList(prev =>
-                    prev.map(rant =>
-                        rant.id === updatedRant.id ? updatedRant : rant
-                    )
-                );
-            })
-            .subscribe();
+                    if (sortOption === "filter" && selectedMoods.length > 0) {
+                        shouldAdd = selectedMoods.includes(newRant.mood);
+                    }
+
+                    if (shouldAdd) {
+                        setRantList(prev => {
+                            // Check if the rant is already in the list to prevent duplicates
+                            if (prev.some(rant => rant.id === newRant.id)) {
+                                return prev;
+                            }
+                            return [newRant, ...prev];
+                        });
+                    }
+                })
+                .on('UPDATE', payload => {
+                    // Update existing rant (e.g., when likes change)
+                    const updatedRant = payload.new as Rant;
+                    console.log("Rant updated:", updatedRant);
+                    setRantList(prev =>
+                        prev.map(rant =>
+                            rant.id === updatedRant.id ? updatedRant : rant
+                        )
+                    );
+                })
+                .subscribe();
+        } catch (err) {
+            // console.error("Error setting up real-time subscription:", err);
+            // Don't show error to user as this is non-critical
+        }
 
         return () => {
-            console.log("Unsubscribing from real-time updates");
-            subscription.unsubscribe();
+            try {
+                // console.log("Unsubscribing from real-time updates");
+                if (subscription) {
+                    subscription.unsubscribe();
+                }
+            } catch (err) {
+                console.error("Error unsubscribing from real-time updates:", err);
+            }
         };
     }, [sortOption, selectedMoods]);
 
     const handleRantSubmit = async (content: string, mood: MoodType) => {
         try {
-            const authorId = getAuthorId();
+            const authorId = getSafeAuthorId();
+            const safeMood = getSafeMood(mood);
 
             // Generate a unique ID for the rant to prevent duplicates
             const rantId = crypto.randomUUID();
@@ -292,7 +410,7 @@ const Index: React.FC = () => {
             const optimisticRant: Rant = {
                 id: rantId,
                 content,
-                mood,
+                mood: safeMood,
                 author_id: authorId,
                 likes: 0,
                 created_at: new Date().toISOString(),
@@ -302,16 +420,17 @@ const Index: React.FC = () => {
             // Optimistically add to the list to improve perceived performance
             setRantList(prev => [optimisticRant, ...prev]);
 
-            console.log("Submitting rant:", { content, mood, authorId, rantId });
+            console.log("Submitting rant:", { content, mood: safeMood, authorId, rantId });
 
             // Show confetti animation
             setShowConfetti(true);
+            setTimeout(() => setShowConfetti(false), 3000);
 
             // Actually submit the rant
             const newRant = await addRant({
                 id: rantId,
                 content,
-                mood,
+                mood: safeMood,
                 author_id: authorId
             });
 
@@ -319,7 +438,12 @@ const Index: React.FC = () => {
 
             // Share the rant with the context if it exists
             if (rantContext && rantContext.addRant) {
-                rantContext.addRant(newRant);
+                try {
+                    rantContext.addRant(newRant);
+                } catch (contextError) {
+                    console.error("Error updating rant context:", contextError);
+                    // Continue execution - this is non-critical
+                }
             }
 
             toast({
@@ -332,6 +456,7 @@ const Index: React.FC = () => {
 
             // Remove the optimistic rant on error
             setRantList(prev => prev.filter(rant => !submittedRantIds.current.has(rant.id)));
+            submittedRantIds.current.delete(rantId);
 
             toast({
                 title: "Error",
@@ -343,7 +468,7 @@ const Index: React.FC = () => {
 
     const handleLikeRant = async (rantId: string) => {
         try {
-            const authorId = getAuthorId();
+            const authorId = getSafeAuthorId();
             console.log("Liking rant:", rantId, "by author:", authorId);
 
             // Optimistically update the UI first for better user experience
@@ -361,7 +486,12 @@ const Index: React.FC = () => {
 
             // Update the context if it exists
             if (rantContext && rantContext.likeRant) {
-                rantContext.likeRant(rantId);
+                try {
+                    rantContext.likeRant(rantId);
+                } catch (contextError) {
+                    console.error("Error updating rant context:", contextError);
+                    // Continue execution - this is non-critical
+                }
             }
         } catch (error) {
             console.error("Error liking rant:", error);
@@ -370,7 +500,7 @@ const Index: React.FC = () => {
             setRantList(prev =>
                 prev.map(rant =>
                     rant.id === rantId
-                        ? { ...rant, likes: rant.likes - 1 }
+                        ? { ...rant, likes: Math.max(0, rant.likes - 1) }
                         : rant
                 )
             );
@@ -384,11 +514,23 @@ const Index: React.FC = () => {
     };
 
     const scrollToRantForm = () => {
-        rantFormRef.current?.scrollIntoView({ behavior: "smooth" });
+        try {
+            rantFormRef.current?.scrollIntoView({ behavior: "smooth" });
+        } catch (error) {
+            console.error("Error scrolling to rant form:", error);
+            // Fallback to regular scroll
+            rantFormRef.current?.scrollIntoView();
+        }
     };
 
     const scrollToRantsList = () => {
-        rantsListRef.current?.scrollIntoView({ behavior: "smooth" });
+        try {
+            rantsListRef.current?.scrollIntoView({ behavior: "smooth" });
+        } catch (error) {
+            console.error("Error scrolling to rants list:", error);
+            // Fallback to regular scroll
+            rantsListRef.current?.scrollIntoView();
+        }
     };
 
     // Handle filter change
@@ -415,31 +557,53 @@ const Index: React.FC = () => {
         // Reset will happen via the URL params effect
     };
 
-    // Custom render function for MasonryGrid
+    // Function to handle retry when loading fails
+    const handleRetry = () => {
+        setRetryCount(prev => prev + 1);
+        setError(null);
+        loadRants(true);
+    };
+
+    // Custom render function for MasonryGrid with error handling
     const renderRantItem = (rant: Rant, index: number) => {
+        // Validate rant data to prevent rendering errors
+        if (!rant || !rant.id || !rant.mood) {
+            console.error("Invalid rant data:", rant);
+            return null;
+        }
+
         const moodAnim = getMoodAnimation(rant.mood);
 
         return (
-            <motion.div
+            <RantErrorBoundary
                 key={rant.id}
-                initial={{ opacity: 0, scale: moodAnim.scale, y: moodAnim.y }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{
-                    delay: index * 0.08,
-                    duration: 1.2,
-                    ease: moodAnim.ease as any
-                }}
-                className="w-full h-full overflow-hidden"
+                fallback={
+                    <div className="w-full p-4 bg-gray-100 rounded-lg">
+                        <p className="text-red-500">Failed to render this rant</p>
+                    </div>
+                }
             >
-                <div className="w-full h-full flex flex-col">
-                    <RantCard
-                        rant={rant}
-                        index={index}
-                        searchTerm={sortOption === "search" ? searchQuery : ""}
-                        onLike={() => handleLikeRant(rant.id)}
-                    />
-                </div>
-            </motion.div>
+                <motion.div
+                    key={rant.id}
+                    initial={{ opacity: 0, scale: moodAnim.scale, y: moodAnim.y }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{
+                        delay: index * 0.08,
+                        duration: 1.2,
+                        ease: moodAnim.ease as any
+                    }}
+                    className="w-full h-full overflow-hidden"
+                >
+                    <div className="w-full h-full flex flex-col">
+                        <RantCard
+                            rant={rant}
+                            index={index}
+                            searchTerm={sortOption === "search" ? searchQuery : ""}
+                            onLike={() => handleLikeRant(rant.id)}
+                        />
+                    </div>
+                </motion.div>
+            </RantErrorBoundary>
         );
     };
 
@@ -454,159 +618,195 @@ const Index: React.FC = () => {
             ));
     };
 
-    // console.log("Current rant list:", rantList);
+    // Network status monitoring
+    useEffect(() => {
+        const handleOnline = () => {
+            if (error) {
+                toast({
+                    title: "You're back online",
+                    description: "Reconnecting to the server...",
+                    variant: "default",
+                });
+                // Retry loading data when connection is restored
+                handleRetry();
+            }
+        };
+
+        window.addEventListener("online", handleOnline);
+        return () => window.removeEventListener("online", handleOnline);
+    }, [error]);
 
     return (
-        <div className="min-h-screen bg-[#09090B]">
-            <Navbar />
+        <RantErrorBoundary>
+            <div className="min-h-screen bg-[#09090B]">
+                <Navbar />
 
-            {/* Confetti animation when posting a rant */}
-            <Confetti active={showConfetti} duration={3000} />
+                {/* Confetti animation when posting a rant */}
+                {showConfetti && <Confetti active={showConfetti} duration={3000} />}
 
-            {/* Keyboard shortcuts dialog */}
-            <KeyboardShortcutsDialog
-                open={shortcutsDialogOpen}
-                onOpenChange={setShortcutsDialogOpen}
-                shortcuts={shortcuts}
-            />
+                {/* Keyboard shortcuts dialog */}
+                <KeyboardShortcutsDialog
+                    open={shortcutsDialogOpen}
+                    onOpenChange={setShortcutsDialogOpen}
+                    shortcuts={shortcuts}
+                />
 
-            <div className="container mx-auto px-4 py-8">
-                {/* Hero section with RantForm side by side */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-                    <div>
-                        <IntroSection
-                            onStartRanting={scrollToRantForm}
-                            onExploreRants={scrollToRantsList}
-                        />
-                    </div>
-
-                    <div ref={rantFormRef}>
-                        <RantForm onSubmit={handleRantSubmit} />
-                    </div>
-                </div>
-
-                <div ref={rantsListRef} className="mt-16">
-                    <div className="flex items-center justify-between mb-4">
-                        <SortingBar
-                            activeOption={sortOption}
-                            onOptionChange={handleSortChange}
-                            onFilterChange={handleFilterChange}
-                            onSearch={handleSearch}
-                            selectedFilters={selectedMoods}
-                            searchQuery={searchQuery}
-                            searchMood={searchMood}
-                            rants={rantList} // Pass rants for suggestions
-                        />
-
-                        {/* Keyboard shortcuts help button */}
-                        <button
-                            onClick={() => setShortcutsDialogOpen(true)}
-                            className="p-2 text-gray-400 hover:text-white transition-colors rounded-full hover:bg-gray-800"
-                            aria-label="Keyboard shortcuts"
-                            title="Keyboard shortcuts (Press ?)"
-                        >
-                            <QuestionMarkCircledIcon className="w-5 h-5" />
-                        </button>
-                    </div>
-
-                    {error && (
-                        <div className="text-red-500 text-center py-4">
-                            {error}
+                <div className="container mx-auto px-4 py-8">
+                    {/* Hero section with RantForm side by side */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                        <div>
+                            <IntroSection
+                                onStartRanting={scrollToRantForm}
+                                onExploreRants={scrollToRantsList}
+                            />
                         </div>
-                    )}
 
-                    <AnimatePresence mode="wait">
-                        {loading && page === 0 ? (
-                            <motion.div
-                                key="loading"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                className="w-full"
-                            >
-                                <section className="w-full px-4 sm:px-8 py-10">
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                        {renderSkeletons()}
-                                    </div>
-                                </section>
-                            </motion.div>
-                        ) : rantList.length > 0 ? (
-                            <motion.div
-                                key="content"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                className="w-full"
-                            >
-                                <section className="w-full px-4 sm:px-8 py-10">
-                                    <MasonryGrid
-                                        rants={rantList}
-                                        gap={24}
-                                        searchTerm={sortOption === "search" ? searchQuery : ""}
-                                        onLike={handleLikeRant}
-                                        onLoadMore={loadMoreRants}
-                                        renderItem={renderRantItem}
-                                    />
-                                </section>
-                            </motion.div>
-                        ) : (
-                            <motion.div
-                                key="empty"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                className="w-full"
-                            >
-                                <EmptyState
-                                    title={
-                                        sortOption === "search"
-                                            ? "No rants found matching your search"
-                                            : sortOption === "filter"
-                                                ? "No rants found with selected moods"
-                                                : "No rants found"
-                                    }
-                                    description={
-                                        sortOption === "search" || sortOption === "filter"
-                                            ? "Try adjusting your filters or search terms"
-                                            : "Be the first to post a rant!"
-                                    }
-                                    action={scrollToRantForm}
-                                    actionLabel="Start Ranting"
+                        <div ref={rantFormRef}>
+                            <RantErrorBoundary>
+                                <RantForm onSubmit={handleRantSubmit} />
+                            </RantErrorBoundary>
+                        </div>
+                    </div>
+
+                    <div ref={rantsListRef} className="mt-16">
+                        <div className="flex items-center justify-between mb-4">
+                            <RantErrorBoundary>
+                                <SortingBar
+                                    activeOption={sortOption}
+                                    onOptionChange={handleSortChange}
+                                    onFilterChange={handleFilterChange}
+                                    onSearch={handleSearch}
+                                    selectedFilters={selectedMoods}
+                                    searchQuery={searchQuery}
+                                    searchMood={searchMood}
+                                    rants={rantList} // Pass rants for suggestions
                                 />
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                            </RantErrorBoundary>
 
-                    {loading && page > 0 && (
-                        <div className="flex justify-center py-6">
-                            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
-                        </div>
-                    )}
-
-                    {!loading && hasMore && rantList.length > 0 && (
-                        <div className="flex justify-center py-6 mt-4">
+                            {/* Keyboard shortcuts help button */}
                             <button
-                                onClick={() => loadMoreRants()}
-                                className="px-6 py-2 bg-cyan-700 hover:bg-cyan-600 text-white rounded-md transition-colors"
+                                onClick={() => setShortcutsDialogOpen(true)}
+                                className="p-2 text-gray-400 hover:text-white transition-colors rounded-full hover:bg-gray-800"
+                                aria-label="Keyboard shortcuts"
+                                title="Keyboard shortcuts (Press ?)"
                             >
-                                Load More Rants
+                                <QuestionMarkCircledIcon className="w-5 h-5" />
                             </button>
                         </div>
-                    )}
 
-                    {!loading && !hasMore && rantList.length > 0 && (
-                        <div className="text-center text-gray-400 py-6">
-                            No more rants to load
-                        </div>
-                    )}
+                        {error && (
+                            <Alert className="my-4 border-red-200 bg-red-50">
+                                <AlertTitle className="text-red-800">Error loading rants</AlertTitle>
+                                <AlertDescription className="text-red-600">
+                                    {error}
+                                </AlertDescription>
+                                <Button
+                                    variant="outline"
+                                    className="mt-2"
+                                    onClick={handleRetry}
+                                >
+                                    <RefreshCw className="mr-2 h-4 w-4" /> Try again
+                                </Button>
+                            </Alert>
+                        )}
+
+                        <AnimatePresence mode="wait">
+                            {loading && page === 0 ? (
+                                <motion.div
+                                    key="loading"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    className="w-full"
+                                >
+                                    <section className="w-full px-4 sm:px-8 py-10">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                            {renderSkeletons()}
+                                        </div>
+                                    </section>
+                                </motion.div>
+                            ) : rantList.length > 0 ? (
+                                <motion.div
+                                    key="content"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    className="w-full"
+                                >
+                                    <section className="w-full px-4 sm:px-8 py-10">
+                                        <RantErrorBoundary>
+                                            <MasonryGrid
+                                                rants={rantList}
+                                                gap={24}
+                                                searchTerm={sortOption === "search" ? searchQuery : ""}
+                                                onLike={handleLikeRant}
+                                                onLoadMore={loadMoreRants}
+                                                renderItem={renderRantItem}
+                                            />
+                                        </RantErrorBoundary>
+                                    </section>
+                                </motion.div>
+                            ) : (
+                                <motion.div
+                                    key="empty"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    className="w-full"
+                                >
+                                    <EmptyState
+                                        title={
+                                            error ? "Failed to load rants" :
+                                                sortOption === "search"
+                                                    ? "No rants found matching your search"
+                                                    : sortOption === "filter"
+                                                        ? "No rants found with selected moods"
+                                                        : "No rants found"
+                                        }
+                                        description={
+                                            error ? "Please try again or check your connection" :
+                                                sortOption === "search" || sortOption === "filter"
+                                                    ? "Try adjusting your filters or search terms"
+                                                    : "Be the first to post a rant!"
+                                        }
+                                        action={error ? handleRetry : scrollToRantForm}
+                                        actionLabel={error ? "Try Again" : "Start Ranting"}
+                                    />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        {loading && page > 0 && (
+                            <div className="flex justify-center py-6">
+                                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
+                            </div>
+                        )}
+
+                        {!loading && hasMore && rantList.length > 0 && (
+                            <div className="flex justify-center py-6 mt-4">
+                                <button
+                                    onClick={() => loadMoreRants()}
+                                    className="px-6 py-2 bg-cyan-700 hover:bg-cyan-600 text-white rounded-md transition-colors"
+                                >
+                                    Load More Rants
+                                </button>
+                            </div>
+                        )}
+
+                        {!loading && !hasMore && rantList.length > 0 && (
+                            <div className="text-center text-gray-400 py-6">
+                                No more rants to load
+                            </div>
+                        )}
+                    </div>
                 </div>
+
+                {/* Scroll to top button */}
+                <ScrollToTopButton />
+
+                <Footer />
             </div>
-
-            {/* Scroll to top button */}
-            <ScrollToTopButton />
-
-            <Footer />
-        </div>
+        </RantErrorBoundary>
     );
 };
 
