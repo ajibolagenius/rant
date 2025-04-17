@@ -1,26 +1,26 @@
 import React from 'react';
 
-export const highlightText = (text: string, searchTerm: string): React.ReactNode => {
-    if (!searchTerm.trim()) return text;
+export function highlightText(text: string, query: string): React.ReactNode {
+    if (!query.trim()) {
+        return text;
+    }
 
-    const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`,  'gi'); // Escape special characters
-    const parts = text.split(regex);
+    const parts = text.split(new RegExp(`(${query})`, 'gi'));
 
     return (
         <>
-            {parts.map((part, i) => {
-                if (part.toLowerCase() === searchTerm.toLowerCase()) {
-                    return (
-                        <span
-                            key={i}
-                            className="bg-yellow-500/30 text-white px-0.5 rounded"
-                        >
-                            {part}
-                        </span>
-                    );
-                }
-                return part;
-            })}
+            {parts.map((part, i) =>
+                part.toLowerCase() === query.toLowerCase() ? (
+                    <mark
+                        key={i}
+                        className="bg-cyan-500/30 text-white px-0.5 rounded"
+                    >
+                        {part}
+                    </mark>
+                ) : (
+                    part
+                )
+            )}
         </>
     );
-};
+}

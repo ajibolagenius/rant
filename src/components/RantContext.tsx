@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase, fetchRants, likeRant as likeRantInSupabase } from '@/lib/supabase';
 import { Rant } from '@/lib/types/rant';
 import { MoodType } from '@/lib/utils/mood';
 import { getAuthorId } from '@/utils/authorId';
@@ -8,47 +8,141 @@ interface RantContextType {
     rants: Rant[];
     loading: boolean;
     error: string | null;
-    addRant: (content: string, mood: MoodType) => Promise<void>;
     likeRant: (id: string) => Promise<void>;
     loadMoreRants: () => Promise<void>;
+    hasMore: boolean;
 }
 
 const RantContext = createContext<RantContextType | undefined>(undefined);
 
 interface RantProviderProps {
     children: ReactNode;
+    initialSortBy?: 'latest' | 'popular';
+    initialMoods?: string[];
+    initialSearchQuery?: string;
+    initialSearchMood?: MoodType | null;
 }
 
-export const RantProvider: React.FC<RantProviderProps> = ({ children }) => {
+export const RantProvider: React.FC<RantProviderProps> = ({
+    children,
+    initialSortBy = 'latest',
+    initialMoods = [],
+    initialSearchQuery = '',
+    initialSearchMood = null
+}) => {
     const [rants, setRants] = useState<Rant[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
-    const LIMIT = 50;
+    const [sortBy, setSortBy] = useState(initialSortBy);
+    const [moods, setMoods] = useState(initialMoods);
+    const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
+    const [searchMood, setSearchMood] = useState(initialSearchMood);
 
-    // Initial fetch of rants
+    const LIMIT = 20;
+
+    // Function to load rants
+    const loadRants = async (reset = false) => {
+        if (loading && !reset) return;
+
+        try {
+            setLoading(true);
+            const offset = reset ? 0 : page * LIMIT;
+
+            const data = await fetchRants({
+                limit: LIMIT,
+                offset,
+                sortBy,
+                moods,
+                searchQuery,
+                searchMood
+            });
+
+            // Transform data to match Rant type if needed
+            const transformedData: Rant[] = data.map(item => ({
+                id: item.id,
+                content: item.content,
+                mood: item.mood as MoodType,
+                createdAt: item.created_at,
+                likes: item.likes || 0,
+                comments: item.comments || 0,
+                userAlias: 'Anonymous',
+            }));
+
+            setRants(prev => reset ? transformedData : [...prev, ...transformedData]);
+            setHasMore(data.length === LIMIT);
+
+            if (reset) {
+                setPage(0);
+            } else {
+                setPage(prev => prev + 1);
+            }
+        } catch (err) {
+            console.error('Error fetching rants:', err);
+            setError('Failed to load rants. Please try again later.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Initial fetch
     useEffect(() => {
-        fetchRants();
+        loadRants(true);
+    }, [sortBy, moods.join(','), searchQuery, searchMood]);
 
-        // Set up real-time subscription
+    // Set up real-time subscription
+    useEffect(() => {
         const subscription = supabase
             .channel('public:rants')
             .on('INSERT', payload => {
-                const newRant = payload.new as Rant;
-                console.log("New rant added:", newRant); // Debugging log
-                setRants(prevRants => {
-                    // Avoid duplicates
-                    const newRantsList = prevRants.filter(rant => rant.id !== newRant.id);
-                    return [...newRantsList, newRant]; // Add new rant to the end
-                });
+                const newRant = payload.new;
+
+                // Transform to match Rant type
+                const transformedRant: Rant = {
+                    id: newRant.id,
+                    content: newRant.content,
+                    mood: newRant.mood as MoodType,
+                    createdAt: newRant.created_at,
+                    likes: newRant.likes || 0,
+                    comments: newRant.comments || 0,
+                    userAlias: 'Anonymous',
+                };
+
+                // Check if the rant matches current filters
+                let shouldAdd = true;
+
+                if (moods.length > 0) {
+                    shouldAdd = moods.includes(newRant.mood);
+                }
+
+                if (shouldAdd && searchMood) {
+                    shouldAdd = newRant.mood === searchMood;
+                }
+
+                if (shouldAdd && searchQuery) {
+                    shouldAdd = newRant.content.toLowerCase().includes(searchQuery.toLowerCase());
+                }
+
+                if (shouldAdd) {
+                    setRants(prev => [transformedRant, ...prev]);
+                }
             })
             .on('UPDATE', payload => {
-                const updatedRant = payload.new as Rant;
-                console.log("Rant updated:", updatedRant); // Debugging log
-                setRants(prevRants =>
-                    prevRants.map(rant =>
-                        rant.id === updatedRant.id ? updatedRant : rant
+                const updatedRant = payload.new;
+
+                // Update the rant in the list
+                setRants(prev =>
+                    prev.map(rant =>
+                        rant.id === updatedRant.id
+                            ? {
+                                ...rant,
+                                content: updatedRant.content,
+                                mood: updatedRant.mood as MoodType,
+                                likes: updatedRant.likes || 0,
+                                comments: updatedRant.comments || 0
+                            }
+                            : rant
                     )
                 );
             })
@@ -57,155 +151,45 @@ export const RantProvider: React.FC<RantProviderProps> = ({ children }) => {
         return () => {
             subscription.unsubscribe();
         };
-    }, []);
+    }, [moods, searchQuery, searchMood]);
 
-    const fetchRants = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-
-            const options = {
-                limit: LIMIT,
-                offset: 0,
-                sortBy: 'latest',
-                moods: [],
-                searchQuery: '',
-                searchMood: null
-            };
-
-            const data = await fetchRantsFromSupabase(options);
-            setRants(data || []);
-            setPage(1);
-            setHasMore(data.length === LIMIT);
-        } catch (err) {
-            console.error('Error fetching rants:', err);
-            setError('Failed to fetch rants');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const fetchRantsFromSupabase = async (options: any) => {
-        const { limit, offset, sortBy, moods, searchQuery, searchMood } = options;
-
-        let query = supabase
-            .from('rants')
-            .select('*');
-
-        // Apply sorting
-        if (sortBy === 'popular') {
-            query = query.order('likes', { ascending: false });
-        } else {
-            query = query.order('created_at', { ascending: false });
-        }
-
-        // Apply mood filtering
-        if (moods && moods.length > 0) {
-            query = query.in('mood', moods);
-        }
-
-        // Apply search query
-        if (searchQuery) {
-            query = query.ilike('content', `%${searchQuery}%`);
-        }
-
-        // Apply mood search
-        if (searchMood) {
-            query = query.eq('mood', searchMood);
-        }
-
-        // Apply pagination
-        query = query.range(offset, offset + limit - 1);
-
-        const { data, error } = await query;
-
-        if (error) throw error;
-
-        return data;
-    };
-
+    // Function to load more rants
     const loadMoreRants = async () => {
-        if (!hasMore || loading) return;
-
-        try {
-            setLoading(true);
-
-            const options = {
-                limit: LIMIT,
-                offset: page * LIMIT,
-                sortBy: 'latest',
-                moods: [],
-                searchQuery: '',
-                searchMood: null
-            };
-
-            const data = await fetchRantsFromSupabase(options);
-
-            if (data && data.length > 0) {
-                setRants(prevRants => [...prevRants, ...data]);
-                setPage(prevPage => prevPage + 1);
-                setHasMore(data.length === LIMIT);
-            } else {
-                setHasMore(false);
-            }
-        } catch (err) {
-            console.error('Error loading more rants:', err);
-            setError('Failed to load more rants');
-        } finally {
-            setLoading(false);
+        if (!loading && hasMore) {
+            await loadRants();
         }
     };
 
-    const addRant = async (content: string, mood: MoodType) => {
-        try {
-            const authorId = getAuthorId();
-
-            const newRant = {
-                id: crypto.randomUUID(),
-                content,
-                mood,
-                author_id: authorId,
-                likes: 0,
-                created_at: new Date().toISOString()
-            };
-
-            const { error } = await supabase
-                .from('rants')
-                .insert([newRant]);
-
-            if (error) throw error;
-
-            // We don't need to update the state here as the real-time subscription will handle it
-        } catch (err) {
-            console.error('Error adding rant:', err);
-            throw err;
-        }
-    };
-
+    // Function to like a rant
     const likeRant = async (id: string) => {
         try {
             const authorId = getAuthorId();
 
             // Optimistically update UI
-            setRants(prevRants =>
-                prevRants.map(rant =>
+            setRants(prev =>
+                prev.map(rant =>
                     rant.id === id ? { ...rant, likes: rant.likes + 1 } : rant
                 )
             );
 
             // Update in database
-            const { error } = await supabase
-                .from('rant_likes')
-                .insert([{ rant_id: id, author_id: authorId }]);
-
-            if (error) throw error;
+            await likeRantInSupabase(id, authorId);
         } catch (err) {
             console.error('Error liking rant:', err);
-            // Revert optimistic update
-            setRants(prevRants => [...prevRants]);
+
+            // Revert optimistic update if there was an error
+            setRants(prev => [...prev]);
             throw err;
         }
     };
+
+    // Update filters
+    useEffect(() => {
+        setSortBy(initialSortBy);
+        setMoods(initialMoods);
+        setSearchQuery(initialSearchQuery);
+        setSearchMood(initialSearchMood);
+    }, [initialSortBy, initialMoods.join(','), initialSearchQuery, initialSearchMood]);
 
     return (
         <RantContext.Provider
@@ -213,9 +197,9 @@ export const RantProvider: React.FC<RantProviderProps> = ({ children }) => {
                 rants,
                 loading,
                 error,
-                addRant,
                 likeRant,
-                loadMoreRants
+                loadMoreRants,
+                hasMore
             }}
         >
             {children}

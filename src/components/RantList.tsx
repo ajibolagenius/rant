@@ -1,10 +1,10 @@
-import React, { useEffect, useRef } from "react";
+import React from "react";
 import MasonryGrid from "./MasonryGrid";
 import { Rant } from "@/lib/types/rant";
 import { motion } from "framer-motion";
 import { getMoodAnimation } from "@/lib/utils/mood";
 import RantCard from "./RantCard";
-import { useRants } from "@/contexts/RantContext";
+import { useRants } from "@/components/RantContext";
 
 interface RantListProps {
     onRantClick?: (rant: Rant) => void;
@@ -15,18 +15,7 @@ const RantList: React.FC<RantListProps> = ({
     onRantClick,
     searchTerm = ""
 }) => {
-    const { rants, loading, loadMoreRants, likeRant } = useRants();
-    const loadingRef = useRef(loading);
-
-    // Update ref when loading changes
-    useEffect(() => {
-        loadingRef.current = loading;
-    }, [loading]);
-
-    // Handle like action
-    const handleLike = (id: string) => {
-        likeRant(id);
-    };
+    const { rants, loading, loadMoreRants, likeRant, hasMore } = useRants();
 
     return (
         <section className="w-full px-4 sm:px-8 py-10">
@@ -39,40 +28,59 @@ const RantList: React.FC<RantListProps> = ({
                     </div>
                 </div>
             ) : (
-                <MasonryGrid
-                    rants={rants}
-                    gap={24}
-                    searchTerm={searchTerm}
-                    onLike={handleLike}
-                    onLoadMore={loadMoreRants}
-                    renderItem={(rant, index) => {
-                        const moodAnim = getMoodAnimation(rant.mood);
-                        return (
+                <>
+                    <MasonryGrid
+                        rants={rants}
+                        gap={24}
+                        searchTerm={searchTerm}
+                        onLike={likeRant}
+                        onLoadMore={loadMoreRants}
+                        renderItem={(rant, index) => {
+                            const moodAnim = getMoodAnimation(rant.mood);
+                            return (
+                                <motion.div
+                                    key={rant.id}
+                                    initial={{ opacity: 0, scale: moodAnim.scale, y: moodAnim.y }}
+                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                    transition={{
+                                        delay: index * 0.08,
+                                        duration: 1.2,
+                                        ease: moodAnim.ease as any
+                                    }}
+                                    onClick={() => onRantClick?.(rant)}
+                                    className={`w-full overflow-hidden ${onRantClick ? "cursor-pointer" : ""}`}
+                                >
+                                    <div className="w-full max-w-full overflow-hidden">
+                                        <RantCard
+                                            rant={rant}
+                                            index={index}
+                                            searchTerm={searchTerm}
+                                            onLike={() => likeRant(rant.id)}
+                                        />
+                                    </div>
+                                </motion.div>
+                            );
+                        }}
+                    />
 
-                            <motion.div
-                                key={rant.id}
-                                initial={{ opacity: 0, scale: moodAnim.scale, y: moodAnim.y }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                transition={{
-                                    delay: index * 0.08,
-                                    duration: 1.2,
-                                    ease: moodAnim.ease as any
-                                }}
-                                onClick={() => onRantClick?.(rant)}
-                                className={`w-full overflow-hidden ${onRantClick ? "cursor-pointer" : ""}`}
-                            >
-                                <div className="w-full max-w-full overflow-hidden">
-                                    <RantCard
-                                        rant={rant}
-                                        index={index}
-                                        searchTerm={searchTerm}
-                                        onLike={handleLike ? () => handleLike(rant.id) : undefined}
-                                    />
-                                </div>
-                            </motion.div>
-                        );
-                    }}
-                />
+                    {loading && rants.length > 0 && (
+                        <div className="flex justify-center py-6 mt-4">
+                            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
+                        </div>
+                    )}
+
+                    {!loading && !hasMore && rants.length > 0 && (
+                        <div className="text-center text-gray-400 py-6 mt-4">
+                            No more rants to load
+                        </div>
+                    )}
+
+                    {!loading && rants.length === 0 && (
+                        <div className="text-center text-gray-400 py-10">
+                            No rants found. Be the first to post one!
+                        </div>
+                    )}
+                </>
             )}
         </section>
     );

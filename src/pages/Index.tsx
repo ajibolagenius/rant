@@ -11,7 +11,19 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { createFuzzySearcher, performFuzzySearch } from "@/lib/utils/fuzzySearch";
 import { parseSearchQuery } from "@/utils/searchParser";
-import { rants as staticRants } from "@/lib/data/rants";
+import { supabase, fetchRants, addRant, likeRant } from "@/lib/supabase";
+import { getAuthorId } from "@/utils/authorId";
+import { useRants } from '@/components/RantContext';
+import RantCard from "@/components/RantCard";
+import { motion, AnimatePresence } from "framer-motion";
+import { getMoodAnimation } from "@/lib/utils/mood";
+import RantSkeleton from "@/components/RantSkeleton";
+import ScrollToTopButton from "@/components/ScrollToTopButton";
+import EmptyState from "@/components/EmptyState";
+import Confetti from "@/components/Confetti";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import KeyboardShortcutsDialog from "@/components/KeyboardShortcutsDialog";
+import { QuestionMarkCircledIcon } from "@radix-ui/react-icons";
 
 type SortOption = "latest" | "popular" | "filter" | "search";
 
@@ -24,11 +36,71 @@ const Index: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [searchMood, setSearchMood] = useState<MoodType | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [hasMore, setHasMore] = useState(true);
+    const [page, setPage] = useState(0);
+    const [showConfetti, setShowConfetti] = useState(false);
+    const [shortcutsDialogOpen, setShortcutsDialogOpen] = useState(false);
+
+    // Increase the limit to load more rants at once
+    const LIMIT = 50;
     const rantFormRef = useRef<HTMLDivElement>(null);
     const rantsListRef = useRef<HTMLDivElement>(null);
+    const submittedRantIds = useRef<Set<string>>(new Set());
+
+    // Get the rant context - but make it optional to avoid errors if not available
+    let rantContext;
+    try {
+        rantContext = useRants();
+    } catch (error) {
+        console.warn("RantContext not available, using local state only");
+    }
 
     // Create fuzzy searcher with memoization
-    const fuzzySearcher = useMemo(() => createFuzzySearcher(staticRants), []);
+    const fuzzySearcher = useMemo(() => createFuzzySearcher(rantList), [rantList]);
+
+    // Define keyboard shortcuts
+    const shortcuts = useKeyboardShortcuts([
+        {
+            key: "n",
+            action: () => scrollToRantForm(),
+            description: "New rant",
+        },
+        {
+            key: "e",
+            action: () => scrollToRantsList(),
+            description: "Explore rants",
+        },
+        {
+            key: "l",
+            action: () => handleSortChange("latest"),
+            description: "Sort by latest",
+        },
+        {
+            key: "p",
+            action: () => handleSortChange("popular"),
+            description: "Sort by popular",
+        },
+        {
+            key: "f",
+            action: () => handleSortChange("filter"),
+            description: "Filter rants",
+        },
+        {
+            key: "s",
+            action: () => handleSortChange("search"),
+            description: "Search rants",
+        },
+        {
+            key: "?",
+            action: () => setShortcutsDialogOpen(true),
+            description: "Show keyboard shortcuts",
+        },
+        {
+            key: "t",
+            action: () => window.scrollTo({ top: 0, behavior: "smooth" }),
+            description: "Scroll to top",
+        },
+    ]);
 
     // Initialize from URL params on load
     useEffect(() => {
@@ -57,54 +129,68 @@ const Index: React.FC = () => {
             setSortOption(sort);
         }
 
-        // Load rants based on filters
-        loadRants();
+        // Reset pagination when filters change
+        setPage(0);
+        setHasMore(true);
+
+        // Load initial rants
+        loadRants(true);
     }, [searchParams]);
 
-    // Function to load and filter rants from static data
-    const loadRants = () => {
+    // Function to load rants from Supabase
+    const loadRants = async (reset = false) => {
+        if (loading && !reset) return;
+
         setLoading(true);
         setError(null);
 
         try {
-            // Make a copy of the static rants to avoid mutating the original
-            let filteredRants = [...staticRants];
+            const offset = reset ? 0 : page * LIMIT;
 
-            // Apply sorting
-            if (sortOption === "popular") {
-                filteredRants.sort((a, b) => b.likes - a.likes);
+            const options = {
+                limit: LIMIT,
+                offset,
+                sortBy: sortOption === "popular" ? "popular" : "latest",
+                moods: sortOption === "filter" ? selectedMoods : [],
+                searchQuery: sortOption === "search" ? searchQuery : "",
+                searchMood: sortOption === "search" ? searchMood : null
+            };
+
+            // console.log("Fetching rants with options:", options);
+            const data = await fetchRants(options);
+            // console.log("Fetched rants:", data);
+
+            if (data.length < LIMIT) {
+                setHasMore(false);
             } else {
-                // Sort by date (latest first)
-                filteredRants.sort((a, b) =>
-                    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-                );
+                setHasMore(true);
             }
 
-            // Apply mood filtering
-            if (sortOption === "filter" && selectedMoods.length > 0) {
-                filteredRants = filteredRants.filter(rant =>
-                    selectedMoods.includes(rant.mood)
-                );
+            // If resetting, replace the list; otherwise append
+            if (reset) {
+                setRantList(data);
+                setPage(0);
+            } else {
+                // Prevent duplicates when loading more
+                setRantList(prev => {
+                    const existingIds = new Set(prev.map(rant => rant.id));
+                    const newRants = data.filter(rant => !existingIds.has(rant.id));
+                    return [...prev, ...newRants];
+                });
+                setPage(prev => prev + 1);
             }
-
-            // Apply search
-            if (sortOption === "search") {
-                if (searchQuery) {
-                    filteredRants = performFuzzySearch(fuzzySearcher, filteredRants, searchQuery);
-                }
-
-                if (searchMood) {
-                    filteredRants = filteredRants.filter(rant => rant.mood === searchMood);
-                }
-            }
-
-            // Set the filtered rants to state
-            setRantList(filteredRants);
         } catch (err) {
-            console.error("Failed to load rants:", err);
+            console.error("Failed to fetch rants:", err);
             setError("Failed to load rants. Please try again later.");
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Load more rants when user scrolls to bottom
+    const loadMoreRants = async () => {
+        if (!loading && hasMore) {
+            await loadRants();
         }
     };
 
@@ -135,26 +221,106 @@ const Index: React.FC = () => {
 
         // Update URL without reloading the page
         setSearchParams(params, { replace: true });
+    }, [sortOption, selectedMoods, searchQuery, searchMood, setSearchParams]);
 
-        // Load rants with new filters
-        loadRants();
-    }, [sortOption, selectedMoods, searchQuery, searchMood]);
+    // Set up real-time subscription for new rants
+    useEffect(() => {
+        // console.log("Setting up real-time subscription");
+        const subscription = supabase
+            .channel('public:rants')
+            .on('INSERT', payload => {
+                // Add the new rant to the list if it matches current filters
+                const newRant = payload.new as Rant;
+                console.log("New rant received:", newRant);
 
-    const handleRantSubmit = (content: string, mood: MoodType) => {
+                // Skip if this is a rant we just submitted to prevent duplicates
+                if (submittedRantIds.current.has(newRant.id)) {
+                    // Remove from the set after a short delay to allow for potential
+                    // network race conditions
+                    setTimeout(() => {
+                        submittedRantIds.current.delete(newRant.id);
+                    }, 5000);
+                    return;
+                }
+
+                // Only add if it matches current filters
+                let shouldAdd = true;
+
+                if (sortOption === "filter" && selectedMoods.length > 0) {
+                    shouldAdd = selectedMoods.includes(newRant.mood);
+                }
+
+                if (shouldAdd) {
+                    setRantList(prev => {
+                        // Check if the rant is already in the list to prevent duplicates
+                        if (prev.some(rant => rant.id === newRant.id)) {
+                            return prev;
+                        }
+                        return [newRant, ...prev];
+                    });
+                }
+            })
+            .on('UPDATE', payload => {
+                // Update existing rant (e.g., when likes change)
+                const updatedRant = payload.new as Rant;
+                console.log("Rant updated:", updatedRant);
+                setRantList(prev =>
+                    prev.map(rant =>
+                        rant.id === updatedRant.id ? updatedRant : rant
+                    )
+                );
+            })
+            .subscribe();
+
+        return () => {
+            console.log("Unsubscribing from real-time updates");
+            subscription.unsubscribe();
+        };
+    }, [sortOption, selectedMoods]);
+
+    const handleRantSubmit = async (content: string, mood: MoodType) => {
         try {
-            // Create a new rant with static data
-            const newRant: Rant = {
-                id: (Math.random() * 1000000).toString(),
+            const authorId = getAuthorId();
+
+            // Generate a unique ID for the rant to prevent duplicates
+            const rantId = crypto.randomUUID();
+
+            // Add to tracking set to prevent duplicate display from real-time subscription
+            submittedRantIds.current.add(rantId);
+
+            // Create optimistic rant for immediate UI update
+            const optimisticRant: Rant = {
+                id: rantId,
                 content,
                 mood,
-                createdAt: new Date().toISOString(),
+                author_id: authorId,
                 likes: 0,
-                comments: 0,
-                userAlias: 'Anonymous',
+                created_at: new Date().toISOString(),
+                // Add any other required fields with default values
             };
 
-            // Add to the beginning of the list
-            setRantList(prev => [newRant, ...prev]);
+            // Optimistically add to the list to improve perceived performance
+            setRantList(prev => [optimisticRant, ...prev]);
+
+            console.log("Submitting rant:", { content, mood, authorId, rantId });
+
+            // Show confetti animation
+            setShowConfetti(true);
+
+            // Actually submit the rant
+            const newRant = await addRant({
+                id: rantId,
+                content,
+                mood,
+                author_id: authorId
+            });
+
+            console.log("Rant submitted successfully:", newRant);
+
+            // Share the rant with the context if it exists
+            if (rantContext && rantContext.addRant) {
+                rantContext.addRant(newRant);
+            }
 
             toast({
                 title: "Rant Posted!",
@@ -163,6 +329,10 @@ const Index: React.FC = () => {
             });
         } catch (error) {
             console.error("Error posting rant:", error);
+
+            // Remove the optimistic rant on error
+            setRantList(prev => prev.filter(rant => !submittedRantIds.current.has(rant.id)));
+
             toast({
                 title: "Error",
                 description: "Failed to post your rant. Please try again.",
@@ -171,21 +341,46 @@ const Index: React.FC = () => {
         }
     };
 
-    const handleLikeRant = (rantId: string) => {
-        // Update the local state to reflect the like
-        setRantList(prev =>
-            prev.map(rant =>
-                rant.id === rantId
-                    ? { ...rant, likes: rant.likes + 1 }
-                    : rant
-            )
-        );
+    const handleLikeRant = async (rantId: string) => {
+        try {
+            const authorId = getAuthorId();
+            console.log("Liking rant:", rantId, "by author:", authorId);
 
-        toast({
-            title: "Liked!",
-            description: "You liked this rant.",
-            variant: "default",
-        });
+            // Optimistically update the UI first for better user experience
+            setRantList(prev =>
+                prev.map(rant =>
+                    rant.id === rantId
+                        ? { ...rant, likes: rant.likes + 1 }
+                        : rant
+                )
+            );
+
+            // Then perform the actual like operation
+            await likeRant(rantId, authorId);
+            console.log("Rant liked successfully");
+
+            // Update the context if it exists
+            if (rantContext && rantContext.likeRant) {
+                rantContext.likeRant(rantId);
+            }
+        } catch (error) {
+            console.error("Error liking rant:", error);
+
+            // Revert the optimistic update if there was an error
+            setRantList(prev =>
+                prev.map(rant =>
+                    rant.id === rantId
+                        ? { ...rant, likes: rant.likes - 1 }
+                        : rant
+                )
+            );
+
+            toast({
+                title: "Error",
+                description: "Failed to like this rant. You may have already liked it.",
+                variant: "destructive",
+            });
+        }
     };
 
     const scrollToRantForm = () => {
@@ -199,14 +394,16 @@ const Index: React.FC = () => {
     // Handle filter change
     const handleFilterChange = (moods: string[]) => {
         setSelectedMoods(moods);
+        // Reset will happen via the URL params effect
     };
 
     // Handle sort change
     const handleSortChange = (option: SortOption) => {
         setSortOption(option);
+        // Reset will happen via the URL params effect
     };
 
-    // Handle search
+    // Handle search - now with advanced search capabilities
     const handleSearch = (query: string, mood: MoodType | null) => {
         setSearchQuery(query);
         setSearchMood(mood);
@@ -215,11 +412,63 @@ const Index: React.FC = () => {
         } else if (sortOption === "search") {
             setSortOption("latest");
         }
+        // Reset will happen via the URL params effect
     };
+
+    // Custom render function for MasonryGrid
+    const renderRantItem = (rant: Rant, index: number) => {
+        const moodAnim = getMoodAnimation(rant.mood);
+
+        return (
+            <motion.div
+                key={rant.id}
+                initial={{ opacity: 0, scale: moodAnim.scale, y: moodAnim.y }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{
+                    delay: index * 0.08,
+                    duration: 1.2,
+                    ease: moodAnim.ease as any
+                }}
+                className="w-full h-full overflow-hidden"
+            >
+                <div className="w-full h-full flex flex-col">
+                    <RantCard
+                        rant={rant}
+                        index={index}
+                        searchTerm={sortOption === "search" ? searchQuery : ""}
+                        onLike={() => handleLikeRant(rant.id)}
+                    />
+                </div>
+            </motion.div>
+        );
+    };
+
+    // Render loading skeletons
+    const renderSkeletons = () => {
+        return Array(8)
+            .fill(0)
+            .map((_, index) => (
+                <div key={`skeleton-${index}`} className="w-full h-full">
+                    <RantSkeleton index={index} />
+                </div>
+            ));
+    };
+
+    // console.log("Current rant list:", rantList);
 
     return (
         <div className="min-h-screen bg-[#09090B]">
             <Navbar />
+
+            {/* Confetti animation when posting a rant */}
+            <Confetti active={showConfetti} duration={3000} />
+
+            {/* Keyboard shortcuts dialog */}
+            <KeyboardShortcutsDialog
+                open={shortcutsDialogOpen}
+                onOpenChange={setShortcutsDialogOpen}
+                shortcuts={shortcuts}
+            />
 
             <div className="container mx-auto px-4 py-8">
                 {/* Hero section with RantForm side by side */}
@@ -237,16 +486,28 @@ const Index: React.FC = () => {
                 </div>
 
                 <div ref={rantsListRef} className="mt-16">
-                    <SortingBar
-                        activeOption={sortOption}
-                        onOptionChange={handleSortChange}
-                        onFilterChange={handleFilterChange}
-                        onSearch={handleSearch}
-                        selectedFilters={selectedMoods}
-                        searchQuery={searchQuery}
-                        searchMood={searchMood}
-                        rants={rantList} // Pass rants for suggestions
-                    />
+                    <div className="flex items-center justify-between mb-4">
+                        <SortingBar
+                            activeOption={sortOption}
+                            onOptionChange={handleSortChange}
+                            onFilterChange={handleFilterChange}
+                            onSearch={handleSearch}
+                            selectedFilters={selectedMoods}
+                            searchQuery={searchQuery}
+                            searchMood={searchMood}
+                            rants={rantList} // Pass rants for suggestions
+                        />
+
+                        {/* Keyboard shortcuts help button */}
+                        <button
+                            onClick={() => setShortcutsDialogOpen(true)}
+                            className="p-2 text-gray-400 hover:text-white transition-colors rounded-full hover:bg-gray-800"
+                            aria-label="Keyboard shortcuts"
+                            title="Keyboard shortcuts (Press ?)"
+                        >
+                            <QuestionMarkCircledIcon className="w-5 h-5" />
+                        </button>
+                    </div>
 
                     {error && (
                         <div className="text-red-500 text-center py-4">
@@ -254,50 +515,99 @@ const Index: React.FC = () => {
                         </div>
                     )}
 
-                    {loading ? (
-                        <div className="flex justify-center py-10">
-                            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500"></div>
-                        </div>
-                    ) : (
-                        <>
-
-                            {rantList.length > 0 ? (
-                                <>
-                                    {/* Try with MasonryGrid first */}
+                    <AnimatePresence mode="wait">
+                        {loading && page === 0 ? (
+                            <motion.div
+                                key="loading"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="w-full"
+                            >
+                                <section className="w-full px-4 sm:px-8 py-10">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                        {renderSkeletons()}
+                                    </div>
+                                </section>
+                            </motion.div>
+                        ) : rantList.length > 0 ? (
+                            <motion.div
+                                key="content"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="w-full"
+                            >
+                                <section className="w-full px-4 sm:px-8 py-10">
                                     <MasonryGrid
                                         rants={rantList}
-                                        searchTerm={sortOption === "search" ? searchQuery : ""}
                                         gap={24}
+                                        searchTerm={sortOption === "search" ? searchQuery : ""}
                                         onLike={handleLikeRant}
+                                        onLoadMore={loadMoreRants}
+                                        renderItem={renderRantItem}
                                     />
+                                </section>
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                key="empty"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="w-full"
+                            >
+                                <EmptyState
+                                    title={
+                                        sortOption === "search"
+                                            ? "No rants found matching your search"
+                                            : sortOption === "filter"
+                                                ? "No rants found with selected moods"
+                                                : "No rants found"
+                                    }
+                                    description={
+                                        sortOption === "search" || sortOption === "filter"
+                                            ? "Try adjusting your filters or search terms"
+                                            : "Be the first to post a rant!"
+                                    }
+                                    action={scrollToRantForm}
+                                    actionLabel="Start Ranting"
+                                />
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
 
-                                    {/* Fallback display in case MasonryGrid has issues */}
-                                    {false && (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-                                            {rantList.map(rant => (
-                                                <div key={rant.id} className="bg-[#121212] p-4 rounded-lg">
-                                                    <p>{rant.content}</p>
-                                                    <div className="mt-2 text-sm text-gray-400">
-                                                        Mood: {rant.mood} | Likes: {rant.likes}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </>
-                            ) : (
-                                <div className="text-center text-gray-400 py-10">
-                                    No rants found. Be the first to post one!
-                                </div>
-                            )}
-                        </>
+                    {loading && page > 0 && (
+                        <div className="flex justify-center py-6">
+                            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
+                        </div>
+                    )}
+
+                    {!loading && hasMore && rantList.length > 0 && (
+                        <div className="flex justify-center py-6 mt-4">
+                            <button
+                                onClick={() => loadMoreRants()}
+                                className="px-6 py-2 bg-cyan-700 hover:bg-cyan-600 text-white rounded-md transition-colors"
+                            >
+                                Load More Rants
+                            </button>
+                        </div>
+                    )}
+
+                    {!loading && !hasMore && rantList.length > 0 && (
+                        <div className="text-center text-gray-400 py-6">
+                            No more rants to load
+                        </div>
                     )}
                 </div>
             </div>
 
+            {/* Scroll to top button */}
+            <ScrollToTopButton />
+
             <Footer />
         </div>
     );
-}
+};
 
 export default Index;
