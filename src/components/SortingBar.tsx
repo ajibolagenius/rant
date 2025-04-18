@@ -14,6 +14,8 @@ import { useSearchHistory } from "@/hooks/useSearchHistory";
 import { useSearchSuggestions } from "@/hooks/useSearchSuggestions";
 import { parseSearchQuery } from "@/utils/searchParser";
 import SearchHelp from "@/components/SearchHelp";
+import { useSearchParams, useLocation } from "react-router-dom";
+import { toast } from "@/hooks/use-toast";
 
 type SortOption = "latest" | "popular" | "filter" | "search";
 
@@ -49,6 +51,13 @@ const SortingBar: React.FC<SortingBarProps> = ({
     const searchDropdownRef = useRef<HTMLDivElement>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
 
+    // For URL syncing
+    const [searchParams, setSearchParams] = useSearchParams();
+    const location = useLocation();
+    const [isHashBasedRouting, setIsHashBasedRouting] = useState(
+        window.location.hash.startsWith('#/')
+    );
+
     // Use our custom hooks for search history and suggestions
     const { searchHistory, addToHistory, clearHistory } = useSearchHistory();
     const suggestions = useSearchSuggestions(rants);
@@ -67,6 +76,94 @@ const SortingBar: React.FC<SortingBarProps> = ({
         }
     }, [activeOption]);
 
+    // Check for URL parameter changes
+    useEffect(() => {
+        // Get parameters from either hash or search params
+        const params = isHashBasedRouting
+            ? new URLSearchParams(window.location.hash.split('?')[1] || '')
+            : searchParams;
+
+        // Get sort option from URL
+        const sortParam = params.get('sort') as SortOption | null;
+
+        // Get mood filters from URL
+        const moodsParam = params.get('moods');
+        const urlMoods = moodsParam ? moodsParam.split(',').filter(Boolean) : [];
+
+        // Get search parameters from URL
+        const urlQuery = params.get('q') || '';
+        const urlMood = params.get('mood') as MoodType | null;
+
+        // Update UI based on URL parameters
+        if (sortParam && sortParam !== activeOption) {
+            // Only update if different to avoid loops
+            onOptionChange(sortParam);
+        }
+
+        // Update filter selection if in filter mode and different from current
+        if (sortParam === 'filter' &&
+            JSON.stringify(urlMoods.sort()) !== JSON.stringify([...selectedFilters].sort())) {
+            if (onFilterChange) {
+                onFilterChange(urlMoods);
+            }
+        }
+
+        // Update search if in search mode and different from current
+        if (sortParam === 'search' &&
+            (urlQuery !== localSearchQuery || urlMood !== localSearchMood)) {
+            setLocalSearchQuery(urlQuery);
+            setLocalSearchMood(urlMood);
+            if (onSearch) {
+                onSearch(urlQuery, urlMood);
+            }
+        }
+    }, [location.search, location.hash]);
+
+    // Function to update URL parameters
+    const updateUrlParams = (params: Record<string, string | null>) => {
+        try {
+            if (isHashBasedRouting) {
+                // For hash-based routing, manually update the hash
+                const hashParts = window.location.hash.split('?');
+                const basePath = hashParts[0] || '#/';
+                const currentParams = new URLSearchParams(hashParts[1] || '');
+
+                // Update parameters
+                Object.entries(params).forEach(([key, value]) => {
+                    if (value === null || value === '') {
+                        currentParams.delete(key);
+                    } else {
+                        currentParams.set(key, value);
+                    }
+                });
+
+                // Create new hash URL
+                const paramString = currentParams.toString();
+                const newHash = `${basePath}${paramString ? '?' + paramString : ''}`;
+
+                // Update URL without reloading
+                window.history.replaceState(null, '', newHash);
+            } else {
+                // For regular routing, use the provided setSearchParams function
+                const currentParams = new URLSearchParams(searchParams.toString());
+
+                // Update parameters
+                Object.entries(params).forEach(([key, value]) => {
+                    if (value === null || value === '') {
+                        currentParams.delete(key);
+                    } else {
+                        currentParams.set(key, value);
+                    }
+                });
+
+                // Update URL using React Router's setSearchParams
+                setSearchParams(currentParams, { replace: true });
+            }
+        } catch (err) {
+            console.error("Error updating URL parameters:", err);
+        }
+    };
+
     // Handle opening the filter dropdown
     const handleFilterDropdownToggle = () => {
         // Close search dropdown if open
@@ -76,6 +173,7 @@ const SortingBar: React.FC<SortingBarProps> = ({
         // If opening filter dropdown, switch to filter mode
         if (!isDropdownOpen && selectedFilters.length > 0) {
             onOptionChange("filter");
+            updateUrlParams({ sort: "filter" });
         }
     };
 
@@ -88,6 +186,11 @@ const SortingBar: React.FC<SortingBarProps> = ({
         // If opening search dropdown, switch to search mode if there's a query or mood
         if (!isSearchOpen && (localSearchQuery || localSearchMood)) {
             onOptionChange("search");
+            updateUrlParams({
+                sort: "search",
+                q: localSearchQuery || null,
+                mood: localSearchMood || null
+            });
         }
         // Focus the search input when opening
         if (!isSearchOpen) {
@@ -102,6 +205,12 @@ const SortingBar: React.FC<SortingBarProps> = ({
         setIsDropdownOpen(false);
         setIsSearchOpen(false);
         onOptionChange("latest");
+        updateUrlParams({
+            sort: null, // Use null to remove the sort param for default sort
+            q: null,
+            mood: null,
+            moods: null
+        });
     };
 
     // Handle clicking Popular button
@@ -109,22 +218,50 @@ const SortingBar: React.FC<SortingBarProps> = ({
         setIsDropdownOpen(false);
         setIsSearchOpen(false);
         onOptionChange("popular");
+        updateUrlParams({
+            sort: "popular",
+            q: null,
+            mood: null,
+            moods: null
+        });
     };
 
-    // Handle mood filter selection
-    const handleFilterSelect = (mood: string) => {
+    // Handle mood filter selection with keyboard shortcut support
+    const handleFilterSelect = (mood: string, isKeyboardShortcut = false) => {
         if (onFilterChange) {
             // Toggle mood selection
             const newFilters = selectedFilters.includes(mood)
                 ? selectedFilters.filter(m => m !== mood)
                 : [...selectedFilters, mood];
+
             onFilterChange(newFilters);
+
             // Only set to filter mode if we have filters selected
             if (newFilters.length > 0) {
                 onOptionChange("filter");
+                updateUrlParams({
+                    sort: "filter",
+                    moods: newFilters.join(',')
+                });
             } else if (activeOption === "filter") {
                 // If we cleared all filters and were in filter mode, switch to latest
                 onOptionChange("latest");
+                updateUrlParams({
+                    sort: null,
+                    moods: null
+                });
+            }
+
+            // Show toast notification if triggered by keyboard shortcut
+            if (isKeyboardShortcut) {
+                const isSelected = !selectedFilters.includes(mood);
+                toast({
+                    title: `Mood Filter: ${getMoodLabel(mood as MoodType)}`,
+                    description: isSelected
+                        ? `Added ${getMoodLabel(mood as MoodType)} filter`
+                        : `Removed ${getMoodLabel(mood as MoodType)} filter`,
+                    variant: "default",
+                });
             }
         }
     };
@@ -136,6 +273,10 @@ const SortingBar: React.FC<SortingBarProps> = ({
             // If we were in filter mode, switch to latest
             if (activeOption === "filter") {
                 onOptionChange("latest");
+                updateUrlParams({
+                    sort: null,
+                    moods: null
+                });
             }
         }
         setIsDropdownOpen(false);
@@ -150,8 +291,18 @@ const SortingBar: React.FC<SortingBarProps> = ({
             onSearch(localSearchQuery, newMood);
             if (localSearchQuery || newMood) {
                 onOptionChange("search");
+                updateUrlParams({
+                    sort: "search",
+                    q: localSearchQuery || null,
+                    mood: newMood || null
+                });
             } else {
                 onOptionChange("latest");
+                updateUrlParams({
+                    sort: null,
+                    q: null,
+                    mood: null
+                });
             }
         }
     };
@@ -165,8 +316,18 @@ const SortingBar: React.FC<SortingBarProps> = ({
             onSearch(query, localSearchMood);
             if (query || localSearchMood) {
                 onOptionChange("search");
+                updateUrlParams({
+                    sort: "search",
+                    q: query || null,
+                    mood: localSearchMood || null
+                });
             } else if (activeOption === "search") {
                 onOptionChange("latest");
+                updateUrlParams({
+                    sort: null,
+                    q: null,
+                    mood: null
+                });
             }
         }
     };
@@ -179,6 +340,11 @@ const SortingBar: React.FC<SortingBarProps> = ({
             onSearch('', null);
             if (activeOption === "search") {
                 onOptionChange("latest");
+                updateUrlParams({
+                    sort: null,
+                    q: null,
+                    mood: null
+                });
             }
         }
         // Focus the search input after clearing
@@ -209,6 +375,13 @@ const SortingBar: React.FC<SortingBarProps> = ({
                     : parsed.text,
                 parsed.mood || localSearchMood
             );
+
+            // Update URL parameters
+            updateUrlParams({
+                sort: "search",
+                q: parsed.text || null,
+                mood: (parsed.mood || localSearchMood) || null
+            });
         }
 
         // Keep the search dropdown open for UX consistency
@@ -223,6 +396,11 @@ const SortingBar: React.FC<SortingBarProps> = ({
             onSearch(item.query, item.mood);
             if (item.query || item.mood) {
                 onOptionChange("search");
+                updateUrlParams({
+                    sort: "search",
+                    q: item.query || null,
+                    mood: item.mood || null
+                });
             }
         }
     };
@@ -234,6 +412,11 @@ const SortingBar: React.FC<SortingBarProps> = ({
         if (onSearch) {
             onSearch(suggestion, localSearchMood);
             onOptionChange("search");
+            updateUrlParams({
+                sort: "search",
+                q: suggestion || null,
+                mood: localSearchMood || null
+            });
         }
     };
 
@@ -257,6 +440,55 @@ const SortingBar: React.FC<SortingBarProps> = ({
             handleAdvancedSearch();
         }
     };
+
+    // Setup keyboard shortcuts for mood selection
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Only process if Shift key is pressed
+            if (e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                let targetMood: MoodType | null = null;
+
+                // Map keys to moods
+                switch (e.key.toLowerCase()) {
+                    case 'h': targetMood = 'happy'; break;
+                    case 's': targetMood = 'sad'; break;
+                    case 'a': targetMood = 'angry'; break;
+                    case 'c': targetMood = 'confused'; break;
+                    case 'l': targetMood = 'loved'; break;
+                    case 't': targetMood = 'tired'; break;
+                    case 'n': targetMood = 'neutral'; break;
+                    case 'm': targetMood = 'smiling'; break;
+                }
+
+                // If a valid mood key was pressed
+                if (targetMood) {
+                    e.preventDefault();
+                    handleFilterSelect(targetMood, true);
+                }
+            }
+
+            // Clear all filters with Escape key
+            if (e.key === 'Escape' && !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                // Only clear if no dropdown is focused
+                if (!isDropdownOpen && !isSearchOpen) {
+                    clearAllFilters();
+                    toast({
+                        title: "Filters Cleared",
+                        description: "All mood filters have been reset",
+                        variant: "default",
+                    });
+                }
+            }
+        };
+
+        // Add event listener
+        window.addEventListener('keydown', handleKeyDown);
+
+        // Clean up
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [selectedFilters, isDropdownOpen, isSearchOpen]);
 
     return (
         <div className="flex flex-col mt-10 mb-5 px-4">
@@ -306,6 +538,11 @@ const SortingBar: React.FC<SortingBarProps> = ({
                     >
                         <MixerHorizontalIcon className="mr-1 h-4 w-4" />
                         <span>Filter</span>
+                        {selectedFilters.length > 0 && (
+                            <span className="inline-flex items-center justify-center w-5 h-5 ml-1 text-xs font-medium text-white bg-cyan-700 rounded-full">
+                                {selectedFilters.length}
+                            </span>
+                        )}
                         <ChevronDownIcon className={`transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
                     </Button>
                 </div>
@@ -508,6 +745,17 @@ const SortingBar: React.FC<SortingBarProps> = ({
                             </button>
                         )}
                     </div>
+
+                    {/* Keyboard shortcut hint */}
+                    <div className="text-xs text-gray-500 mb-4">
+                        <p>Tip: Use <kbd className="px-1 py-0.5 bg-gray-800 rounded">Shift</kbd> + mood letter to toggle filters</p>
+                        <p className="mt-1">
+                            <kbd className="px-1 py-0.5 bg-gray-800 rounded">Shift+H</kbd> for Happy,
+                            <kbd className="px-1 py-0.5 bg-gray-800 rounded ml-1">Shift+S</kbd> for Sad,
+                            <kbd className="px-1 py-0.5 bg-gray-800 rounded ml-1">Shift+A</kbd> for Angry, etc.
+                        </p>
+                    </div>
+
                     {/* Display selected filters inside the filter panel */}
                     {selectedFilters.length > 0 && (
                         <div className="text-sm text-gray-400 pt-2 border-t border-[#333]">
@@ -557,6 +805,14 @@ const SortingBar: React.FC<SortingBarProps> = ({
                             </button>
                         </span>
                     ))}
+                    <button
+                        onClick={clearAllFilters}
+                        className="inline-flex items-center gap-2 px-2 py-1 text-xs rounded-full
+                                   bg-[#121212] border border-red-500/30 hover:bg-[#1A1A1A] text-red-400"
+                    >
+                        <Cross1Icon className="w-3 h-3" />
+                        Clear All
+                    </button>
                 </div>
             )}
             {/* Display active search query outside the dropdown (only when dropdown is closed) */}
@@ -590,6 +846,38 @@ const SortingBar: React.FC<SortingBarProps> = ({
                                 ×
                             </button>
                         </span>
+                    )}
+                </div>
+            )}
+
+            {/* URL Sync Status Indicator - only show in development */}
+            {process.env.NODE_ENV === 'development' && (
+                <div className="text-xs text-gray-600 mt-2">
+                    <span>URL Sync: {isHashBasedRouting ? 'Hash-based (#/)' : 'Regular'}</span>
+                    {isHashBasedRouting && (
+                        <button
+                            onClick={() => {
+                                localStorage.removeItem('useHashRouter');
+                                window.location.href = window.location.origin + window.location.pathname;
+                            }}
+                            className="ml-2 underline hover:text-gray-400"
+                        >
+                            Switch to regular routing
+                        </button>
+                    )}
+                    {!isHashBasedRouting && (
+                        <button
+                            onClick={() => {
+                                localStorage.setItem('useHashRouter', 'true');
+                                // Preserve current URL parameters when switching
+                                const currentParams = new URLSearchParams(window.location.search);
+                                const paramString = currentParams.toString();
+                                window.location.href = `${window.location.origin}${window.location.pathname}#/${paramString ? '?' + paramString : ''}`;
+                            }}
+                            className="ml-2 underline hover:text-gray-400"
+                        >
+                            Switch to hash-based routing
+                        </button>
                     )}
                 </div>
             )}

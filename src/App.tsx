@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, HashRouter, Navigate } from "react-router-dom";
 import { RantProvider } from "@/components/RantContext";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -88,6 +88,46 @@ const createQueryClient = () => {
     });
 };
 
+// Router component that selects between BrowserRouter and HashRouter
+const AppRouter: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    // Detect if we should use hash-based routing
+    const [useHashRouter, setUseHashRouter] = useState(() => {
+        return window.location.hash.startsWith('#/') ||
+            localStorage.getItem('useHashRouter') === 'true';
+    });
+
+    // Effect to handle navigation errors and switch to hash router if needed
+    useEffect(() => {
+        // Function to handle navigation errors
+        const handleNavigationError = () => {
+            if (!useHashRouter && window.location.pathname !== '/') {
+                console.log("Navigation error detected, switching to hash router");
+                localStorage.setItem('useHashRouter', 'true');
+                setUseHashRouter(true);
+
+                // Preserve current URL parameters when switching
+                const currentParams = new URLSearchParams(window.location.search);
+                const paramString = currentParams.toString();
+                window.location.href = `${window.location.origin}${window.location.pathname}#/${paramString ? '?' + paramString : ''}`;
+            }
+        };
+
+        // Listen for popstate events which might indicate navigation issues
+        window.addEventListener('popstate', handleNavigationError);
+
+        return () => {
+            window.removeEventListener('popstate', handleNavigationError);
+        };
+    }, [useHashRouter]);
+
+    // Render the appropriate router
+    return useHashRouter ? (
+        <HashRouter>{children}</HashRouter>
+    ) : (
+        <BrowserRouter>{children}</BrowserRouter>
+    );
+};
+
 const App = () => {
     // Create query client with error handling
     const [queryClient] = useState(() => createQueryClient());
@@ -123,7 +163,7 @@ const App = () => {
                             <Toaster />
                             <Sonner />
                             <ErrorBoundary>
-                                <BrowserRouter>
+                                <AppRouter>
                                     <Suspense fallback={<LoadingFallback />}>
                                         <Routes>
                                             <Route path="/" element={
@@ -140,7 +180,7 @@ const App = () => {
                                             } />
                                         </Routes>
                                     </Suspense>
-                                </BrowserRouter>
+                                </AppRouter>
                             </ErrorBoundary>
                         </div>
                     </RantProvider>

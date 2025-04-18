@@ -3,17 +3,23 @@ import { Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { MoodType, getMoodEmoji, getMoodLabel, getMoodColor } from '@/lib/utils/mood';
 import { useSearchParams } from 'react-router-dom';
+import { Badge } from '@/components/ui/badge';
+import { toast } from '@/hooks/use-toast';
 
 interface SearchBarProps {
     onSearch: (query: string, mood: MoodType | null) => void;
     initialQuery?: string;
     initialMood?: MoodType | null;
+    onMoodSelect?: (mood: MoodType) => void;
+    selectedMoods?: MoodType[];
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({
     onSearch,
     initialQuery = '',
-    initialMood = null
+    initialMood = null,
+    onMoodSelect,
+    selectedMoods = []
 }) => {
     const [searchParams, setSearchParams] = useSearchParams();
 
@@ -31,7 +37,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
     // Common moods for quick filtering
     const quickMoods: MoodType[] = [
-        'sad', 'angry', 'confused', 'tired', 'smiling', 'loved'
+        'sad', 'angry', 'confused', 'tired', 'smiling', 'loved', 'neutral'
     ];
 
     // Update search when query or mood changes - real-time search
@@ -120,6 +126,64 @@ const SearchBar: React.FC<SearchBarProps> = ({
         }
     }, [searchParams, query, selectedMood]);
 
+    // Setup keyboard shortcuts for mood selection
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Only process if Shift key is pressed
+            if (e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                let targetMood: MoodType | null = null;
+
+                // Map keys to moods
+                switch (e.key.toLowerCase()) {
+                    case 'h': targetMood = 'happy'; break;
+                    case 's': targetMood = 'sad'; break;
+                    case 'a': targetMood = 'angry'; break;
+                    case 'c': targetMood = 'confused'; break;
+                    case 'l': targetMood = 'loved'; break;
+                    case 't': targetMood = 'tired'; break;
+                    case 'n': targetMood = 'neutral'; break;
+                    case 'm': targetMood = 'smiling'; break;
+                }
+
+                // If a valid mood key was pressed and we have a mood selection handler
+                if (targetMood && onMoodSelect) {
+                    e.preventDefault();
+                    onMoodSelect(targetMood);
+
+                    // Show toast notification for better UX
+                    const isSelected = selectedMoods.includes(targetMood);
+                    toast({
+                        title: `Mood Filter: ${getMoodLabel(targetMood)}`,
+                        description: isSelected
+                            ? `Removed ${getMoodLabel(targetMood)} filter`
+                            : `Added ${getMoodLabel(targetMood)} filter`,
+                        variant: "default",
+                    });
+                }
+            }
+
+            // Clear all filters with Escape key
+            if (e.key === 'Escape' && !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                if (document.activeElement !== inputRef.current) {
+                    handleClear();
+                    toast({
+                        title: "Filters Cleared",
+                        description: "All search filters have been reset",
+                        variant: "default",
+                    });
+                }
+            }
+        };
+
+        // Add event listener
+        window.addEventListener('keydown', handleKeyDown);
+
+        // Clean up
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [onMoodSelect, selectedMoods]);
+
     const handleClear = () => {
         setQuery('');
         setSelectedMood(null);
@@ -140,6 +204,22 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
         // Focus the input after clearing
         inputRef.current?.focus();
+    };
+
+    // Handle mood selection for multiple mood filtering
+    const handleMoodToggle = (mood: MoodType) => {
+        if (onMoodSelect) {
+            // If we have a mood selection handler, use it for multiple mood selection
+            onMoodSelect(mood);
+        } else {
+            // Otherwise, use the single mood selection behavior
+            setSelectedMood(selectedMood === mood ? null : mood);
+        }
+    };
+
+    // Check if a mood is selected (either as the single mood or in the multiple selection)
+    const isMoodSelected = (mood: MoodType) => {
+        return selectedMood === mood || (selectedMoods && selectedMoods.includes(mood));
     };
 
     return (
@@ -176,20 +256,20 @@ const SearchBar: React.FC<SearchBarProps> = ({
                                 <button
                                     key={mood}
                                     type="button"
-                                    onClick={() => setSelectedMood(selectedMood === mood ? null : mood)}
+                                    onClick={() => handleMoodToggle(mood)}
                                     className={`
                                         relative overflow-hidden transition-all duration-200 ease-in-out
                                         flex items-center gap-2 py-1 px-3 text-xs
-                                        ${selectedMood === mood
+                                        ${isMoodSelected(mood)
                                             ? 'scale-110 shadow-lg z-10'
                                             : 'hover:scale-105 hover:shadow-md'}
                                         rounded-xl
                                     `}
                                     style={{
-                                        backgroundColor: selectedMood === mood
+                                        backgroundColor: isMoodSelected(mood)
                                             ? getMoodColor(mood)
                                             : `${getMoodColor(mood)}15`,
-                                        color: selectedMood === mood
+                                        color: isMoodSelected(mood)
                                             ? '#fff'
                                             : getMoodColor(mood),
                                         border: `1px solid ${getMoodColor(mood)}`,
@@ -201,7 +281,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
                                         className="w-4 h-4"
                                     />
                                     <span className="font-medium">{getMoodLabel(mood)}</span>
-                                    {selectedMood === mood && (
+                                    {isMoodSelected(mood) && (
                                         <span className="absolute -right-1 -top-1 bg-white rounded-full p-0.5 shadow-sm">
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke={getMoodColor(mood)} strokeWidth={3}>
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -218,11 +298,16 @@ const SearchBar: React.FC<SearchBarProps> = ({
                                 Hide options
                             </button>
                         </div>
+
+                        {/* Keyboard shortcut hint */}
+                        <div className="w-full mt-2 text-xs text-gray-500">
+                            <span>Tip: Use <kbd className="px-1 py-0.5 bg-gray-800 rounded">Shift</kbd> + mood letter to toggle filters (e.g., <kbd className="px-1 py-0.5 bg-gray-800 rounded">Shift+H</kbd> for Happy)</span>
+                        </div>
                     </div>
                 )}
 
                 {/* Display active search */}
-                {(query || selectedMood) && (
+                {(query || selectedMood || (selectedMoods && selectedMoods.length > 0)) && (
                     <div className="mt-3 text-sm text-gray-400">
                         <div className="flex flex-wrap gap-2 items-center">
                             <span>Searching for:</span>
@@ -241,6 +326,35 @@ const SearchBar: React.FC<SearchBarProps> = ({
                                     />
                                     {getMoodLabel(selectedMood)}
                                 </span>
+                            )}
+                            {/* Show multiple selected moods if using that mode */}
+                            {!selectedMood && selectedMoods && selectedMoods.length > 0 && (
+                                <div className="flex flex-wrap gap-1">
+                                    {selectedMoods.map(mood => (
+                                        <span
+                                            key={mood}
+                                            className="inline-flex items-center gap-2 bg-[#121212] border border-[#333] px-2 py-1 rounded-full"
+                                            style={{ borderColor: getMoodColor(mood) }}
+                                        >
+                                            <img
+                                                src={getMoodEmoji(mood)}
+                                                alt={getMoodLabel(mood)}
+                                                className="w-4 h-4 object-cover"
+                                            />
+                                            {getMoodLabel(mood)}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Clear all button */}
+                            {(query || selectedMood || (selectedMoods && selectedMoods.length > 0)) && (
+                                <button
+                                    onClick={handleClear}
+                                    className="text-xs text-gray-400 hover:text-white bg-gray-800 hover:bg-gray-700 px-2 py-1 rounded-full transition-colors"
+                                >
+                                    Clear all
+                                </button>
                             )}
                         </div>
                     </div>

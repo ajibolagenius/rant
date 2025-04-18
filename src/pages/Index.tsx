@@ -16,7 +16,7 @@ import { getAuthorId } from "@/utils/authorId";
 import { useRants } from '@/components/RantContext';
 import RantCard from "@/components/RantCard";
 import { motion, AnimatePresence } from "framer-motion";
-import { getMoodAnimation } from "@/lib/utils/mood";
+import { getMoodAnimation, getMoodLabel } from "@/lib/utils/mood";
 import RantSkeleton from "@/components/RantSkeleton";
 import ScrollToTopButton from "@/components/ScrollToTopButton";
 import EmptyState from "@/components/EmptyState";
@@ -27,6 +27,15 @@ import { QuestionMarkCircledIcon } from "@radix-ui/react-icons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
+import {
+    getUrlParams,
+    parseMoodFilters,
+    parseSearchParams,
+    getSortOption,
+    updateUrlParams,
+    isHashBasedRouting
+} from '@/utils/urlUtils';
+import { useMoodKeyboardShortcuts } from '@/hooks/useMoodKeyboardShortcuts';
 
 type SortOption = "latest" | "popular" | "filter" | "search";
 
@@ -89,6 +98,7 @@ const Index: React.FC = () => {
     const [showConfetti, setShowConfetti] = useState(false);
     const [shortcutsDialogOpen, setShortcutsDialogOpen] = useState(false);
     const [retryCount, setRetryCount] = useState(0);
+    const [usingHashRouter, setUsingHashRouter] = useState(isHashBasedRouting());
 
     // State for auto-loading rants
     const [autoLoadFailed, setAutoLoadFailed] = useState(false);
@@ -114,7 +124,48 @@ const Index: React.FC = () => {
     // Create fuzzy searcher with memoization
     const fuzzySearcher = useMemo(() => createFuzzySearcher(rantList), [rantList]);
 
-    // Define keyboard shortcuts
+    // Function to safely parse URL parameters
+    const safeParseUrlParams = () => {
+        try {
+            // Check if we should use hash-based routing
+            const isHashRouting = isHashBasedRouting();
+            setUsingHashRouter(isHashRouting);
+
+            // Get parameters from either hash or search params
+            const params = getUrlParams();
+
+            // Get sort option from URL
+            const sort = getSortOption(params) as SortOption;
+
+            // Get mood filters from URL
+            const moods = parseMoodFilters(params);
+
+            // Get search parameters from URL
+            const { query, mood } = parseSearchParams(params);
+
+            return { query, mood, moods, sort, isHashRouting };
+        } catch (err) {
+            console.error("Error parsing URL parameters:", err);
+            return {
+                query: null,
+                mood: null,
+                moods: [],
+                sort: null as SortOption | null,
+                isHashRouting: false
+            };
+        }
+    };
+
+    // Use the mood keyboard shortcuts hook for multiple mood selection
+    useMoodKeyboardShortcuts({
+        onMoodToggle: (mood) => {
+            toggleMoodSelection(mood as string);
+        },
+        onClearAll: () => clearAllFilters(),
+        isEnabled: !shortcutsDialogOpen // Disable when shortcuts dialog is open
+    });
+
+    // Define keyboard shortcuts including multiple mood selection
     const shortcuts = useKeyboardShortcuts([
         {
             key: "n",
@@ -156,7 +207,178 @@ const Index: React.FC = () => {
             action: () => window.scrollTo({ top: 0, behavior: "smooth" }),
             description: "Scroll to top",
         },
+        // Mood selection shortcuts with Shift key
+        {
+            key: "Shift+s",
+            action: () => toggleMoodSelection("sad"),
+            description: "Sad Mood",
+            category: "Mood Filtering"
+        },
+        {
+            key: "Shift+y",
+            action: () => toggleMoodSelection("crying"),
+            description: "Crying Mood",
+            category: "Mood Filtering"
+        },
+        {
+            key: "Shift+a",
+            action: () => toggleMoodSelection("angry"),
+            description: "Angry Mood",
+            category: "Mood Filtering"
+        },
+        {
+            key: "Shift+e",
+            action: () => toggleMoodSelection("eyeRoll"),
+            description: "Eye Roll Mood",
+            category: "Mood Filtering"
+        },
+        {
+            key: "Shift+b",
+            action: () => toggleMoodSelection("heartbroken"),
+            description: "Heartbroken Mood",
+            category: "Mood Filtering"
+        },
+        {
+            key: "Shift+m",
+            action: () => toggleMoodSelection("mindBlown"),
+            description: "Mind Blown Mood",
+            category: "Mood Filtering"
+        },
+        {
+            key: "Shift+p",
+            action: () => toggleMoodSelection("speechless"),
+            description: "Speechless Mood",
+            category: "Mood Filtering"
+        },
+        {
+            key: "Shift+c",
+            action: () => toggleMoodSelection("confused"),
+            description: "Confused Mood",
+            category: "Mood Filtering"
+        },
+        {
+            key: "Shift+t",
+            action: () => toggleMoodSelection("tired"),
+            description: "Tired Mood",
+            category: "Mood Filtering"
+        },
+        {
+            key: "Shift+n",
+            action: () => toggleMoodSelection("nervous"),
+            description: "Nervous Mood",
+            category: "Mood Filtering"
+        },
+        {
+            key: "Shift+g",
+            action: () => toggleMoodSelection("smiling"),
+            description: "Smiling Mood",
+            category: "Mood Filtering"
+        },
+        {
+            key: "Shift+f",
+            action: () => toggleMoodSelection("laughing"),
+            description: "Laughing Mood",
+            category: "Mood Filtering"
+        },
+        {
+            key: "Shift+d",
+            action: () => toggleMoodSelection("celebratory"),
+            description: "Celebratory Mood",
+            category: "Mood Filtering"
+        },
+        {
+            key: "Shift+o",
+            action: () => toggleMoodSelection("confident"),
+            description: "Confident Mood",
+            category: "Mood Filtering"
+        },
+        {
+            key: "Shift+l",
+            action: () => toggleMoodSelection("loved"),
+            description: "Loved Mood",
+            category: "Mood Filtering"
+        },
+        {
+            key: "Escape",
+            action: () => clearAllFilters(),
+            description: "Clear all filters",
+            category: "Mood Filtering"
+        },
     ]);
+
+    // Function to toggle a mood in the selection
+    const toggleMoodSelection = (mood: string) => {
+        setSelectedMoods(prev => {
+            // If mood is already selected, remove it
+            if (prev.includes(mood)) {
+                const newMoods = prev.filter(m => m !== mood);
+
+                // If removing the last mood, switch back to latest
+                if (newMoods.length === 0 && sortOption === "filter") {
+                    setSortOption("latest");
+                    updateUrlParams({
+                        sort: null,
+                        moods: null
+                    }, setSearchParams);
+                    return [];
+                }
+
+                // Otherwise update the moods list
+                updateUrlParams({
+                    moods: newMoods.length > 0 ? newMoods.join(',') : null
+                }, setSearchParams);
+                return newMoods;
+            }
+            // If mood is not selected, add it
+            else {
+                const newMoods = [...prev, mood];
+
+                // If this is the first mood, switch to filter mode
+                if (prev.length === 0) {
+                    setSortOption("filter");
+                    updateUrlParams({
+                        sort: "filter",
+                        moods: newMoods.join(',')
+                    }, setSearchParams);
+                } else {
+                    updateUrlParams({
+                        moods: newMoods.join(',')
+                    }, setSearchParams);
+                }
+
+                return newMoods;
+            }
+        });
+
+        // Show toast notification for better UX
+        toast({
+            title: `Mood Filter: ${getMoodLabel(mood as MoodType)}`,
+            description: selectedMoods.includes(mood)
+                ? `Removed ${getMoodLabel(mood as MoodType)} filter`
+                : `Added ${getMoodLabel(mood as MoodType)} filter`,
+            variant: "default",
+        });
+    };
+
+    // Function to clear all filters
+    const clearAllFilters = () => {
+        setSelectedMoods([]);
+        setSearchQuery("");
+        setSearchMood(null);
+        setSortOption("latest");
+        updateUrlParams({
+            sort: null,
+            moods: null,
+            q: null,
+            mood: null
+        }, setSearchParams);
+
+        toast({
+            title: "Filters Cleared",
+            description: "All filters have been reset",
+            variant: "default",
+        });
+    };
 
     // Fetch rants when the component mounts
     useEffect(() => {
@@ -198,15 +420,12 @@ const Index: React.FC = () => {
         };
     }, [loading, hasMore, page]); // Re-create observer when these dependencies change
 
-    // Initialize from URL params on load
+    // Initialize from URL params on load and when URL changes
     useEffect(() => {
         try {
-            const query = searchParams.get('q');
-            const mood = searchParams.get('mood') as MoodType | null;
-            const moodsParam = searchParams.get('moods');
-            const moods = moodsParam ? moodsParam.split(',').filter(Boolean) : [];
-            const sort = searchParams.get('sort') as SortOption;
+            const { query, mood, moods, sort, isHashRouting } = safeParseUrlParams();
 
+            // Set state based on URL parameters
             if (query) {
                 setSearchQuery(query);
                 setSortOption("search");
@@ -242,7 +461,7 @@ const Index: React.FC = () => {
             setSearchMood(null);
             loadRants(true);
         }
-    }, [searchParams]);
+    }, [location.search, location.hash]); // React to changes in both search params and hash
 
     // Load more rants when the page changes
     useEffect(() => {
@@ -373,7 +592,7 @@ const Index: React.FC = () => {
 
     // Load more rants when user scrolls to bottom with debounce
     const loadMoreRantsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    // Update the loadMoreRants function:
+
     const loadMoreRants = async () => {
         if (loading || !hasMore) return;
 
@@ -406,40 +625,57 @@ const Index: React.FC = () => {
     // Update URL when filters or search change
     useEffect(() => {
         try {
-            const params = new URLSearchParams();
+            // Prepare parameters
+            const params: Record<string, string | null> = {};
 
             // Add search params if in search mode
             if (sortOption === "search") {
+                params.sort = sortOption;
+
                 if (searchQuery) {
-                    params.set('q', searchQuery);
+                    params.q = searchQuery;
+                } else {
+                    params.q = null;
                 }
 
                 if (searchMood) {
-                    params.set('mood', searchMood);
+                    params.mood = searchMood;
+                } else {
+                    params.mood = null;
                 }
             }
-
             // Add mood filters if in filter mode
-            if (sortOption === "filter" && selectedMoods.length > 0) {
-                params.set('moods', selectedMoods.join(','));
+            else if (sortOption === "filter") {
+                params.sort = sortOption;
+
+                if (selectedMoods.length > 0) {
+                    params.moods = selectedMoods.join(',');
+                } else {
+                    params.moods = null;
+                }
+
+                // Clear search params if we're not in search mode
+                params.q = null;
+                params.mood = null;
+            }
+            // For other sort options
+            else {
+                // Only include sort option if it's not the default
+                params.sort = sortOption !== "latest" ? sortOption : null;
+
+                // Clear filter and search params
+                params.moods = null;
+                params.q = null;
+                params.mood = null;
             }
 
-            // Only include sort option if it's not the default or if other params exist
-            if (sortOption !== "latest" || params.toString()) {
-                params.set('sort', sortOption);
-            }
-
-            // Update URL without reloading the page
-            setSearchParams(params, { replace: true });
-
-            // For better SEO and sharing, also update the browser history
-            const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
-            window.history.replaceState(null, '', newUrl);
+            // Update URL parameters
+            updateUrlParams(params, setSearchParams);
         } catch (err) {
             console.error("Error updating URL params:", err);
             // Don't set error state here to avoid UI disruption
         }
-    }, [sortOption, selectedMoods, searchQuery, searchMood, setSearchParams]);
+    }, [sortOption, selectedMoods, searchQuery, searchMood]);
 
     // Set up real-time subscription for new rants
     useEffect(() => {
@@ -649,78 +885,51 @@ const Index: React.FC = () => {
 
     // Handle filter change
     const handleFilterChange = (moods: string[]) => {
-        setSelectedMoods(moods);
-        // Reset will happen via the URL params effect
+        // Handle edge case where moods array might contain empty strings
+        const validMoods = moods.filter(Boolean);
+        setSelectedMoods(validMoods);
 
-        // Update URL parameters for sharing and SEO
-        const params = new URLSearchParams(searchParams);
-        if (moods.length > 0) {
-            params.set('moods', moods.join(','));
-            params.set('sort', 'filter');
-        } else {
-            params.delete('moods');
-            if (params.get('sort') === 'filter') {
-                params.delete('sort');
-            }
+        if (validMoods.length > 0) {
+            setSortOption("filter");
+        } else if (sortOption === "filter") {
+            // If no moods selected and we're in filter mode, switch to latest
+            setSortOption("latest");
         }
-        setSearchParams(params);
     };
 
     // Handle sort change
     const handleSortChange = (option: SortOption) => {
         setSortOption(option);
 
-        // Update URL parameters for sharing and SEO
-        const params = new URLSearchParams(searchParams);
-        if (option !== 'latest') {
-            params.set('sort', option);
-        } else {
-            params.delete('sort');
+        // If changing away from filter mode and no moods are selected, clear moods
+        if (option !== "filter" && selectedMoods.length === 0) {
+            setSelectedMoods([]);
         }
 
-        // If changing to a non-filter/search option, clear those params
-        if (option !== 'filter') {
-            params.delete('moods');
-        }
-        if (option !== 'search') {
-            params.delete('q');
-            params.delete('mood');
+        // If changing away from search mode, clear search params
+        if (option !== "search") {
+            setSearchQuery("");
+            setSearchMood(null);
         }
 
-        setSearchParams(params);
+        // Reset pagination when sort changes
+        setPage(0);
+        setHasMore(true);
     };
 
     // Handle search - now with advanced search capabilities
     const handleSearch = (query: string, mood: MoodType | null) => {
         setSearchQuery(query);
         setSearchMood(mood);
-
-        // Update URL parameters for sharing and SEO
-        const params = new URLSearchParams(searchParams);
-
         if (query || mood) {
             setSortOption("search");
-            params.set('sort', 'search');
-
-            if (query) {
-                params.set('q', query);
-            } else {
-                params.delete('q');
-            }
-
-            if (mood) {
-                params.set('mood', mood);
-            } else {
-                params.delete('mood');
-            }
-        } else {
+        } else if (sortOption === "search") {
             setSortOption("latest");
-            params.delete('sort');
-            params.delete('q');
-            params.delete('mood');
         }
 
-        setSearchParams(params);
+        // Reset pagination when search changes
+        setPage(0);
+        setHasMore(true);
     };
 
     // Function to handle retry when loading fails
@@ -802,6 +1011,31 @@ const Index: React.FC = () => {
         return () => window.removeEventListener("online", handleOnline);
     }, [error]);
 
+    // Function to toggle hash-based routing
+    const toggleHashRouting = () => {
+        if (usingHashRouter) {
+            // Switch to regular routing
+            localStorage.removeItem('useHashRouter');
+
+            // Preserve current URL parameters when switching
+            const hashParts = window.location.hash.split('?');
+            const paramString = hashParts[1] || '';
+
+            // Redirect to regular URL
+            window.location.href = `${window.location.origin}${window.location.pathname}${paramString ? '?' + paramString : ''}`;
+        } else {
+            // Switch to hash-based routing
+            localStorage.setItem('useHashRouter', 'true');
+
+            // Preserve current URL parameters when switching
+            const currentParams = new URLSearchParams(window.location.search);
+            const paramString = currentParams.toString();
+
+            // Redirect to hash-based URL
+            window.location.href = `${window.location.origin}${window.location.pathname}#/${paramString ? '?' + paramString : ''}`;
+        }
+    };
+
     return (
         <RantErrorBoundary>
             <div className="min-h-screen bg-[#09090B]">
@@ -859,6 +1093,26 @@ const Index: React.FC = () => {
                                 <QuestionMarkCircledIcon className="w-5 h-5" />
                             </button>
                         </div>
+
+                        {/* URL Routing Mode Indicator - only show in development */}
+                        {process.env.NODE_ENV === 'development' && (
+                            <div className="mb-4 px-4 py-2 bg-gray-800 rounded-md text-xs text-gray-300 flex items-center justify-between">
+                                <div>
+                                    <span className="font-semibold">URL Mode:</span> {usingHashRouter ? 'Hash-based (#/)' : 'Regular'}
+                                    <span className="ml-2 text-gray-400">
+                                        {usingHashRouter
+                                            ? 'Works without server configuration'
+                                            : 'Requires server configuration for direct URLs'}
+                                    </span>
+                                </div>
+                                <button
+                                    onClick={toggleHashRouting}
+                                    className="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-white text-xs"
+                                >
+                                    Switch to {usingHashRouter ? 'regular' : 'hash-based'} routing
+                                </button>
+                            </div>
+                        )}
 
                         {error && (
                             <Alert className="my-4 border-red-200 bg-red-50">
@@ -962,6 +1216,29 @@ const Index: React.FC = () => {
                             </div>
                         )}
                     </div>
+                </div>
+
+                {/* Mood keyboard shortcuts hint */}
+                <div className="fixed bottom-20 right-4 p-3 bg-gray-800 rounded-lg shadow-lg text-xs text-gray-300 max-w-xs opacity-70 hover:opacity-100 transition-opacity">
+                    <p className="font-semibold mb-1">Mood Filter Shortcuts:</p>
+                    <p>
+                        <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+H</kbd> Happy,
+                        <kbd className="px-1 py-0.5 bg-gray-700 rounded ml-1">Shift+S</kbd> Sad,
+                        <kbd className="px-1 py-0.5 bg-gray-700 rounded ml-1">Shift+A</kbd> Angry
+                    </p>
+                    <p className="mt-1">
+                        <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+G</kbd> Smiling,
+                        <kbd className="px-1 py-0.5 bg-gray-700 rounded ml-1">Shift+L</kbd> Loved
+                    </p>
+                    <p className="mt-1">
+                        <kbd className="px-1 py-0.5 bg-gray-700 rounded">Esc</kbd> Clear all filters
+                    </p>
+                    <button
+                        className="mt-1 text-cyan-400 hover:text-cyan-300 text-xs"
+                        onClick={() => setShortcutsDialogOpen(true)}
+                    >
+                        View all shortcuts
+                    </button>
                 </div>
 
                 {/* Scroll to top button */}
