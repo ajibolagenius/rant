@@ -56,19 +56,20 @@ const RantCard: React.FC<RantCardProps> = ({
     const moodAnimation = getMoodAnimation(rant.mood);
 
     // Check if this is a new rant (less than 1 minute old)
+    // Update the isOptimistic check to also look for the is_optimistic flag
     useEffect(() => {
         if (rant.created_at) {
             const createdAt = new Date(rant.created_at);
             const now = new Date();
             const diffInSeconds = Math.floor((now.getTime() - createdAt.getTime()) / 1000);
 
-            // If the rant was created less than 60 seconds ago, mark it as new
-            setIsNew(diffInSeconds < 60);
+            // If the rant was created less than 120 seconds ago, mark it as new
+            setIsNew(diffInSeconds < 120);
 
-            // Check if this is likely an optimistic update (created in the last 2 seconds)
-            setIsOptimistic(diffInSeconds < 2);
+            // Check if this is likely an optimistic update (created in the last 2 seconds or has the flag)
+            setIsOptimistic(diffInSeconds < 2 || rant.is_optimistic === true);
         }
-    }, [rant.created_at]);
+    }, [rant.created_at, rant.is_optimistic]);
 
     // Format the relative time
     const formattedTime = rant.created_at

@@ -10,4 +10,6 @@ export interface Rant {
     comments: number;
     userAlias: string;
     isLiked?: boolean;
+    author_id: string;
+    is_optimistic?: boolean;
 }

@@ -9,6 +9,7 @@ export interface Rant {
     author_id: string;
     language: string;
     sentiment: string;
+    is_optimistic?: boolean;
 }
 
 export interface Comment {

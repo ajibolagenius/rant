@@ -380,6 +380,39 @@ const Index: React.FC = () => {
         });
     };
 
+    useEffect(() => {
+        // Set up real-time subscription for new rants
+        const subscription = supabase
+            .channel('public:rants')
+            .on('postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'rants' },
+                (payload) => {
+                    // When a new rant is inserted, add it to our state
+                    const newRant = payload.new as Rant;
+
+                    // Only add if we don't already have this rant
+                    if (!submittedRantIds.current.has(newRant.id)) {
+                        setRantList(prevRants => [newRant, ...prevRants]);
+
+                        // Show visual feedback
+                        setShowNewRantNotification(true);
+
+                        // Trigger animation for the new rant
+                        setNewRantId(newRant.id);
+                    }
+                })
+            .subscribe();
+
+        // Cleanup subscription on unmount
+        return () => {
+            subscription.unsubscribe();
+        };
+    }, []);
+
+    // Add these new state variables
+    const [showNewRantNotification, setShowNewRantNotification] = useState(false);
+    const [newRantId, setNewRantId] = useState<string | null>(null);
+
     // Fetch rants when the component mounts
     useEffect(() => {
         if (observerRef.current) {
@@ -764,7 +797,8 @@ const Index: React.FC = () => {
                 author_id: authorId,
                 likes: 0,
                 created_at: new Date().toISOString(),
-                // Add any other required fields with default values
+                // Add a flag to indicate this is an optimistic update
+                is_optimistic: true
             };
 
             // Optimistically add to the list to improve perceived performance
@@ -858,6 +892,33 @@ const Index: React.FC = () => {
             toast({
                 title: "Error",
                 description: "Failed to like this rant. You may have already liked it.",
+                variant: "destructive",
+            });
+        }
+    };
+
+    // Add the handleRemoveRant function that was missing
+    const handleRemoveRant = (id: string) => {
+        try {
+            // Remove from local state
+            setRantList(prevRants => prevRants.filter(rant => rant.id !== id));
+
+            // If using the rant context, also update it
+            if (rantContext && rantContext.removeRant) {
+                rantContext.removeRant(id);
+            }
+
+            toast({
+                title: "Rant Removed",
+                description: "The rant has been removed successfully.",
+                variant: "default",
+            });
+        } catch (error) {
+            console.error("Error removing rant:", error);
+
+            toast({
+                title: "Error",
+                description: "Failed to remove the rant. Please try again.",
                 variant: "destructive",
             });
         }
@@ -1164,7 +1225,26 @@ const Index: React.FC = () => {
                                                 renderItem={renderRantItem}
                                                 isLoading={loading}
                                                 hasMore={hasMore}
+                                                onRemove={handleRemoveRant}
+                                                newRantId={newRantId}
+                                                onNewRantAppear={() => setNewRantId(null)}
                                             />
+                                            {/* Toast notification for new rants */}
+                                            {showNewRantNotification && (
+                                                <div className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-md shadow-lg cursor-pointer"
+                                                    onClick={() => {
+                                                        setShowNewRantNotification(false);
+                                                        // If we have a newRantId, scroll to it
+                                                        if (newRantId && document.querySelector(`.new-rant`)) {
+                                                            document.querySelector(`.new-rant`)?.scrollIntoView({
+                                                                behavior: 'smooth',
+                                                                block: 'start'
+                                                            });
+                                                        }
+                                                    }}>
+                                                    New rant added! Click to view
+                                                </div>
+                                            )}
                                         </RantErrorBoundary>
                                     </section>
                                 </motion.div>
@@ -1221,20 +1301,31 @@ const Index: React.FC = () => {
                 {/* Mood keyboard shortcuts hint */}
                 <div className="fixed bottom-20 right-4 p-3 bg-gray-800 rounded-lg shadow-lg text-xs text-gray-300 max-w-xs opacity-70 hover:opacity-100 transition-opacity">
                     <p className="font-semibold mb-1">Mood Filter Shortcuts:</p>
-                    <p>
-                        <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+H</kbd> Happy,
-                        <kbd className="px-1 py-0.5 bg-gray-700 rounded ml-1">Shift+S</kbd> Sad,
-                        <kbd className="px-1 py-0.5 bg-gray-700 rounded ml-1">Shift+A</kbd> Angry
-                    </p>
-                    <p className="mt-1">
-                        <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+G</kbd> Smiling,
-                        <kbd className="px-1 py-0.5 bg-gray-700 rounded ml-1">Shift+L</kbd> Loved
-                    </p>
-                    <p className="mt-1">
+                    <div className="grid grid-cols-2 gap-x-2 gap-y-1">
+                        <p>
+                            <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+S</kbd> Sad
+                        </p>
+                        <p>
+                            <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+A</kbd> Angry
+                        </p>
+                        <p>
+                            <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+C</kbd> Confused
+                        </p>
+                        <p>
+                            <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+G</kbd> Smiling
+                        </p>
+                        <p>
+                            <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+L</kbd> Loved
+                        </p>
+                        <p>
+                            <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+M</kbd> Mind Blown
+                        </p>
+                    </div>
+                    <p className="mt-1 text-center">
                         <kbd className="px-1 py-0.5 bg-gray-700 rounded">Esc</kbd> Clear all filters
                     </p>
                     <button
-                        className="mt-1 text-cyan-400 hover:text-cyan-300 text-xs"
+                        className="mt-2 text-cyan-400 hover:text-cyan-300 text-xs w-full text-center"
                         onClick={() => setShortcutsDialogOpen(true)}
                     >
                         View all shortcuts
@@ -1246,7 +1337,7 @@ const Index: React.FC = () => {
 
                 <Footer />
             </div>
-        </RantErrorBoundary>
+        </RantErrorBoundary >
     );
 };
 

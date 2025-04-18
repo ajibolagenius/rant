@@ -22,6 +22,8 @@ interface MasonryGridProps {
     renderItem?: (rant: Rant, index: number) => React.ReactNode;
     isLoading?: boolean;
     hasMore?: boolean;
+    newRantId?: string | null;
+    onNewRantAppear?: () => void;
 }
 
 const MasonryGrid: React.FC<MasonryGridProps> = ({
@@ -32,7 +34,9 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({
     onLoadMore,
     renderItem,
     isLoading = false,
-    hasMore = true
+    hasMore = true,
+    newRantId = null,
+    onNewRantAppear
 }) => {
     const [columns, setColumns] = useState(getColumnCount());
     const observerRef = useRef<IntersectionObserver | null>(null);
@@ -40,6 +44,7 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({
     const containerRef = useRef<HTMLDivElement>(null);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const newRantRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const handleResize = () => {
@@ -52,6 +57,34 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
     }, [columns]);
+
+    // Effect to scroll to new rant when it appears
+    useEffect(() => {
+        if (newRantId && newRantRef.current) {
+            // Smooth scroll to the new rant
+            newRantRef.current.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+
+            // Add pulse animation class
+            newRantRef.current.classList.add('pulse-animation');
+
+            // Notify parent that we've handled the new rant
+            if (onNewRantAppear) {
+                onNewRantAppear();
+            }
+
+            // Remove animation class after it completes
+            const timer = setTimeout(() => {
+                if (newRantRef.current) {
+                    newRantRef.current.classList.remove('pulse-animation');
+                }
+            }, 2000);
+
+            return () => clearTimeout(timer);
+        }
+    }, [newRantId, onNewRantAppear]);
 
     // Set up intersection observer for infinite scrolling with debounce
     const setupObserver = useCallback(() => {
@@ -161,8 +194,14 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({
                     >
                         {columnRants.map((rant, rantIndex) => {
                             const overallIndex = rantIndex * columns + columnIndex;
+                            const isNewRant = rant.id === newRantId;
+
                             return (
-                                <div key={rant.id} className="w-full">
+                                <div
+                                    key={rant.id}
+                                    className={`w-full ${isNewRant ? 'new-rant' : ''}`}
+                                    ref={isNewRant ? newRantRef : null}
+                                >
                                     {renderItem ? renderItem(rant, overallIndex) : null}
                                 </div>
                             );

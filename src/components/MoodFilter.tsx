@@ -65,17 +65,6 @@ const MoodFilter: React.FC<MoodFilterProps> = ({ selectedMoods, onChange }) => {
                 ))}
             </div>
 
-            {/* Keyboard shortcut hint */}
-            <div className="text-xs text-gray-500">
-                <p>Tip: Use <kbd className="px-1 py-0.5 bg-gray-800 rounded">Shift</kbd> + mood letter to toggle filters</p>
-                <p className="mt-1">
-                    <kbd className="px-1 py-0.5 bg-gray-800 rounded">Shift+H</kbd> for Happy,
-                    <kbd className="px-1 py-0.5 bg-gray-800 rounded ml-1">Shift+S</kbd> for Sad,
-                    <kbd className="px-1 py-0.5 bg-gray-800 rounded ml-1">Shift+A</kbd> for Angry, etc.
-                </p>
-                <p className="mt-1">Press <kbd className="px-1 py-0.5 bg-gray-800 rounded">Esc</kbd> to clear all filters</p>
-            </div>
-
             {/* Selected moods summary */}
             {selectedMoods.length > 0 && (
                 <div className="pt-3 border-t border-[#333]">

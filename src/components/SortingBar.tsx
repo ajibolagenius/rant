@@ -16,6 +16,7 @@ import { parseSearchQuery } from "@/utils/searchParser";
 import SearchHelp from "@/components/SearchHelp";
 import { useSearchParams, useLocation } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 
 type SortOption = "latest" | "popular" | "filter" | "search";
 
@@ -61,6 +62,57 @@ const SortingBar: React.FC<SortingBarProps> = ({
     // Use our custom hooks for search history and suggestions
     const { searchHistory, addToHistory, clearHistory } = useSearchHistory();
     const suggestions = useSearchSuggestions(rants);
+
+    // Define keyboard shortcuts for search functionality
+    useKeyboardShortcuts([
+        {
+            key: "/",
+            action: () => {
+                // Focus search box
+                handleSearchDropdownToggle();
+                setTimeout(() => {
+                    searchInputRef.current?.focus();
+                }, 100);
+
+                // Show toast notification
+                toast({
+                    title: "Search Activated",
+                    description: "Type to search rants",
+                    variant: "default",
+                });
+            },
+            description: "Focus search box"
+        },
+        {
+            key: "s",
+            action: () => {
+                // Activate search mode
+                if (activeOption !== "search") {
+                    handleSearchDropdownToggle();
+                    setTimeout(() => {
+                        searchInputRef.current?.focus();
+                    }, 100);
+
+                    // Show toast notification
+                    toast({
+                        title: "Search Mode",
+                        description: "Search mode activated",
+                        variant: "default",
+                    });
+                }
+            },
+            description: "Activate search mode"
+        }
+    ]);
+
+    // Handle Escape key for clearing search (already implemented in handleKeyDown)
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            handleAdvancedSearch();
+        } else if (e.key === 'Escape') {
+            clearSearch();
+        }
+    };
 
     // Update local state when props change
     useEffect(() => {
@@ -434,13 +486,6 @@ const SortingBar: React.FC<SortingBarProps> = ({
         }
     };
 
-    // Handle key down for search input
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter') {
-            handleAdvancedSearch();
-        }
-    };
-
     // Setup keyboard shortcuts for mood selection
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -690,11 +735,9 @@ const SortingBar: React.FC<SortingBarProps> = ({
 
                         {/* Advanced search help */}
                         <div className="text-xs text-gray-500 pt-2 border-t border-[#333] flex items-center justify-between">
-                            <div>
-                                <p className="font-semibold mb-1">Advanced search:</p>
-                                <p>• Use <code className="bg-[#252525] px-1 rounded">mood:angry</code> to filter by mood</p>
-                                <p>• Use <code className="bg-[#252525] px-1 rounded">"exact phrase"</code> for exact matching</p>
-                            </div>
+                            <p className="mt-1">
+                                For filter and search tips: Use <kbd className="px-1 py-0.5 bg-gray-800 rounded">Shift + ?</kbd> to view the shortcuts and tip guide.
+                            </p>
                             <SearchHelp />
                         </div>
                     </div>
@@ -747,13 +790,11 @@ const SortingBar: React.FC<SortingBarProps> = ({
                     </div>
 
                     {/* Keyboard shortcut hint */}
-                    <div className="text-xs text-gray-500 mb-4">
-                        <p>Tip: Use <kbd className="px-1 py-0.5 bg-gray-800 rounded">Shift</kbd> + mood letter to toggle filters</p>
+                    <div className="text-xs text-gray-500 pt-2 border-t border-[#333] flex items-center justify-between">
                         <p className="mt-1">
-                            <kbd className="px-1 py-0.5 bg-gray-800 rounded">Shift+H</kbd> for Happy,
-                            <kbd className="px-1 py-0.5 bg-gray-800 rounded ml-1">Shift+S</kbd> for Sad,
-                            <kbd className="px-1 py-0.5 bg-gray-800 rounded ml-1">Shift+A</kbd> for Angry, etc.
+                            For filter and search tips: Use <kbd className="px-1 py-0.5 bg-gray-800 rounded">Shift + ?</kbd> to view the shortcuts and tip guide.
                         </p>
+                        <SearchHelp />
                     </div>
 
                     {/* Display selected filters inside the filter panel */}
@@ -849,6 +890,7 @@ const SortingBar: React.FC<SortingBarProps> = ({
                     )}
                 </div>
             )}
+
 
             {/* URL Sync Status Indicator - only show in development */}
             {process.env.NODE_ENV === 'development' && (

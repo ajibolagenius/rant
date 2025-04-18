@@ -126,63 +126,6 @@ const SearchBar: React.FC<SearchBarProps> = ({
         }
     }, [searchParams, query, selectedMood]);
 
-    // Setup keyboard shortcuts for mood selection
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            // Only process if Shift key is pressed
-            if (e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey) {
-                let targetMood: MoodType | null = null;
-
-                // Map keys to moods
-                switch (e.key.toLowerCase()) {
-                    case 'h': targetMood = 'happy'; break;
-                    case 's': targetMood = 'sad'; break;
-                    case 'a': targetMood = 'angry'; break;
-                    case 'c': targetMood = 'confused'; break;
-                    case 'l': targetMood = 'loved'; break;
-                    case 't': targetMood = 'tired'; break;
-                    case 'n': targetMood = 'neutral'; break;
-                    case 'm': targetMood = 'smiling'; break;
-                }
-
-                // If a valid mood key was pressed and we have a mood selection handler
-                if (targetMood && onMoodSelect) {
-                    e.preventDefault();
-                    onMoodSelect(targetMood);
-
-                    // Show toast notification for better UX
-                    const isSelected = selectedMoods.includes(targetMood);
-                    toast({
-                        title: `Mood Filter: ${getMoodLabel(targetMood)}`,
-                        description: isSelected
-                            ? `Removed ${getMoodLabel(targetMood)} filter`
-                            : `Added ${getMoodLabel(targetMood)} filter`,
-                        variant: "default",
-                    });
-                }
-            }
-
-            // Clear all filters with Escape key
-            if (e.key === 'Escape' && !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey) {
-                if (document.activeElement !== inputRef.current) {
-                    handleClear();
-                    toast({
-                        title: "Filters Cleared",
-                        description: "All search filters have been reset",
-                        variant: "default",
-                    });
-                }
-            }
-        };
-
-        // Add event listener
-        window.addEventListener('keydown', handleKeyDown);
-
-        // Clean up
-        return () => {
-            window.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [onMoodSelect, selectedMoods]);
 
     const handleClear = () => {
         setQuery('');
@@ -297,11 +240,6 @@ const SearchBar: React.FC<SearchBarProps> = ({
                             >
                                 Hide options
                             </button>
-                        </div>
-
-                        {/* Keyboard shortcut hint */}
-                        <div className="w-full mt-2 text-xs text-gray-500">
-                            <span>Tip: Use <kbd className="px-1 py-0.5 bg-gray-800 rounded">Shift</kbd> + mood letter to toggle filters (e.g., <kbd className="px-1 py-0.5 bg-gray-800 rounded">Shift+H</kbd> for Happy)</span>
                         </div>
                     </div>
                 )}

@@ -120,11 +120,15 @@ const AppRouter: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         };
     }, [useHashRouter]);
 
-    // Render the appropriate router
+    // Render the appropriate router with future flags to address warnings
     return useHashRouter ? (
-        <HashRouter>{children}</HashRouter>
+        <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            {children}
+        </HashRouter>
     ) : (
-        <BrowserRouter>{children}</BrowserRouter>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            {children}
+        </BrowserRouter>
     );
 };
 

@@ -7,8 +7,28 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { getMoodEmoji, getMoodLabel, allMoods, MoodType } from "@/lib/utils/mood";
 
 const SearchHelp: React.FC = () => {
+    // Function to render a search tip item
+    const renderSearchTipItem = (title: string, description: React.ReactNode, example?: string, explanation?: string) => {
+        return (
+            <div className="bg-[#121212] hover:bg-[#1A1A1A] border border-[#222] p-3 rounded-lg">
+                <h4 className="font-medium text-sm text-white mb-1">{title}</h4>
+                <div className="text-sm text-gray-300 mb-2">{description}</div>
+                {example && (
+                    <div className="bg-[#1A1A1A] p-2 rounded border border-[#333]">
+                        <code className="text-xs text-cyan-400">{example}</code>
+                        {explanation && (
+                            <p className="text-xs text-gray-400 mt-1">{explanation}</p>
+                        )}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     return (
         <Popover>
             <PopoverTrigger asChild>
@@ -16,43 +36,87 @@ const SearchHelp: React.FC = () => {
                     <QuestionMarkCircledIcon className="h-5 w-5" />
                 </button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 bg-[#1A1A1A] border border-[#333] text-white p-4">
-                <div className="space-y-4">
-                    <h3 className="font-medium text-lg">Search Tips</h3>
+            <PopoverContent
+                className="w-[90vw] max-w-[800px] max-h-[80vh] bg-[#1A1A1A] border border-[#333] text-white p-4"
+                sideOffset={5}
+                align="end"
+            >
+                <div className="space-y-2">
+                    <h3 className="font-medium text-lg mb-3">Search Tips</h3>
 
-                    <div className="space-y-2">
-                        <h4 className="font-medium text-sm">Basic Search</h4>
-                        <p className="text-sm text-gray-300">
-                            Type any word or phrase to find matching rants.
-                        </p>
-                    </div>
+                    <ScrollArea className="h-[min(500px,calc(80vh-80px))] pr-4">
+                        {/* Responsive grid: 1 column on small screens, 2 on medium, 3 on large */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {renderSearchTipItem(
+                                "Basic Search",
+                                "Type any word or phrase to find matching rants.",
+                                "anxiety work stress",
+                                "Finds rants containing any of these words"
+                            )}
 
-                    <div className="space-y-2">
-                        <h4 className="font-medium text-sm">Mood Filter</h4>
-                        <p className="text-sm text-gray-300">
-                            Use <code className="bg-[#252525] px-1 rounded">mood:angry</code> to find rants with a specific mood.
-                        </p>
-                        <p className="text-sm text-gray-300">
-                            Available moods: sad, crying, angry, eyeRoll, heartbroken, mindBlown, speechless, confused, tired, nervous, smiling, laughing, celebratory, confident, loved
-                        </p>
-                    </div>
+                            {renderSearchTipItem(
+                                "Exact Phrases",
+                                <>Use quotes for exact phrase matching: <code className="bg-[#252525] px-1 rounded">"exactly this phrase"</code></>,
+                                "\"bad day at work\"",
+                                "Finds rants with this exact phrase"
+                            )}
 
-                    <div className="space-y-2">
-                        <h4 className="font-medium text-sm">Exact Phrases</h4>
-                        <p className="text-sm text-gray-300">
-                            Use quotes for exact phrase matching: <code className="bg-[#252525] px-1 rounded">"exactly this phrase"</code>
-                        </p>
-                    </div>
+                            {renderSearchTipItem(
+                                "Mood Filter",
+                                <>Use <code className="bg-[#252525] px-1 rounded">mood:angry</code> to find rants with a specific mood.</>,
+                                "mood:angry",
+                                "Finds angry rants"
+                            )}
 
-                    <div className="space-y-2">
-                        <h4 className="font-medium text-sm">Combined Search</h4>
-                        <p className="text-sm text-gray-300">
-                            You can combine these techniques:
-                        </p>
-                        <p className="text-sm text-gray-300">
-                            <code className="bg-[#252525] px-1 rounded">mood:angry "terrible day" work</code>
-                        </p>
-                    </div>
+                            {renderSearchTipItem(
+                                "Combined Search",
+                                "You can combine these techniques:",
+                                "mood:angry \"terrible day\" work",
+                                "Finds angry rants containing the exact phrase and word"
+                            )}
+
+                            {/* This item spans 2 columns on medium screens and above */}
+                            <div className="sm:col-span-2 lg:col-span-3">
+                                {renderSearchTipItem(
+                                    "Available Moods",
+                                    <div className="text-xs grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1">
+                                        {allMoods.map(mood => (
+                                            <div key={mood} className="flex items-center gap-1">
+                                                <img
+                                                    src={getMoodEmoji(mood)}
+                                                    alt={getMoodLabel(mood)}
+                                                    className="w-3 h-3"
+                                                    onError={(e) => {
+                                                        // Fallback if emoji fails to load
+                                                        (e.target as HTMLImageElement).style.display = 'none';
+                                                    }}
+                                                />
+                                                <span>{mood}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {renderSearchTipItem(
+                                "Search Shortcuts",
+                                <div className="space-y-2">
+                                    <div className="flex justify-between items-center">
+                                        <span>Focus search box</span>
+                                        <kbd className="px-1.5 py-0.5 bg-[#1A1A1A] border border-[#333] rounded text-xs">/</kbd>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span>Search mode</span>
+                                        <kbd className="px-1.5 py-0.5 bg-[#1A1A1A] border border-[#333] rounded text-xs">S</kbd>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span>Clear search</span>
+                                        <kbd className="px-1.5 py-0.5 bg-[#1A1A1A] border border-[#333] rounded text-xs">Esc</kbd>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </ScrollArea>
                 </div>
             </PopoverContent>
         </Popover>
