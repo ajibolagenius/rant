@@ -1,10 +1,11 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import MasonryGrid from "./MasonryGrid";
 import { Rant } from "@/lib/types/rant";
 import { motion } from "framer-motion";
 import { getMoodAnimation } from "@/lib/utils/mood";
 import RantCard from "./RantCard";
 import { useRants } from "@/components/RantContext";
+import { useSearchParams, useLocation } from "react-router-dom";
 
 interface RantListProps {
     onRantClick?: (rant: Rant) => void;
@@ -15,8 +16,56 @@ const RantList: React.FC<RantListProps> = ({
     onRantClick,
     searchTerm = ""
 }) => {
-    const { rants, loading, loadMoreRants, likeRant, hasMore } = useRants();
+    const { rants, loading, loadMoreRants, likeRant, hasMore, filterByMoods, sortBy, searchRants } = useRants();
     const isEmpty = rants.length === 0;
+    const [searchParams, setSearchParams] = useSearchParams();
+    const location = useLocation();
+
+    // Parse URL parameters on component mount
+    useEffect(() => {
+        // Get parameters from URL
+        const query = searchParams.get('q');
+        const mood = searchParams.get('mood');
+        const moodsParam = searchParams.get('moods');
+        const sort = searchParams.get('sort');
+
+        // Apply filters based on URL parameters
+        if (moodsParam) {
+            const moods = moodsParam.split(',').filter(Boolean);
+            if (moods.length > 0 && filterByMoods) {
+                filterByMoods(moods);
+            }
+        }
+
+        if (sort && sortBy) {
+            sortBy(sort);
+        }
+
+        if ((query || mood) && searchRants) {
+            searchRants(query || '', mood || null);
+        }
+    }, [searchParams, filterByMoods, sortBy, searchRants]);
+
+    // Update URL when filters change
+    const updateUrlParams = useCallback((params: Record<string, string | null>) => {
+        const newParams = new URLSearchParams(searchParams);
+
+        // Update or remove each parameter
+        Object.entries(params).forEach(([key, value]) => {
+            if (value === null) {
+                newParams.delete(key);
+            } else {
+                newParams.set(key, value);
+            }
+        });
+
+        // Update URL without page reload
+        setSearchParams(newParams, { replace: true });
+
+        // For better SEO and sharing, also update the browser history
+        const newUrl = `${window.location.pathname}${newParams.toString() ? '?' + newParams.toString() : ''}`;
+        window.history.replaceState(null, '', newUrl);
+    }, [searchParams, setSearchParams]);
 
     // Memoize the loadMore function to prevent unnecessary re-renders
     const handleLoadMore = useCallback(async () => {
@@ -28,6 +77,11 @@ const RantList: React.FC<RantListProps> = ({
             }
         }
     }, [loading, hasMore, loadMoreRants]);
+
+    // Handle like with URL parameter preservation
+    const handleLike = useCallback((rantId: string) => {
+        likeRant(rantId);
+    }, [likeRant]);
 
     return (
         <section className="w-full px-4 sm:px-8 py-10">
@@ -45,7 +99,7 @@ const RantList: React.FC<RantListProps> = ({
                         rants={rants}
                         gap={24}
                         searchTerm={searchTerm}
-                        onLike={likeRant}
+                        onLike={handleLike}
                         onLoadMore={handleLoadMore}
                         isLoading={loading}
                         hasMore={hasMore}
@@ -69,7 +123,7 @@ const RantList: React.FC<RantListProps> = ({
                                             rant={rant}
                                             index={index}
                                             searchTerm={searchTerm}
-                                            onLike={() => likeRant(rant.id)}
+                                            onLike={() => handleLike(rant.id)}
                                         />
                                     </div>
                                 </motion.div>
@@ -95,18 +149,7 @@ const RantList: React.FC<RantListProps> = ({
                                         ease: "easeOut"
                                     }}
                                 >
-                                    {/* <motion.span
-                                        initial={{ scale: 0.9 }}
-                                        animate={{ scale: 1 }}
-                                        transition={{
-                                            duration: 0.5,
-                                            ease: "easeInOut",
-                                            repeat: 1,
-                                            repeatType: "reverse"
-                                        }}
-                                    >
-                                        No more rants to load
-                                    </motion.span> */}
+                                    {/* No more rants message */}
                                 </motion.div>
                             )}
 

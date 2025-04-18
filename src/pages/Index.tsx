@@ -6,7 +6,7 @@ import SortingBar from "@/components/SortingBar";
 import MasonryGrid from "@/components/MasonryGrid";
 import IntroSection from "@/components/IntroSection";
 import { toast } from "@/hooks/use-toast";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { createFuzzySearcher, performFuzzySearch } from "@/lib/utils/fuzzySearch";
@@ -75,6 +75,8 @@ class RantErrorBoundary extends React.Component<
 
 const Index: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();
+    const navigate = useNavigate();
+    const location = useLocation();
     const [rantList, setRantList] = useState<Rant[]>([]);
     const [sortOption, setSortOption] = useState<SortOption>("latest");
     const [selectedMoods, setSelectedMoods] = useState<string[]>([]);
@@ -429,6 +431,10 @@ const Index: React.FC = () => {
 
             // Update URL without reloading the page
             setSearchParams(params, { replace: true });
+
+            // For better SEO and sharing, also update the browser history
+            const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
+            window.history.replaceState(null, '', newUrl);
         } catch (err) {
             console.error("Error updating URL params:", err);
             // Don't set error state here to avoid UI disruption
@@ -645,24 +651,76 @@ const Index: React.FC = () => {
     const handleFilterChange = (moods: string[]) => {
         setSelectedMoods(moods);
         // Reset will happen via the URL params effect
+
+        // Update URL parameters for sharing and SEO
+        const params = new URLSearchParams(searchParams);
+        if (moods.length > 0) {
+            params.set('moods', moods.join(','));
+            params.set('sort', 'filter');
+        } else {
+            params.delete('moods');
+            if (params.get('sort') === 'filter') {
+                params.delete('sort');
+            }
+        }
+        setSearchParams(params);
     };
 
     // Handle sort change
     const handleSortChange = (option: SortOption) => {
         setSortOption(option);
-        // Reset will happen via the URL params effect
+
+        // Update URL parameters for sharing and SEO
+        const params = new URLSearchParams(searchParams);
+        if (option !== 'latest') {
+            params.set('sort', option);
+        } else {
+            params.delete('sort');
+        }
+
+        // If changing to a non-filter/search option, clear those params
+        if (option !== 'filter') {
+            params.delete('moods');
+        }
+        if (option !== 'search') {
+            params.delete('q');
+            params.delete('mood');
+        }
+
+        setSearchParams(params);
     };
 
     // Handle search - now with advanced search capabilities
     const handleSearch = (query: string, mood: MoodType | null) => {
         setSearchQuery(query);
         setSearchMood(mood);
+
+        // Update URL parameters for sharing and SEO
+        const params = new URLSearchParams(searchParams);
+
         if (query || mood) {
             setSortOption("search");
-        } else if (sortOption === "search") {
+            params.set('sort', 'search');
+
+            if (query) {
+                params.set('q', query);
+            } else {
+                params.delete('q');
+            }
+
+            if (mood) {
+                params.set('mood', mood);
+            } else {
+                params.delete('mood');
+            }
+        } else {
             setSortOption("latest");
+            params.delete('sort');
+            params.delete('q');
+            params.delete('mood');
         }
-        // Reset will happen via the URL params effect
+
+        setSearchParams(params);
     };
 
     // Function to handle retry when loading fails
@@ -903,12 +961,6 @@ const Index: React.FC = () => {
                                 )}
                             </div>
                         )}
-
-                        {/* {!loading && !hasMore && rantList.length > 0 && (
-                            <div className="text-center text-gray-400 py-6">
-                                No more rants to load
-                            </div>
-                        )} */}
                     </div>
                 </div>
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { MoodType, getMoodEmoji, getMoodLabel, getMoodColor } from '@/lib/utils/mood';
+import { useSearchParams } from 'react-router-dom';
 
 interface SearchBarProps {
     onSearch: (query: string, mood: MoodType | null) => void;
@@ -14,12 +15,18 @@ const SearchBar: React.FC<SearchBarProps> = ({
     initialQuery = '',
     initialMood = null
 }) => {
-    // Get initial values from localStorage if not provided
-    const [query, setQuery] = useState(initialQuery || localStorage.getItem('lastSearchQuery') || '');
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    // Get initial values from URL params first, then fallback to props or localStorage
+    const urlQuery = searchParams.get('q') || '';
+    const urlMood = searchParams.get('mood') as MoodType | null;
+
+    // Initialize state with URL parameters taking precedence
+    const [query, setQuery] = useState(urlQuery || initialQuery || localStorage.getItem('lastSearchQuery') || '');
     const [selectedMood, setSelectedMood] = useState<MoodType | null>(
-        initialMood || (localStorage.getItem('lastSearchMood') as MoodType | null)
+        urlMood || initialMood || (localStorage.getItem('lastSearchMood') as MoodType | null)
     );
-    const [isExpanded, setIsExpanded] = useState(!!initialQuery || !!initialMood);
+    const [isExpanded, setIsExpanded] = useState(!!urlQuery || !!urlMood || !!initialQuery || !!initialMood);
     const inputRef = useRef<HTMLInputElement>(null);
 
     // Common moods for quick filtering
@@ -44,13 +51,92 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
         // Trigger search immediately
         onSearch(query, selectedMood);
+
+        // Update URL parameters
+        updateUrlParams();
     }, [query, selectedMood, onSearch]);
+
+    // Update URL parameters when search changes
+    const updateUrlParams = () => {
+        const newParams = new URLSearchParams(searchParams);
+
+        if (query) {
+            newParams.set('q', query);
+            // If we have a query, ensure we're in search mode
+            newParams.set('sort', 'search');
+        } else {
+            newParams.delete('q');
+        }
+
+        if (selectedMood) {
+            newParams.set('mood', selectedMood);
+            // If we have a mood, ensure we're in search mode
+            newParams.set('sort', 'search');
+        } else {
+            newParams.delete('mood');
+        }
+
+        // If neither query nor mood is set, remove the sort parameter if it's 'search'
+        if (!query && !selectedMood && newParams.get('sort') === 'search') {
+            newParams.delete('sort');
+        }
+
+        // Only update if there's a change to avoid unnecessary history entries
+        if (newParams.toString() !== searchParams.toString()) {
+            setSearchParams(newParams, { replace: true });
+        }
+    };
+
+    // Check for URL parameter changes
+    useEffect(() => {
+        const urlQuery = searchParams.get('q');
+        const urlMood = searchParams.get('mood') as MoodType | null;
+
+        // Only update state if the URL parameters differ from current state
+        // to avoid infinite loops
+        if (urlQuery !== null && urlQuery !== query) {
+            setQuery(urlQuery);
+        } else if (urlQuery === null && query !== '') {
+            // If URL has no query but state does, check if we should clear it
+            // Only clear if we're not in search mode anymore
+            if (searchParams.get('sort') !== 'search') {
+                setQuery('');
+            }
+        }
+
+        if (urlMood !== selectedMood) {
+            setSelectedMood(urlMood);
+        } else if (urlMood === null && selectedMood !== null) {
+            // If URL has no mood but state does, check if we should clear it
+            // Only clear if we're not in search mode anymore
+            if (searchParams.get('sort') !== 'search') {
+                setSelectedMood(null);
+            }
+        }
+
+        // Expand the search options if there are search parameters
+        if (urlQuery || urlMood) {
+            setIsExpanded(true);
+        }
+    }, [searchParams, query, selectedMood]);
 
     const handleClear = () => {
         setQuery('');
         setSelectedMood(null);
         localStorage.removeItem('lastSearchQuery');
         localStorage.removeItem('lastSearchMood');
+
+        // Update URL to remove search parameters
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('q');
+        newParams.delete('mood');
+
+        // If sort is 'search' and we're clearing the search, remove sort too
+        if (newParams.get('sort') === 'search') {
+            newParams.delete('sort');
+        }
+
+        setSearchParams(newParams, { replace: true });
 
         // Focus the input after clearing
         inputRef.current?.focus();
