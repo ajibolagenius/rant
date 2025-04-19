@@ -1,0 +1,54 @@
+/* High contrast mode */
+.high-contrast {
+  --background: #000000;
+  --foreground: #ffffff;
+  --muted: #333333;
+  --muted-foreground: #ffffff;
+  --border: #ffffff;
+  --input: #ffffff;
+  --primary: #ffff00;
+  --primary-foreground: #000000;
+  --secondary: #ffffff;
+  --secondary-foreground: #000000;
+  --accent: #ffff00;
+  --accent-foreground: #000000;
+  --destructive: #ff0000;
+  --destructive-foreground: #ffffff;
+  --card: #000000;
+  --card-foreground: #ffffff;
+  --popover: #000000;
+  --popover-foreground: #ffffff;
+
+  /* Increase outline visibility */
+  --outline-width: 3px;
+  --outline-style: solid;
+  --outline-color: #ffff00;
+}
+
+.high-contrast a:focus,
+.high-contrast button:focus,
+.high-contrast input:focus,
+.high-contrast textarea:focus,
+.high-contrast select:focus {
+  outline: var(--outline-width) var(--outline-style) var(--outline-color);
+  outline-offset: 2px;
+}
+
+/* Font size adjustments */
+[data-fontSize="normal"] {
+  font-size: 1rem;
+}
+
+[data-fontSize="large"] {
+  font-size: 1.25rem;
+}
+
+[data-fontSize="x-large"] {
+  font-size: 1.5rem;
+}
+
+/* Reduced motion support */
+.reduce-motion * {
+  animation-duration: 0.001ms !important;
+  transition-duration: 0.001ms !important;
+}

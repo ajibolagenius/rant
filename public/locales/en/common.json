@@ -1,0 +1,116 @@
+{
+  "app": {
+    "title": "Rant - About Anything!",
+    "tagline": "Share your thoughts. Express your moods.",
+    "footerText": "© 2025 Rant - About Anything!. All rights reserved."
+  },
+  "rants": {
+    "new": "New Rant",
+    "placeholder": "What's on your mind?",
+    "submit": "Share Your Thoughts!",
+    "noResults": "No rants found",
+    "empty": "No rants found",
+    "beFirst": "Be the first to post a rant!",
+    "loading": "Loading rants...",
+    "loadMore": "Load more",
+    "list": "Rants list",
+    "gridTitle": "Rants grid"
+  },
+  "moods": {
+    "sad": "Sad",
+    "crying": "Crying",
+    "angry": "Angry",
+    "eyeRoll": "Eye Roll",
+    "heartbroken": "Heartbroken",
+    "mindBlown": "Mind Blown",
+    "speechless": "Speechless",
+    "confused": "Confused",
+    "tired": "Tired",
+    "nervous": "Nervous",
+    "smiling": "Smiling",
+    "laughing": "Laughing",
+    "celebratory": "Celebratory",
+    "confident": "Confident",
+    "loved": "Loved",
+    "mood": "Mood"
+  },
+  "sorting": {
+    "latest": "Latest",
+    "popular": "Popular",
+    "trending": "Trending"
+  },
+  "accessibility": {
+    "title": "Accessibility",
+    "description": "Customize your experience with these accessibility options",
+    "highContrast": "High Contrast Mode",
+    "highContrastDescription": "Increases contrast for better visibility",
+    "reducedMotion": "Reduced Motion",
+    "reducedMotionDescription": "Reduces or eliminates animations",
+    "fontSize": "Font Size",
+    "fontSizeNormal": "Normal",
+    "fontSizeLarge": "Large",
+    "fontSizeXLarge": "Extra Large",
+    "switchToLight": "Switch to light mode",
+    "switchToDark": "Switch to dark mode",
+    "keyboardShortcuts": "Keyboard shortcuts",
+    "keyboardShortcutsHint": "View keyboard shortcuts (Press ?)",
+    "toggleContrast": "Toggle high contrast mode"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "theme": "Theme",
+    "accessibility": "Accessibility",
+    "selectLanguage": "Select language",
+    "themeDescription": "Choose your preferred color theme",
+    "lightTheme": "Light",
+    "darkTheme": "Dark",
+    "systemTheme": "System"
+  },
+  "actions": {
+    "tryAgain": "Try Again",
+    "startRanting": "Start Ranting",
+    "loadMoreRants": "Load More Rants"
+  },
+  "search": {
+    "noResults": "No rants found matching your search",
+    "adjustFilters": "Try adjusting your filters or search terms"
+  },
+  "filter": {
+    "noResults": "No rants found with selected moods",
+    "moodSelection": "Select your mood"
+  },
+  "errors": {
+    "loadingRants": "Error loading rants",
+    "failedToLoad": "Failed to load rants",
+    "tryAgain": "Please try again or check your connection"
+  },
+  "notifications": {
+    "newRant": "New rant added! Click to view"
+  },
+  "shortcuts": {
+    "moodFilters": "Mood Filter Shortcuts",
+    "expand": "Expand shortcuts",
+    "collapse": "Collapse shortcuts",
+    "clearFilters": "Clear filters",
+    "viewAll": "View all shortcuts",
+    "moodSelection": "Select your mood"
+  },
+  "development": {
+    "urlMode": "URL Mode",
+    "hashBased": "Hash-based (#/)",
+    "regular": "Regular",
+    "hashBasedDescription": "Works without server configuration",
+    "regularDescription": "Requires server configuration for direct URLs",
+    "switchRoutingMode": "Switch routing mode",
+    "switchTo": "Switch to",
+    "routing": "routing"
+  },
+  "rant": {
+    "by": "Rant by",
+    "anonymousAuthor": "anonymous user",
+    "likeAction": "Like this rant",
+    "unlikeAction": "Unlike this rant",
+    "moodSelection": "Select your mood"
+  }
+}

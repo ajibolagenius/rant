@@ -5,9 +5,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, HashRouter, Navigate } from "react-router-dom";
 import { RantProvider } from "@/components/RantContext";
+import { AccessibilityProvider } from "@/components/AccessibilityContext";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
+import '@/lib/i18n';
+import '@/styles/accessibility.css';
 
 // Error boundary component for catching rendering errors
 class ErrorBoundary extends React.Component<
@@ -63,8 +66,9 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Loading fallback component
 const LoadingFallback = () => (
-    <div className="min-h-screen flex items-center justify-center bg-[#09090B]">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-cyan-500 border-t-transparent"></div>
+    <div className="min-h-screen flex items-center justify-center bg-[#09090B]" role="status" aria-live="polite">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-cyan-500 border-t-transparent" aria-hidden="true"></div>
+        <span className="sr-only">Loading...</span>
     </div>
 );
 
@@ -158,38 +162,66 @@ const App = () => {
         return () => window.removeEventListener('unhandledrejection', handleRejection);
     }, []);
 
+    // Listen for system preference changes for accessibility
+    useEffect(() => {
+        const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const reducedMotionMediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+        const handleDarkModeChange = (e: MediaQueryListEvent) => {
+            if (localStorage.getItem('theme') === 'system') {
+                document.documentElement.classList.toggle('dark', e.matches);
+            }
+        };
+
+        const handleReducedMotionChange = (e: MediaQueryListEvent) => {
+            if (!localStorage.getItem('reducedMotion')) {
+                document.documentElement.classList.toggle('reduce-motion', e.matches);
+            }
+        };
+
+        darkModeMediaQuery.addEventListener('change', handleDarkModeChange);
+        reducedMotionMediaQuery.addEventListener('change', handleReducedMotionChange);
+
+        return () => {
+            darkModeMediaQuery.removeEventListener('change', handleDarkModeChange);
+            reducedMotionMediaQuery.removeEventListener('change', handleReducedMotionChange);
+        };
+    }, []);
+
     return (
         <ErrorBoundary>
-            <QueryClientProvider client={queryClient}>
-                <TooltipProvider>
-                    <RantProvider>
-                        <div className="dark">
-                            <Toaster />
-                            <Sonner />
-                            <ErrorBoundary>
-                                <AppRouter>
-                                    <Suspense fallback={<LoadingFallback />}>
-                                        <Routes>
-                                            <Route path="/" element={
-                                                <ErrorBoundary>
-                                                    <Index />
-                                                </ErrorBoundary>
-                                            } />
-                                            {/* <Route path="/rants" element={<RantList />} />  */}
-                                            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                                            <Route path="*" element={
-                                                <ErrorBoundary>
-                                                    <NotFound />
-                                                </ErrorBoundary>
-                                            } />
-                                        </Routes>
-                                    </Suspense>
-                                </AppRouter>
-                            </ErrorBoundary>
-                        </div>
-                    </RantProvider>
-                </TooltipProvider>
-            </QueryClientProvider>
+            <AccessibilityProvider>
+                <QueryClientProvider client={queryClient}>
+                    <TooltipProvider>
+                        <RantProvider>
+                            <div className="dark">
+                                <Toaster />
+                                <Sonner />
+                                <ErrorBoundary>
+                                    <AppRouter>
+                                        <Suspense fallback={<LoadingFallback />}>
+                                            <Routes>
+                                                <Route path="/" element={
+                                                    <ErrorBoundary>
+                                                        <Index />
+                                                    </ErrorBoundary>
+                                                } />
+                                                {/* <Route path="/rants" element={<RantList />} />  */}
+                                                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                                                <Route path="*" element={
+                                                    <ErrorBoundary>
+                                                        <NotFound />
+                                                    </ErrorBoundary>
+                                                } />
+                                            </Routes>
+                                        </Suspense>
+                                    </AppRouter>
+                                </ErrorBoundary>
+                            </div>
+                        </RantProvider>
+                    </TooltipProvider>
+                </QueryClientProvider>
+            </AccessibilityProvider>
         </ErrorBoundary>
     );
 };

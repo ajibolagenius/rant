@@ -200,20 +200,24 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
                     <div className="mt-6">
                         <p className="text-sm font-medium mb-2">Current mood:</p>
                         <MoodSelector selectedMood={selectedMood} onMoodSelect={setSelectedMood} />
+
+                        {/* Keyboard shortcut hint - single line with responsive break */}
+                        <div className="mt-4 flex flex-row flex-wrap items-center justify-start gap-2 bg-[#121212] hover:bg-[#1A1A1A] px-3 py-2 rounded-lg border border-[#222] transition-colors">
+                            <div className="text-xs text-cyan-500 font-medium whitespace-nowrap">Pro tip:</div>
+                            <div className="flex flex-wrap items-center gap-1.5 text-xs text-gray-400">
+                                <span>Press</span>
+                                <kbd className="px-1.5 py-0.5 text-xs font-medium bg-[#1A1A1A] border border-[#333] rounded text-white shadow-sm">
+                                    Ctrl
+                                </kbd>
+                                <span>+</span>
+                                <kbd className="px-1.5 py-0.5 text-xs font-medium bg-[#1A1A1A] border border-[#333] rounded text-white shadow-sm">
+                                    Enter
+                                </kbd>
+                                <span>to submit your rant</span>
+                            </div>
+                        </div>
                     </div>
 
-                    {/* Keyboard shortcut hint */}
-                    <div className="mt-4 text-xs text-gray-500 flex items-center gap-1">
-                        <span>Pro tip: Press</span>
-                        <kbd className="px-1.5 py-0.5 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-md dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">
-                            Ctrl
-                        </kbd>
-                        <span>+</span>
-                        <kbd className="px-1.5 py-0.5 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-md dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">
-                            Enter
-                        </kbd>
-                        <span>to submit</span>
-                    </div>
                 </form>
             </CardContent>
             <CardFooter className="px-6 pb-6">

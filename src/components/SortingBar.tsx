@@ -47,6 +47,7 @@ const SortingBar: React.FC<SortingBarProps> = ({
     const [localSearchMood, setLocalSearchMood] = useState<MoodType | null>(searchMood);
     const [showHistory, setShowHistory] = useState(false);
     const [showSuggestions, setShowSuggestions] = useState(false);
+    const [isMobileView, setIsMobileView] = useState(false);
 
     const dropdownRef = useRef<HTMLDivElement>(null);
     const searchDropdownRef = useRef<HTMLDivElement>(null);
@@ -62,6 +63,23 @@ const SortingBar: React.FC<SortingBarProps> = ({
     // Use our custom hooks for search history and suggestions
     const { searchHistory, addToHistory, clearHistory } = useSearchHistory();
     const suggestions = useSearchSuggestions(rants);
+
+    // Check for mobile view
+    useEffect(() => {
+        const checkMobileView = () => {
+            setIsMobileView(window.innerWidth < 768);
+        };
+
+        // Initial check
+        checkMobileView();
+
+        // Check on resize
+        window.addEventListener('resize', checkMobileView);
+
+        return () => {
+            window.removeEventListener('resize', checkMobileView);
+        };
+    }, []);
 
     // Define keyboard shortcuts for search functionality
     useKeyboardShortcuts([
@@ -535,13 +553,295 @@ const SortingBar: React.FC<SortingBarProps> = ({
         };
     }, [selectedFilters, isDropdownOpen, isSearchOpen]);
 
+    // Render mobile view
+    if (isMobileView) {
+        return (
+            <div className="flex flex-col mt-8 mb-4 px-2">
+                <div id="rant-section" className="mb-4"></div>
+
+                {/* Section Title - Mobile */}
+                <h2 className="text-xl font-bold text-white mb-4">
+                    {activeOption === "search"
+                        ? "Search Results 🔍"
+                        : activeOption === "popular"
+                            ? "Trending Rants ✨"
+                            : "Hottest Rants 🔥"}
+                </h2>
+
+                {/* Mobile Navigation */}
+                <div className="flex flex-wrap gap-2 mb-4">
+                    <Button
+                        onClick={handleSearchDropdownToggle}
+                        variant="outline"
+                        size="sm"
+                        className={`border-[#333] bg-[#121212] hover:bg-[#1A1A1A] text-white rounded-full flex-1 px-3 py-2 flex items-center gap-1 justify-center ${activeOption === "search" ? "ring-2 ring-white/30" : ""}`}
+                    >
+                        <MagnifyingGlassIcon className="h-3 w-3" />
+                        <span className="text-xs">Search</span>
+                    </Button>
+
+                    <Button
+                        onClick={handleLatestClick}
+                        variant="outline"
+                        size="sm"
+                        className={`border-[#333] bg-[#121212] hover:bg-[#1A1A1A] text-white rounded-full flex-1 px-3 py-2 flex items-center gap-1 justify-center ${activeOption === "latest" ? "ring-2 ring-white/30" : ""}`}
+                    >
+                        <ClockIcon className="h-3 w-3" />
+                        <span className="text-xs">Latest</span>
+                    </Button>
+
+                    <Button
+                        onClick={handlePopularClick}
+                        variant="outline"
+                        size="sm"
+                        className={`border-[#333] bg-[#121212] hover:bg-[#1A1A1A] text-white rounded-full flex-1 px-3 py-2 flex items-center gap-1 justify-center ${activeOption === "popular" ? "ring-2 ring-white/30" : ""}`}
+                    >
+                        <StarIcon className="h-3 w-3" />
+                        <span className="text-xs">Popular</span>
+                    </Button>
+
+                    <Button
+                        onClick={handleFilterDropdownToggle}
+                        variant="outline"
+                        size="sm"
+                        className={`border-[#333] bg-[#121212] hover:bg-[#1A1A1A] text-white rounded-full flex-1 px-3 py-2 flex items-center gap-1 justify-center ${activeOption === "filter" && selectedFilters.length > 0 ? "ring-2 ring-white/30" : ""}`}
+                    >
+                        <MixerHorizontalIcon className="h-3 w-3" />
+                        <span className="text-xs">Filter</span>
+                        {selectedFilters.length > 0 && (
+                            <span className="inline-flex items-center justify-center w-4 h-4 ml-1 text-[10px] font-medium text-white bg-cyan-700 rounded-full">
+                                {selectedFilters.length}
+                            </span>
+                        )}
+                    </Button>
+                </div>
+
+                {/* Search Dropdown - Mobile */}
+                <div
+                    className={`overflow-hidden transition-all duration-300 ease-in-out ${isSearchOpen ? 'opacity-100' : 'opacity-0 h-0'}`}
+                    style={{ height: isSearchOpen ? 'auto' : 0, marginBottom: isSearchOpen ? '1rem' : 0 }}
+                >
+                    <div
+                        ref={searchDropdownRef}
+                        className="bg-[#121212] border border-[#333] rounded-lg p-4 shadow-lg w-full"
+                    >
+                        <div className="space-y-4">
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <MagnifyingGlassIcon className="h-4 w-4 text-gray-400" />
+                                </div>
+                                <Input
+                                    ref={searchInputRef}
+                                    type="text"
+                                    placeholder="Search rants..."
+                                    value={localSearchQuery}
+                                    onChange={handleSearchInputChange}
+                                    onFocus={handleInputFocus}
+                                    onKeyDown={handleKeyDown}
+                                    className="pl-10 pr-10 bg-[#1A1A1A] border-[#333] text-white"
+                                />
+                                {localSearchQuery && (
+                                    <button
+                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white"
+                                        onClick={clearSearch}
+                                    >
+                                        <Cross1Icon className="h-4 w-4" />
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Search history - Mobile */}
+                            {showHistory && searchHistory.length > 0 && (
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <h4 className="text-sm font-medium text-gray-400">Recent searches:</h4>
+                                        <button
+                                            onClick={clearHistory}
+                                            className="text-xs text-gray-400 hover:text-white"
+                                        >
+                                            Clear
+                                        </button>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {searchHistory.slice(0, 3).map((item, index) => (
+                                            <button
+                                                key={index}
+                                                onClick={() => handleHistoryItemClick(item)}
+                                                className="inline-flex items-center gap-2 px-2 py-1 text-xs rounded-full
+                                                    bg-[#1A1A1A] border border-[#333] hover:bg-[#252525] text-gray-300"
+                                            >
+                                                <MagnifyingGlassIcon className="h-3 w-3 text-gray-400" />
+                                                {item.query.length > 12 ? item.query.substring(0, 10) + "..." : item.query}
+                                                {item.mood && (
+                                                    <img
+                                                        src={getMoodEmoji(item.mood)}
+                                                        alt={getMoodLabel(item.mood)}
+                                                        className="w-3 h-3 ml-1"
+                                                    />
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Mood filter buttons - Mobile */}
+                            <div className="space-y-2">
+                                <h4 className="text-xs font-medium text-gray-400">Filter by mood:</h4>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {allMoods.slice(0, 9).map((mood) => (
+                                        <button
+                                            key={mood}
+                                            type="button"
+                                            onClick={() => handleSearchMoodSelect(mood)}
+                                            className={`
+                                                inline-flex items-center gap-1 px-2 py-1 text-[10px]
+                                                rounded-full transition-all duration-200
+                                                ${localSearchMood === mood
+                                                    ? 'bg-[#1A1A1A] border border-[#333] text-white font-medium'
+                                                    : 'bg-[#121212] border border-[#333] hover:bg-[#1A1A1A] text-gray-300'}
+                                            `}
+                                        >
+                                            <img
+                                                src={getMoodEmoji(mood)}
+                                                alt={getMoodLabel(mood)}
+                                                className="w-3 h-3"
+                                            />
+                                            <span className="truncate">{getMoodLabel(mood)}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Filter Dropdown - Mobile */}
+                <div
+                    className={`overflow-hidden transition-all duration-300 ease-in-out ${isDropdownOpen ? 'opacity-100' : 'opacity-0 h-0'}`}
+                    style={{ height: isDropdownOpen ? 'auto' : 0, marginBottom: isDropdownOpen ? '1rem' : 0 }}
+                >
+                    <div
+                        ref={dropdownRef}
+                        className="bg-[#121212] border border-[#333] rounded-lg p-4 shadow-lg w-full"
+                    >
+                        <h3 className="text-sm font-medium text-white mb-3">Filter by Mood</h3>
+                        {/* Mood Options - Mobile */}
+                        <div className="mb-4 grid grid-cols-3 gap-2">
+                            {allMoods.slice(0, 12).map((mood) => (
+                                <button
+                                    key={mood}
+                                    type="button"
+                                    onClick={() => handleFilterSelect(mood)}
+                                    className={`
+                                        inline-flex items-center gap-1 px-2 py-1 text-[10px]
+                                        rounded-full transition-all duration-200
+                                        ${selectedFilters.includes(mood)
+                                            ? 'bg-[#1A1A1A] border border-[#333] text-white font-medium'
+                                            : 'bg-[#121212] border border-[#333] hover:bg-[#1A1A1A] text-gray-300'}
+                                    `}
+                                >
+                                    <img
+                                        src={getMoodEmoji(mood)}
+                                        alt={getMoodLabel(mood)}
+                                        className="w-3 h-3"
+                                    />
+                                    <span className="truncate">{getMoodLabel(mood)}</span>
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Clear Filter - Mobile */}
+                        {selectedFilters.length > 0 && (
+                            <button
+                                onClick={clearAllFilters}
+                                className="w-full inline-flex items-center justify-center gap-2 px-2 py-1 text-xs rounded-full
+                                           bg-[#121212] border border-red-500/30 hover:bg-[#1A1A1A] text-red-400"
+                            >
+                                <Cross1Icon className="w-3 h-3" />
+                                Clear All Filters
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {/* Selected Filters Display - Mobile */}
+                {selectedFilters.length > 0 && activeOption === "filter" && !isDropdownOpen && (
+                    <div className="text-xs text-gray-400 flex flex-wrap gap-2 mb-4">
+                        <span>Filters:</span>
+                        <div className="flex flex-wrap gap-1">
+                            {selectedFilters.slice(0, 3).map(mood => (
+                                <span key={mood} className="inline-flex items-center gap-1 bg-[#121212] border border-[#333] px-1 py-0.5 rounded-full">
+                                    <img
+                                        src={getMoodEmoji(mood as MoodType)}
+                                        alt={getMoodLabel(mood as MoodType)}
+                                        className="w-3 h-3 object-cover"
+                                    />
+                                    <span className="truncate max-w-[60px]">{getMoodLabel(mood as MoodType)}</span>
+                                    <button
+                                        onClick={() => handleFilterSelect(mood)}
+                                        className="ml-1 text-gray-400 hover:text-white"
+                                    >
+                                        ×
+                                    </button>
+                                </span>
+                            ))}
+                            {selectedFilters.length > 3 && (
+                                <span className="inline-flex items-center gap-1 bg-[#121212] border border-[#333] px-1 py-0.5 rounded-full">
+                                    +{selectedFilters.length - 3} more
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* Active Search Query - Mobile */}
+                {activeOption === "search" && (searchQuery || searchMood) && !isSearchOpen && (
+                    <div className="text-xs text-gray-400 flex flex-wrap gap-2 mb-4">
+                        <span>Searching:</span>
+                        <div className="flex flex-wrap gap-1">
+                            {searchQuery && (
+                                <span className="inline-flex items-center gap-1 bg-[#121212] border border-[#333] px-1 py-0.5 rounded-full">
+                                    <MagnifyingGlassIcon className="w-3 h-3" />
+                                    {searchQuery.length > 15 ? `"${searchQuery.substring(0, 12)}..."` : `"${searchQuery}"`}
+                                </span>
+                            )}
+                            {searchMood && (
+                                <span className="inline-flex items-center gap-1 bg-[#121212] border border-[#333] px-1 py-0.5 rounded-full">
+                                    <img
+                                        src={getMoodEmoji(searchMood)}
+                                        alt={getMoodLabel(searchMood)}
+                                        className="w-3 h-3 object-cover"
+                                    />
+                                    <span className="truncate max-w-[60px]">{getMoodLabel(searchMood)}</span>
+                                </span>
+                            )}
+                            <button
+                                onClick={clearSearch}
+                                className="inline-flex items-center gap-1 bg-[#121212] border border-red-500/30 px-1 py-0.5 rounded-full text-red-400"
+                            >
+                                <Cross1Icon className="w-3 h-3" />
+                                Clear
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    }
+
+    // Desktop view (original layout with minor improvements)
     return (
         <div className="flex flex-col mt-10 mb-5 px-4">
             <div id="rant-section" className="mb-4"></div>
             <div className="flex items-center justify-between mb-4">
                 {/* Section Title */}
                 <h2 className="text-xl font-bold text-white">
-                    {activeOption === "search" ? "Search Results 🔍" : "Hottest Rants 🔥"}
+                    {activeOption === "search"
+                        ? "Search Results 🔍"
+                        : activeOption === "popular"
+                            ? "Trending Rants ✨"
+                            : "Hottest Rants 🔥"}
                 </h2>
                 {/* Buttons Section */}
                 <div className="flex gap-4 items-center">
@@ -890,7 +1190,6 @@ const SortingBar: React.FC<SortingBarProps> = ({
                     )}
                 </div>
             )}
-
 
             {/* URL Sync Status Indicator - only show in development */}
             {process.env.NODE_ENV === 'development' && (

@@ -1,4 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { QuestionMarkCircledIcon, SunIcon, MoonIcon } from "@radix-ui/react-icons";
+import { RefreshCw } from "lucide-react";
+import { useTranslation } from 'react-i18next';
 import { Rant } from "@/lib/types/rant";
 import { generateAlias, MoodType } from "@/lib/utils/mood";
 import RantForm from "@/components/RantForm";
@@ -6,7 +11,6 @@ import SortingBar from "@/components/SortingBar";
 import MasonryGrid from "@/components/MasonryGrid";
 import IntroSection from "@/components/IntroSection";
 import { toast } from "@/hooks/use-toast";
-import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { createFuzzySearcher, performFuzzySearch } from "@/lib/utils/fuzzySearch";
@@ -15,7 +19,6 @@ import { supabase, fetchRants, addRant, likeRant } from "@/lib/supabase";
 import { getAuthorId } from "@/utils/authorId";
 import { useRants } from '@/components/RantContext';
 import RantCard from "@/components/RantCard";
-import { motion, AnimatePresence } from "framer-motion";
 import { getMoodAnimation, getMoodLabel } from "@/lib/utils/mood";
 import RantSkeleton from "@/components/RantSkeleton";
 import ScrollToTopButton from "@/components/ScrollToTopButton";
@@ -23,19 +26,20 @@ import EmptyState from "@/components/EmptyState";
 import Confetti from "@/components/Confetti";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import KeyboardShortcutsDialog from "@/components/KeyboardShortcutsDialog";
-import { QuestionMarkCircledIcon } from "@radix-ui/react-icons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { useMoodKeyboardShortcuts } from '@/hooks/useMoodKeyboardShortcuts';
+import Settings from '@/components/Settings';
+import LanguageSelector from '@/components/LanguageSelector';
+import { useAccessibility } from '@/components/AccessibilityContext';
 import {
     getUrlParams,
     parseMoodFilters,
     parseSearchParams,
     getSortOption,
     updateUrlParams,
-    isHashBasedRouting
+    isHashBasedRouting,
 } from '@/utils/urlUtils';
-import { useMoodKeyboardShortcuts } from '@/hooks/useMoodKeyboardShortcuts';
 
 type SortOption = "latest" | "popular" | "filter" | "search";
 
@@ -83,6 +87,8 @@ class RantErrorBoundary extends React.Component<
 }
 
 const Index: React.FC = () => {
+    const { t } = useTranslation();
+    const { theme, setTheme } = useAccessibility();
     const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
     const location = useLocation();
@@ -100,6 +106,7 @@ const Index: React.FC = () => {
     const [retryCount, setRetryCount] = useState(0);
     const [usingHashRouter, setUsingHashRouter] = useState(isHashBasedRouting());
     const [optimisticRantIds, setOptimisticRantIds] = useState<Set<string>>(new Set());
+    const [showMoodShortcutsHint, setShowMoodShortcutsHint] = useState(false);
 
 
     // State for auto-loading rants
@@ -1099,10 +1106,53 @@ const Index: React.FC = () => {
         }
     };
 
-    return (
+    // useEffect to handle the scroll detection
+    useEffect(() => {
+        const handleScroll = () => {
+            // Only show the hint when the user has scrolled to the rants list
+            if (rantsListRef.current) {
+                const rect = rantsListRef.current.getBoundingClientRect();
+                // Show when the rants list is visible in the viewport
+                setShowMoodShortcutsHint(rect.top <= window.innerHeight && rect.bottom >= 0);
+            }
+        };
+
+        // Initialize visibility based on initial scroll position
+        handleScroll();
+
+        // Add event listener
+        window.addEventListener('scroll', handleScroll, { passive: true });
+
+        // Clean up
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+        };
+    }, []);
+
+    const [shortcutsCollapsed, setShortcutsCollapsed] = useState(false);
+
+        return (
         <RantErrorBoundary>
             <div className="min-h-screen bg-[#09090B]">
-                <Navbar />
+                {/* Existing Navbar with added accessibility components */}
+                <div className="flex justify-between items-center">
+                    <Navbar />
+                    <div className="flex items-center gap-2 mr-4">
+                        <LanguageSelector />
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => useAccessibility().toggleHighContrast()}
+                            aria-label={t('accessibility.toggleContrast')}
+                            className="rounded-full bg-gray-800 text-white hover:bg-gray-700"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 14a6 6 0 01-6-6c0-1.4.5-2.7 1.3-3.7A7.92 7.92 0 0110 4c1.9 0 3.7.7 5 2 .9 1 1.3 2.3 1.3 3.7a6 6 0 01-6 6.3z" />
+                            </svg>
+                        </Button>
+                        <Settings />
+                    </div>
+                </div>
 
                 {/* Confetti animation when posting a rant */}
                 {showConfetti && <Confetti active={showConfetti} duration={3000} />}
@@ -1147,39 +1197,42 @@ const Index: React.FC = () => {
                             </RantErrorBoundary>
 
                             {/* Keyboard shortcuts help button */}
-                            <button
-                                onClick={() => setShortcutsDialogOpen(true)}
-                                className="p-2 text-gray-400 hover:text-white transition-colors rounded-full hover:bg-gray-800"
-                                aria-label="Keyboard shortcuts"
-                                title="Keyboard shortcuts (Press ?)"
-                            >
-                                <QuestionMarkCircledIcon className="w-5 h-5" />
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setShortcutsDialogOpen(true)}
+                                    className="p-2 text-gray-400 hover:text-white transition-colors rounded-full hover:bg-gray-800"
+                                    aria-label={t('accessibility.keyboardShortcuts')}
+                                    title={t('accessibility.keyboardShortcutsHint')}
+                                >
+                                    <QuestionMarkCircledIcon className="w-5 h-5" />
+                                </button>
+                            </div>
                         </div>
 
                         {/* URL Routing Mode Indicator - only show in development */}
                         {process.env.NODE_ENV === 'development' && (
                             <div className="mb-4 px-4 py-2 bg-gray-800 rounded-md text-xs text-gray-300 flex items-center justify-between">
                                 <div>
-                                    <span className="font-semibold">URL Mode:</span> {usingHashRouter ? 'Hash-based (#/)' : 'Regular'}
+                                    <span className="font-semibold">{t('development.urlMode')}:</span> {usingHashRouter ? t('development.hashBased') : t('development.regular')}
                                     <span className="ml-2 text-gray-400">
                                         {usingHashRouter
-                                            ? 'Works without server configuration'
-                                            : 'Requires server configuration for direct URLs'}
+                                            ? t('development.hashBasedDescription')
+                                            : t('development.regularDescription')}
                                     </span>
                                 </div>
                                 <button
                                     onClick={toggleHashRouting}
                                     className="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-white text-xs"
+                                    aria-label={t('development.switchRoutingMode')}
                                 >
-                                    Switch to {usingHashRouter ? 'regular' : 'hash-based'} routing
+                                    {t('development.switchTo')} {usingHashRouter ? t('development.regular') : t('development.hashBased')} {t('development.routing')}
                                 </button>
                             </div>
                         )}
 
                         {error && (
                             <Alert className="my-4 border-red-200 bg-red-50">
-                                <AlertTitle className="text-red-800">Error loading rants</AlertTitle>
+                                <AlertTitle className="text-red-800">{t('errors.loadingRants')}</AlertTitle>
                                 <AlertDescription className="text-red-600">
                                     {error}
                                 </AlertDescription>
@@ -1187,8 +1240,9 @@ const Index: React.FC = () => {
                                     variant="outline"
                                     className="mt-2"
                                     onClick={handleRetry}
+                                    aria-label={t('actions.tryAgain')}
                                 >
-                                    <RefreshCw className="mr-2 h-4 w-4" /> Try again
+                                    <RefreshCw className="mr-2 h-4 w-4" /> {t('actions.tryAgain')}
                                 </Button>
                             </Alert>
                         )}
@@ -1202,7 +1256,7 @@ const Index: React.FC = () => {
                                     exit={{ opacity: 0 }}
                                     className="w-full"
                                 >
-                                    <section className="w-full px-4 sm:px-8 py-10">
+                                    <section className="w-full px-4 sm:px-8 py-10" aria-label={t('rants.loading')}>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                             {renderSkeletons()}
                                         </div>
@@ -1216,7 +1270,7 @@ const Index: React.FC = () => {
                                     exit={{ opacity: 0 }}
                                     className="w-full"
                                 >
-                                    <section className="w-full px-4 sm:px-8 py-10">
+                                    <section className="w-full px-4 sm:px-8 py-10" aria-label={t('rants.list')}>
                                         <RantErrorBoundary>
                                             <MasonryGrid
                                                 rants={rantList}
@@ -1233,7 +1287,8 @@ const Index: React.FC = () => {
                                             />
                                             {/* Toast notification for new rants */}
                                             {showNewRantNotification && (
-                                                <div className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-md shadow-lg cursor-pointer"
+                                                <div
+                                                    className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-md shadow-lg cursor-pointer"
                                                     onClick={() => {
                                                         setShowNewRantNotification(false);
                                                         // If we have a newRantId, scroll to it
@@ -1243,8 +1298,11 @@ const Index: React.FC = () => {
                                                                 block: 'start'
                                                             });
                                                         }
-                                                    }}>
-                                                    New rant added! Click to view
+                                                    }}
+                                                    role="alert"
+                                                    aria-live="assertive"
+                                                >
+                                                    {t('notifications.newRant')}
                                                 </div>
                                             )}
                                         </RantErrorBoundary>
@@ -1260,21 +1318,21 @@ const Index: React.FC = () => {
                                 >
                                     <EmptyState
                                         title={
-                                            error ? "Failed to load rants" :
+                                            error ? t('errors.failedToLoad') :
                                                 sortOption === "search"
-                                                    ? "No rants found matching your search"
+                                                    ? t('search.noResults')
                                                     : sortOption === "filter"
-                                                        ? "No rants found with selected moods"
-                                                        : "No rants found"
+                                                        ? t('filter.noResults')
+                                                        : t('rants.empty')
                                         }
                                         description={
-                                            error ? "Please try again or check your connection" :
+                                            error ? t('errors.tryAgain') :
                                                 sortOption === "search" || sortOption === "filter"
-                                                    ? "Try adjusting your filters or search terms"
-                                                    : "Be the first to post a rant!"
+                                                    ? t('search.adjustFilters')
+                                                    : t('rants.beFirst')
                                         }
                                         action={error ? handleRetry : scrollToRantForm}
-                                        actionLabel={error ? "Try Again" : "Start Ranting"}
+                                        actionLabel={error ? t('actions.tryAgain') : t('actions.startRanting')}
                                     />
                                 </motion.div>
                             )}
@@ -1285,14 +1343,16 @@ const Index: React.FC = () => {
                             <div
                                 ref={loadMoreTriggerRef}
                                 className="h-20 w-full flex items-center justify-center mt-4"
+                                aria-live="polite"
                             >
                                 {/* Only show button if auto-loading failed */}
                                 {autoLoadFailed && (
                                     <button
                                         onClick={() => loadMoreRants()}
                                         className="px-6 py-2 bg-cyan-700 hover:bg-cyan-600 text-white rounded-md transition-colors"
+                                        aria-label={t('actions.loadMore')}
                                     >
-                                        Load More Rants
+                                        {t('actions.loadMoreRants')}
                                     </button>
                                 )}
                             </div>
@@ -1300,46 +1360,83 @@ const Index: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Mood keyboard shortcuts hint */}
-                <div className="fixed bottom-20 right-4 p-3 bg-gray-800 rounded-lg shadow-lg text-xs text-gray-300 max-w-xs opacity-70 hover:opacity-100 transition-opacity">
-                    <p className="font-semibold mb-1">Mood Filter Shortcuts:</p>
-                    <div className="grid grid-cols-2 gap-x-2 gap-y-1">
-                        <p>
-                            <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+S</kbd> Sad
-                        </p>
-                        <p>
-                            <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+A</kbd> Angry
-                        </p>
-                        <p>
-                            <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+C</kbd> Confused
-                        </p>
-                        <p>
-                            <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+G</kbd> Smiling
-                        </p>
-                        <p>
-                            <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+L</kbd> Loved
-                        </p>
-                        <p>
-                            <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+M</kbd> Mind Blown
-                        </p>
-                    </div>
-                    <p className="mt-1 text-center">
-                        <kbd className="px-1 py-0.5 bg-gray-700 rounded">Esc</kbd> Clear all filters
-                    </p>
-                    <button
-                        className="mt-2 text-cyan-400 hover:text-cyan-300 text-xs w-full text-center"
-                        onClick={() => setShortcutsDialogOpen(true)}
+                {/* Mood Shortcuts Hint Box */}
+                {showMoodShortcutsHint && (
+                    <div
+                        className={`fixed bottom-20 right-4 bg-gray-800 rounded-lg shadow-lg text-xs text-gray-300 transition-all duration-300 ${shortcutsCollapsed
+                            ? "w-10 h-10 overflow-hidden opacity-50 hover:opacity-90"
+                            : "max-w-xs p-3 opacity-70 hover:opacity-100"
+                            }`}
+                        aria-label={t('shortcuts.moodFilters')}
                     >
-                        View all shortcuts
-                    </button>
-                </div>
+                        {shortcutsCollapsed ? (
+                            // Collapsed state - just show an icon button
+                            <button
+                                onClick={() => setShortcutsCollapsed(false)}
+                                className="w-full h-full flex items-center justify-center"
+                                aria-label={t('shortcuts.expand')}
+                                title={t('shortcuts.expand')}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+                                </svg>
+                            </button>
+                        ) : (
+                            // Expanded state - show full content with collapse button
+                            <>
+                                <div className="flex justify-between items-center mb-1">
+                                    <p className="font-semibold">{t('shortcuts.moodFilters')}:</p>
+                                    <button
+                                        onClick={() => setShortcutsCollapsed(true)}
+                                        className="text-gray-400 hover:text-white transition-colors"
+                                        aria-label={t('shortcuts.collapse')}
+                                        title={t('shortcuts.collapse')}
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div className="grid grid-cols-2 gap-x-2 gap-y-1">
+                                    <p>
+                                        <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+S</kbd> {t('moods.sad')}
+                                    </p>
+                                    <p>
+                                        <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+A</kbd> {t('moods.angry')}
+                                    </p>
+                                    <p>
+                                        <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+C</kbd> {t('moods.confused')}
+                                    </p>
+                                    <p>
+                                        <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+G</kbd> {t('moods.smiling')}
+                                    </p>
+                                    <p>
+                                        <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+L</kbd> {t('moods.loved')}
+                                    </p>
+                                    <p>
+                                        <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+M</kbd> {t('moods.mindBlown')}
+                                    </p>
+                                </div>
+                                <p className="mt-1 text-center">
+                                    <kbd className="px-1 py-0.5 bg-gray-700 rounded">Esc</kbd> {t('shortcuts.clearFilters')}
+                                </p>
+                                <button
+                                    className="mt-2 text-cyan-400 hover:text-cyan-300 text-xs w-full text-center"
+                                    onClick={() => setShortcutsDialogOpen(true)}
+                                >
+                                    {t('shortcuts.viewAll')}
+                                </button>
+                            </>
+                        )}
+                    </div>
+                )}
 
                 {/* Scroll to top button */}
                 <ScrollToTopButton />
 
                 <Footer />
             </div>
-        </RantErrorBoundary >
+        </RantErrorBoundary>
     );
 };
 

@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Rant } from '@/lib/types/rant';
+import { useTranslation } from 'react-i18next';
+import { cn } from '@/lib/utils';
 
 // Function to determine column count based on screen width
 function getColumnCount() {
     if (typeof window === 'undefined') return 2; // Default for SSR
 
     const width = window.innerWidth;
-    if (width < 640) return 1; // Mobile
-    if (width < 1024) return 2; // Tablet
-    if (width < 1280) return 3; // Small desktop
-    return 4; // Large desktop
+    if (width < 640) return 1; // Mobile - single column
+    if (width < 1024) return 2; // Tablet - two columns
+    if (width < 1280) return 3; // Small desktop - three columns
+    return 4; // Large desktop - four columns
 }
 
 interface MasonryGridProps {
@@ -38,6 +40,7 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({
     newRantId = null,
     onNewRantAppear
 }) => {
+    const { t } = useTranslation();
     const [columns, setColumns] = useState(getColumnCount());
     const observerRef = useRef<IntersectionObserver | null>(null);
     const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
@@ -45,17 +48,34 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const newRantRef = useRef<HTMLDivElement>(null);
+    const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+    // For keyboard navigation
+    const [focusedRantIndex, setFocusedRantIndex] = useState<number | null>(null);
+    const rantRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+    // Handle resize with debounce for better performance
     useEffect(() => {
         const handleResize = () => {
-            const newColumnCount = getColumnCount();
-            if (newColumnCount !== columns) {
-                setColumns(newColumnCount);
+            if (resizeTimeoutRef.current) {
+                clearTimeout(resizeTimeoutRef.current);
             }
+
+            resizeTimeoutRef.current = setTimeout(() => {
+                const newColumnCount = getColumnCount();
+                if (newColumnCount !== columns) {
+                    setColumns(newColumnCount);
+                }
+            }, 150); // Debounce resize for 150ms
         };
 
         window.addEventListener("resize", handleResize);
-        return () => window.removeEventListener("resize", handleResize);
+        return () => {
+            window.removeEventListener("resize", handleResize);
+            if (resizeTimeoutRef.current) {
+                clearTimeout(resizeTimeoutRef.current);
+            }
+        };
     }, [columns]);
 
     // Effect to scroll to new rant when it appears
@@ -143,24 +163,117 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({
 
     // Calculate fixed column width based on container width
     useEffect(() => {
+        const handleResize = () => {
+            if (containerRef.current) {
+                const containerWidth = containerRef.current.offsetWidth;
+                const columnWidth = (containerWidth - (gap * (columns - 1))) / columns;
+
+                // Apply fixed width to all column divs
+                const columnDivs = containerRef.current.querySelectorAll('.masonry-column');
+                columnDivs.forEach((div) => {
+                    (div as HTMLElement).style.width = `${columnWidth}px`;
+                });
+            }
+        };
+
+        // Initial calculation
+        handleResize();
+
+        // Set up resize observer
         if (containerRef.current) {
-            const resizeObserver = new ResizeObserver(() => {
-                if (containerRef.current) {
-                    const containerWidth = containerRef.current.offsetWidth;
-                    const columnWidth = (containerWidth - (gap * (columns - 1))) / columns;
-
-                    // Apply fixed width to all column divs
-                    const columnDivs = containerRef.current.querySelectorAll('.masonry-column');
-                    columnDivs.forEach((div) => {
-                        (div as HTMLElement).style.width = `${columnWidth}px`;
-                    });
-                }
-            });
-
+            const resizeObserver = new ResizeObserver(handleResize);
             resizeObserver.observe(containerRef.current);
-            return () => resizeObserver.disconnect();
+            return () => {
+                if (containerRef.current) {
+                    resizeObserver.disconnect();
+                }
+            };
         }
     }, [columns, gap]);
+
+    // Keyboard navigation handler
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+        // If no rants or no focused rant, select the first one on arrow or home key
+        if (rants.length === 0) return;
+
+        // Initialize focus if none exists
+        if (focusedRantIndex === null &&
+            (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === 'Home')) {
+            setFocusedRantIndex(0);
+            e.preventDefault();
+            return;
+        }
+
+        if (focusedRantIndex === null) return;
+
+        switch (e.key) {
+            case 'ArrowDown': {
+                e.preventDefault();
+                // Move to the next rant in the same column or to the next column
+                const currentCol = focusedRantIndex % columns;
+                const nextIndex = focusedRantIndex + columns;
+                if (nextIndex < rants.length) {
+                    setFocusedRantIndex(nextIndex);
+                }
+                break;
+            }
+            case 'ArrowUp': {
+                e.preventDefault();
+                // Move to the previous rant in the same column
+                const prevIndex = focusedRantIndex - columns;
+                if (prevIndex >= 0) {
+                    setFocusedRantIndex(prevIndex);
+                }
+                break;
+            }
+            case 'ArrowRight': {
+                e.preventDefault();
+                // Move to the next column in the same row
+                const currentCol = focusedRantIndex % columns;
+                if (currentCol < columns - 1 && focusedRantIndex + 1 < rants.length) {
+                    setFocusedRantIndex(focusedRantIndex + 1);
+                }
+                break;
+            }
+            case 'ArrowLeft': {
+                e.preventDefault();
+                // Move to the previous column in the same row
+                const currentCol = focusedRantIndex % columns;
+                if (currentCol > 0) {
+                    setFocusedRantIndex(focusedRantIndex - 1);
+                }
+                break;
+            }
+            case 'Home': {
+                e.preventDefault();
+                // Move to the first rant
+                setFocusedRantIndex(0);
+                break;
+            }
+            case 'End': {
+                e.preventDefault();
+                // Move to the last rant
+                setFocusedRantIndex(rants.length - 1);
+                break;
+            }
+        }
+    };
+
+    // Focus the rant when focusedRantIndex changes
+    useEffect(() => {
+        if (focusedRantIndex !== null && rants[focusedRantIndex]) {
+            const rantId = rants[focusedRantIndex].id;
+            const element = rantRefs.current[rantId];
+            if (element) {
+                element.focus();
+                // Scroll into view if needed
+                element.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest'
+                });
+            }
+        }
+    }, [focusedRantIndex, rants]);
 
     // Distribute rants across columns
     const columnArrays: Rant[][] = Array.from({ length: columns }, () => []);
@@ -173,18 +286,24 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({
         return (
             <div className="flex flex-col items-center justify-center py-16 text-center">
                 <div className="text-6xl mb-4">🔍</div>
-                <h3 className="text-xl font-medium text-white mb-2">No rants found</h3>
+                <h3 className="text-xl font-medium text-white mb-2">{t('rants.noRantsFound', 'No rants found')}</h3>
                 <p className="text-gray-400 max-w-md">
                     {searchTerm
-                        ? `No rants matching "${searchTerm}" were found. Try a different search term.`
-                        : "Be the first to post a rant!"}
+                        ? t('rants.noMatchingRants', 'No rants matching "{{searchTerm}}" were found. Try a different search term.', { searchTerm })
+                        : t('rants.beFirstToPost', 'Be the first to post a rant!')}
                 </p>
             </div>
         );
     }
 
     return (
-        <div ref={containerRef} className="w-full">
+        <div
+            ref={containerRef}
+            className="w-full"
+            onKeyDown={handleKeyDown}
+            role="region"
+            aria-label={t('rants.feed', 'Rants feed')}
+        >
             <div className="flex" style={{ gap: `${gap}px` }}>
                 {columnArrays.map((columnRants, columnIndex) => (
                     <div
@@ -195,12 +314,25 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({
                         {columnRants.map((rant, rantIndex) => {
                             const overallIndex = rantIndex * columns + columnIndex;
                             const isNewRant = rant.id === newRantId;
+                            const isFocused = focusedRantIndex === overallIndex;
 
                             return (
                                 <div
                                     key={rant.id}
-                                    className={`w-full ${isNewRant ? 'new-rant' : ''}`}
-                                    ref={isNewRant ? newRantRef : null}
+                                    className={cn(
+                                        "w-full",
+                                        isNewRant ? 'new-rant' : '',
+                                        isFocused ? 'ring-2 ring-primary ring-offset-2' : ''
+                                    )}
+                                    ref={(el) => {
+                                        if (isNewRant) newRantRef.current = el;
+                                        rantRefs.current[rant.id] = el;
+                                    }}
+                                    tabIndex={0}
+                                    role="article"
+                                    aria-label={t('rants.rantLabel', 'Rant number {{index}}', { index: overallIndex + 1 })}
+                                    onFocus={() => setFocusedRantIndex(overallIndex)}
+                                    data-rant-index={overallIndex}
                                 >
                                     {renderItem ? renderItem(rant, overallIndex) : null}
                                 </div>
@@ -217,12 +349,19 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({
                 aria-hidden="true"
             >
                 {isLoadingMore && (
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
+                    <div
+                        className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"
+                        role="status"
+                        aria-label={t('rants.loading', 'Loading more rants')}
+                    ></div>
                 )}
 
                 {!isLoading && !hasMore && rants.length > 0 && (
-                    <div className="text-center text-gray-400 py-2">
-                        No more rants to load
+                    <div
+                        className="text-center text-gray-400 py-2"
+                        aria-live="polite"
+                    >
+                        {t('rants.noMoreRants', 'No more rants to load')}
                     </div>
                 )}
             </div>

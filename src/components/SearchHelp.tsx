@@ -14,14 +14,14 @@ const SearchHelp: React.FC = () => {
     // Function to render a search tip item
     const renderSearchTipItem = (title: string, description: React.ReactNode, example?: string, explanation?: string) => {
         return (
-            <div className="bg-[#121212] hover:bg-[#1A1A1A] border border-[#222] p-3 rounded-lg">
-                <h4 className="font-medium text-sm text-white mb-1">{title}</h4>
-                <div className="text-sm text-gray-300 mb-2">{description}</div>
+            <div className="bg-[#121212] hover:bg-[#1A1A1A] border border-[#222] p-2 sm:p-3 rounded-lg">
+                <h4 className="font-medium text-xs sm:text-sm text-white mb-1">{title}</h4>
+                <div className="text-xs sm:text-sm text-gray-300 mb-2">{description}</div>
                 {example && (
-                    <div className="bg-[#1A1A1A] p-2 rounded border border-[#333]">
-                        <code className="text-xs text-cyan-400">{example}</code>
+                    <div className="bg-[#1A1A1A] p-1 sm:p-2 rounded border border-[#333]">
+                        <code className="text-[10px] sm:text-xs text-cyan-400">{example}</code>
                         {explanation && (
-                            <p className="text-xs text-gray-400 mt-1">{explanation}</p>
+                            <p className="text-[10px] sm:text-xs text-gray-400 mt-1">{explanation}</p>
                         )}
                     </div>
                 )}
@@ -37,16 +37,16 @@ const SearchHelp: React.FC = () => {
                 </button>
             </PopoverTrigger>
             <PopoverContent
-                className="w-[90vw] max-w-[800px] max-h-[80vh] bg-[#1A1A1A] border border-[#333] text-white p-4"
+                className="w-[95vw] sm:w-[90vw] max-w-[800px] max-h-[80vh] bg-[#1A1A1A] border border-[#333] text-white p-3 sm:p-4"
                 sideOffset={5}
                 align="end"
             >
                 <div className="space-y-2">
-                    <h3 className="font-medium text-lg mb-3">Search Tips</h3>
+                    <h3 className="font-medium text-base sm:text-lg mb-2 sm:mb-3">Search Tips</h3>
 
-                    <ScrollArea className="h-[min(500px,calc(80vh-80px))] pr-4">
+                    <ScrollArea className="h-[min(400px,calc(80vh-80px))] pr-2 sm:pr-4">
                         {/* Responsive grid: 1 column on small screens, 2 on medium, 3 on large */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
                             {renderSearchTipItem(
                                 "Basic Search",
                                 "Type any word or phrase to find matching rants.",
@@ -79,7 +79,7 @@ const SearchHelp: React.FC = () => {
                             <div className="sm:col-span-2 lg:col-span-3">
                                 {renderSearchTipItem(
                                     "Available Moods",
-                                    <div className="text-xs grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1">
+                                    <div className="text-[10px] sm:text-xs grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1">
                                         {allMoods.map(mood => (
                                             <div key={mood} className="flex items-center gap-1">
                                                 <img
@@ -103,15 +103,15 @@ const SearchHelp: React.FC = () => {
                                 <div className="space-y-2">
                                     <div className="flex justify-between items-center">
                                         <span>Focus search box</span>
-                                        <kbd className="px-1.5 py-0.5 bg-[#1A1A1A] border border-[#333] rounded text-xs">/</kbd>
+                                        <kbd className="px-1 py-0.5 bg-[#1A1A1A] border border-[#333] rounded text-[10px] sm:text-xs">/</kbd>
                                     </div>
                                     <div className="flex justify-between items-center">
                                         <span>Search mode</span>
-                                        <kbd className="px-1.5 py-0.5 bg-[#1A1A1A] border border-[#333] rounded text-xs">S</kbd>
+                                        <kbd className="px-1 py-0.5 bg-[#1A1A1A] border border-[#333] rounded text-[10px] sm:text-xs">S</kbd>
                                     </div>
                                     <div className="flex justify-between items-center">
                                         <span>Clear search</span>
-                                        <kbd className="px-1.5 py-0.5 bg-[#1A1A1A] border border-[#333] rounded text-xs">Esc</kbd>
+                                        <kbd className="px-1 py-0.5 bg-[#1A1A1A] border border-[#333] rounded text-[10px] sm:text-xs">Esc</kbd>
                                     </div>
                                 </div>
                             )}

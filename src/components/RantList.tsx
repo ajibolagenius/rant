@@ -84,20 +84,20 @@ const RantList: React.FC<RantListProps> = ({
     }, [likeRant]);
 
     return (
-        <section className="w-full px-4 sm:px-8 py-10">
+        <section className="w-full px-2 sm:px-4 md:px-8 py-6 sm:py-10">
             {loading && isEmpty ? (
-                <div className="flex justify-center items-center py-20">
+                <div className="flex justify-center items-center py-12 sm:py-20">
                     <div className="animate-pulse flex flex-col items-center">
-                        <div className="h-10 w-10 bg-gray-700 rounded-full mb-4"></div>
-                        <div className="h-4 w-40 bg-gray-700 rounded mb-2"></div>
-                        <div className="h-3 w-28 bg-gray-700 rounded"></div>
+                        <div className="h-8 w-8 sm:h-10 sm:w-10 bg-gray-700 rounded-full mb-4"></div>
+                        <div className="h-3 sm:h-4 w-32 sm:w-40 bg-gray-700 rounded mb-2"></div>
+                        <div className="h-2 sm:h-3 w-24 sm:w-28 bg-gray-700 rounded"></div>
                     </div>
                 </div>
             ) : (
                 <>
                     <MasonryGrid
                         rants={rants}
-                        gap={24}
+                        gap={16}
                         searchTerm={searchTerm}
                         onLike={handleLike}
                         onLoadMore={handleLoadMore}
@@ -132,8 +132,8 @@ const RantList: React.FC<RantListProps> = ({
                     />
 
                     {loading && rants.length > 0 && !isEmpty && (
-                        <div className="flex justify-center py-6 mt-4">
-                            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
+                        <div className="flex justify-center py-4 sm:py-6 mt-2 sm:mt-4">
+                            <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-t-2 border-b-2 border-cyan-500"></div>
                         </div>
                     )}
 
@@ -141,7 +141,7 @@ const RantList: React.FC<RantListProps> = ({
                         <>
                             {!hasMore && !isEmpty && (
                                 <motion.div
-                                    className="text-center text-gray-400 py-6 mt-4"
+                                    className="text-center text-gray-400 py-4 sm:py-6 mt-2 sm:mt-4 text-sm sm:text-base"
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{
@@ -149,13 +149,13 @@ const RantList: React.FC<RantListProps> = ({
                                         ease: "easeOut"
                                     }}
                                 >
-                                    {/* No more rants message */}
+                                    You've reached the end of the rants! Come back later for more.
                                 </motion.div>
                             )}
 
                             {isEmpty && (
                                 <motion.div
-                                    className="text-center text-gray-400 py-10"
+                                    className="text-center text-gray-400 py-8 sm:py-10"
                                     initial={{ opacity: 0, scale: 0.8 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     transition={{
@@ -173,6 +173,7 @@ const RantList: React.FC<RantListProps> = ({
                                             repeatDelay: 1
                                         }}
                                         style={{ display: "inline-block" }}
+                                        className="text-sm sm:text-base"
                                     >
                                         No rants found. Be the first to post one!
                                     </motion.span>
