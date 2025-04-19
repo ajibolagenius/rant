@@ -32,6 +32,9 @@ import { useMoodKeyboardShortcuts } from '@/hooks/useMoodKeyboardShortcuts';
 import Settings from '@/components/Settings';
 import LanguageSelector from '@/components/LanguageSelector';
 import { useAccessibility } from '@/components/AccessibilityContext';
+import MyRants from '@/components/MyRants';
+import UndoDeleteNotification from '@/components/UndoDeleteNotification';
+import { addDeletedRant, addMyRant } from '@/utils/userStorage';
 import {
     getUrlParams,
     parseMoodFilters,
@@ -105,9 +108,13 @@ const Index: React.FC = () => {
     const [shortcutsDialogOpen, setShortcutsDialogOpen] = useState(false);
     const [retryCount, setRetryCount] = useState(0);
     const [usingHashRouter, setUsingHashRouter] = useState(isHashBasedRouting());
+    const [shortcutsCollapsed, setShortcutsCollapsed] = useState(false);
     const [optimisticRantIds, setOptimisticRantIds] = useState<Set<string>>(new Set());
     const [showMoodShortcutsHint, setShowMoodShortcutsHint] = useState(false);
-
+    // New state for My Rants and Undo Delete functionality
+    const [showMyRants, setShowMyRants] = useState(false);
+    const [deletedRantId, setDeletedRantId] = useState<string | null>(null);
+    const [deletedRant, setDeletedRant] = useState<Rant | null>(null);
 
     // State for auto-loading rants
     const [autoLoadFailed, setAutoLoadFailed] = useState(false);
@@ -215,6 +222,11 @@ const Index: React.FC = () => {
             key: "t",
             action: () => window.scrollTo({ top: 0, behavior: "smooth" }),
             description: "Scroll to top",
+        },
+        {
+            key: "m",
+            action: () => setShowMyRants(true),
+            description: "View My Rants",
         },
         // Mood selection shortcuts with Shift key
         {
@@ -829,6 +841,11 @@ const Index: React.FC = () => {
 
             console.log("Rant submitted successfully:", newRant);
 
+            // Add to user's own rants for "My Rants" feature
+            if (newRant && newRant.id) {
+                addMyRant(newRant.id);
+            }
+
             // Share the rant with the context if it exists
             if (rantContext && rantContext.addRant) {
                 try {
@@ -844,6 +861,8 @@ const Index: React.FC = () => {
                 description: "Your rant has been posted anonymously.",
                 variant: "default",
             });
+
+            return newRant;
         } catch (error) {
             console.error("Error posting rant:", error);
 
@@ -856,6 +875,8 @@ const Index: React.FC = () => {
                 description: "Failed to post your rant. Please try again.",
                 variant: "destructive",
             });
+
+            throw error;
         }
     };
 
@@ -906,9 +927,20 @@ const Index: React.FC = () => {
         }
     };
 
-    // Add the handleRemoveRant function that was missing
+    // Add the handleRemoveRant function with undo functionality
     const handleRemoveRant = (id: string) => {
         try {
+            // Find the rant first
+            const rantToDelete = rantList.find(rant => rant.id === id);
+            if (!rantToDelete) return;
+
+            // Store the deleted rant for potential undo
+            setDeletedRant(rantToDelete);
+            setDeletedRantId(id);
+
+            // Store in persistence layer
+            addDeletedRant(rantToDelete);
+
             // Remove from local state
             setRantList(prevRants => prevRants.filter(rant => rant.id !== id));
 
@@ -919,7 +951,7 @@ const Index: React.FC = () => {
 
             toast({
                 title: "Rant Removed",
-                description: "The rant has been removed successfully.",
+                description: "The rant has been removed. Click Undo to restore it.",
                 variant: "default",
             });
         } catch (error) {
@@ -931,6 +963,29 @@ const Index: React.FC = () => {
                 variant: "destructive",
             });
         }
+    };
+
+    // Add function to handle rant restoration
+    const handleUndoDelete = (rant: Rant) => {
+        // Add the rant back to the list
+        setRantList(prev => [rant, ...prev.filter(r => r.id !== rant.id)]);
+
+        // If using the rant context, also update it
+        if (rantContext && rantContext.addRant) {
+            rantContext.addRant(rant);
+        }
+
+        toast({
+            title: "Rant Restored",
+            description: "Your rant has been restored successfully.",
+            variant: "default",
+        });
+    };
+
+    // Add function to close the undo notification
+    const handleCloseUndoNotification = () => {
+        setDeletedRantId(null);
+        setDeletedRant(null);
     };
 
     const scrollToRantForm = () => {
@@ -1045,6 +1100,7 @@ const Index: React.FC = () => {
                             index={index}
                             searchTerm={sortOption === "search" ? searchQuery : ""}
                             onLike={() => handleLikeRant(rant.id)}
+                            onRemove={() => handleRemoveRant(rant.id)}
                         />
                     </div>
                 </motion.div>
@@ -1129,29 +1185,12 @@ const Index: React.FC = () => {
         };
     }, []);
 
-    const [shortcutsCollapsed, setShortcutsCollapsed] = useState(false);
-
-        return (
+    return (
         <RantErrorBoundary>
             <div className="min-h-screen bg-[#09090B]">
-                {/* Existing Navbar with added accessibility components */}
+                {/* Updated Navbar with My Rants button */}
                 <div className="flex justify-between items-center">
                     <Navbar />
-                    <div className="flex items-center gap-2 mr-4">
-                        <LanguageSelector />
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => useAccessibility().toggleHighContrast()}
-                            aria-label={t('accessibility.toggleContrast')}
-                            className="rounded-full bg-gray-800 text-white hover:bg-gray-700"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 14a6 6 0 01-6-6c0-1.4.5-2.7 1.3-3.7A7.92 7.92 0 0110 4c1.9 0 3.7.7 5 2 .9 1 1.3 2.3 1.3 3.7a6 6 0 01-6 6.3z" />
-                            </svg>
-                        </Button>
-                        <Settings />
-                    </div>
                 </div>
 
                 {/* Confetti animation when posting a rant */}
@@ -1433,6 +1472,27 @@ const Index: React.FC = () => {
 
                 {/* Scroll to top button */}
                 <ScrollToTopButton />
+
+                {/* My Rants Modal */}
+                <AnimatePresence>
+                    {showMyRants && (
+                        <MyRants
+                            onClose={() => setShowMyRants(false)}
+                            onLike={handleLikeRant}
+                        />
+                    )}
+                </AnimatePresence>
+
+                {/* Undo Delete Notification */}
+                <AnimatePresence>
+                    {deletedRantId && deletedRant && (
+                        <UndoDeleteNotification
+                            rantId={deletedRantId}
+                            onClose={handleCloseUndoNotification}
+                            onUndo={handleUndoDelete}
+                        />
+                    )}
+                </AnimatePresence>
 
                 <Footer />
             </div>

@@ -38,7 +38,8 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({
     isLoading = false,
     hasMore = true,
     newRantId = null,
-    onNewRantAppear
+    onNewRantAppear,
+    onRemove
 }) => {
     const { t } = useTranslation();
     const [columns, setColumns] = useState(getColumnCount());
@@ -180,84 +181,18 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({
         handleResize();
 
         // Set up resize observer
-        if (containerRef.current) {
+        // Store the current value of containerRef in a local variable
+        const currentContainer = containerRef.current;
+
+        // Set up resize observer
+        if (currentContainer) {
             const resizeObserver = new ResizeObserver(handleResize);
-            resizeObserver.observe(containerRef.current);
+            resizeObserver.observe(currentContainer);
             return () => {
-                if (containerRef.current) {
-                    resizeObserver.disconnect();
-                }
+                resizeObserver.disconnect();
             };
         }
     }, [columns, gap]);
-
-    // Keyboard navigation handler
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-        // If no rants or no focused rant, select the first one on arrow or home key
-        if (rants.length === 0) return;
-
-        // Initialize focus if none exists
-        if (focusedRantIndex === null &&
-            (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === 'Home')) {
-            setFocusedRantIndex(0);
-            e.preventDefault();
-            return;
-        }
-
-        if (focusedRantIndex === null) return;
-
-        switch (e.key) {
-            case 'ArrowDown': {
-                e.preventDefault();
-                // Move to the next rant in the same column or to the next column
-                const currentCol = focusedRantIndex % columns;
-                const nextIndex = focusedRantIndex + columns;
-                if (nextIndex < rants.length) {
-                    setFocusedRantIndex(nextIndex);
-                }
-                break;
-            }
-            case 'ArrowUp': {
-                e.preventDefault();
-                // Move to the previous rant in the same column
-                const prevIndex = focusedRantIndex - columns;
-                if (prevIndex >= 0) {
-                    setFocusedRantIndex(prevIndex);
-                }
-                break;
-            }
-            case 'ArrowRight': {
-                e.preventDefault();
-                // Move to the next column in the same row
-                const currentCol = focusedRantIndex % columns;
-                if (currentCol < columns - 1 && focusedRantIndex + 1 < rants.length) {
-                    setFocusedRantIndex(focusedRantIndex + 1);
-                }
-                break;
-            }
-            case 'ArrowLeft': {
-                e.preventDefault();
-                // Move to the previous column in the same row
-                const currentCol = focusedRantIndex % columns;
-                if (currentCol > 0) {
-                    setFocusedRantIndex(focusedRantIndex - 1);
-                }
-                break;
-            }
-            case 'Home': {
-                e.preventDefault();
-                // Move to the first rant
-                setFocusedRantIndex(0);
-                break;
-            }
-            case 'End': {
-                e.preventDefault();
-                // Move to the last rant
-                setFocusedRantIndex(rants.length - 1);
-                break;
-            }
-        }
-    };
 
     // Focus the rant when focusedRantIndex changes
     useEffect(() => {
@@ -282,6 +217,7 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({
         columnArrays[columnIndex].push(rant);
     });
 
+
     if (rants.length === 0 && !isLoading) {
         return (
             <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -300,7 +236,6 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({
         <div
             ref={containerRef}
             className="w-full"
-            onKeyDown={handleKeyDown}
             role="region"
             aria-label={t('rants.feed', 'Rants feed')}
         >
@@ -317,53 +252,19 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({
                             const isFocused = focusedRantIndex === overallIndex;
 
                             return (
-                                <div
-                                    key={rant.id}
-                                    className={cn(
-                                        "w-full",
-                                        isNewRant ? 'new-rant' : '',
-                                        isFocused ? 'ring-2 ring-primary ring-offset-2' : ''
+                                <>
+                                    {renderItem ? renderItem(rant, overallIndex) : (
+                                        <>
+                                            <p>By: {rant.userAlias || 'Anonymous'}</p>
+                                            <p>{rant.content || 'No content available.'}</p>
+                                            <p style={{ color: 'gray', fontSize: '12px' }}>Posted on: {new Date(rant.created_at).toLocaleString()}</p>
+                                        </>
                                     )}
-                                    ref={(el) => {
-                                        if (isNewRant) newRantRef.current = el;
-                                        rantRefs.current[rant.id] = el;
-                                    }}
-                                    tabIndex={0}
-                                    role="article"
-                                    aria-label={t('rants.rantLabel', 'Rant number {{index}}', { index: overallIndex + 1 })}
-                                    onFocus={() => setFocusedRantIndex(overallIndex)}
-                                    data-rant-index={overallIndex}
-                                >
-                                    {renderItem ? renderItem(rant, overallIndex) : null}
-                                </div>
+                                </>
                             );
                         })}
                     </div>
                 ))}
-            </div>
-
-            {/* Loading indicator and trigger for infinite scroll */}
-            <div
-                ref={loadMoreTriggerRef}
-                className="h-20 w-full flex items-center justify-center mt-4"
-                aria-hidden="true"
-            >
-                {isLoadingMore && (
-                    <div
-                        className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"
-                        role="status"
-                        aria-label={t('rants.loading', 'Loading more rants')}
-                    ></div>
-                )}
-
-                {!isLoading && !hasMore && rants.length > 0 && (
-                    <div
-                        className="text-center text-gray-400 py-2"
-                        aria-live="polite"
-                    >
-                        {t('rants.noMoreRants', 'No more rants to load')}
-                    </div>
-                )}
             </div>
         </div>
     );

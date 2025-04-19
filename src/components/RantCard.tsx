@@ -8,6 +8,8 @@ import {
     HeartFilledIcon,
     ChatBubbleIcon,
     Share1Icon,
+    BookmarkIcon,
+    BookmarkFilledIcon,
 } from "@radix-ui/react-icons";
 import { getAuthorId } from "@/utils/authorId";
 import { highlightText } from "@/lib/utils/highlight";
@@ -17,6 +19,25 @@ import { toast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { useAccessibility } from "@/components/AccessibilityContext";
 import { cn } from "@/lib/utils";
+
+// We'll add a function to manage bookmarks in localStorage
+const getBookmarks = (): string[] => {
+    try {
+        const bookmarks = localStorage.getItem('bentoRant_bookmarks');
+        return bookmarks ? JSON.parse(bookmarks) : [];
+    } catch (error) {
+        console.error("Failed to get bookmarks:", error);
+        return [];
+    }
+};
+
+const saveBookmarks = (bookmarks: string[]): void => {
+    try {
+        localStorage.setItem('bentoRant_bookmarks', JSON.stringify(bookmarks));
+    } catch (error) {
+        console.error("Failed to save bookmarks:", error);
+    }
+};
 
 interface RantCardProps {
     rant: Rant;
@@ -53,6 +74,8 @@ const RantCard: React.FC<RantCardProps> = ({
     const [isNew, setIsNew] = useState(false);
     const [isOptimistic, setIsOptimistic] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
+    // Add state for bookmarked status
+    const [isBookmarked, setIsBookmarked] = useState(false);
 
     // Use the useLikeStatus hook to manage like status
     const { isLiked, likeCount, setLikeStatus, isLoading } = useLikeStatus(rant.id);
@@ -93,6 +116,12 @@ const RantCard: React.FC<RantCardProps> = ({
         }
     }, [rant.created_at, rant.is_optimistic]);
 
+    // Check if the rant is bookmarked
+    useEffect(() => {
+        const bookmarks = getBookmarks();
+        setIsBookmarked(bookmarks.includes(rant.id));
+    }, [rant.id]);
+
     // Format the relative time
     const formattedTime = rant.created_at
         ? formatDistanceToNow(new Date(rant.created_at), { addSuffix: true })
@@ -108,13 +137,41 @@ const RantCard: React.FC<RantCardProps> = ({
         }
     };
 
-    // Handle keyboard interaction for card and internal elements
-    const handleCardKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            onClick?.();
+    // Add bookmark toggle handler
+    const handleBookmarkClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const bookmarks = getBookmarks();
+
+        if (isBookmarked) {
+            // Remove from bookmarks
+            const updatedBookmarks = bookmarks.filter(id => id !== rant.id);
+            saveBookmarks(updatedBookmarks);
+            setIsBookmarked(false);
+            toast({
+                title: t('rant.bookmarkRemoved'),
+                description: t('rant.bookmarkRemovedDesc'),
+                duration: 3000,
+            });
+        } else {
+            // Add to bookmarks
+            const updatedBookmarks = [...bookmarks, rant.id];
+            saveBookmarks(updatedBookmarks);
+            setIsBookmarked(true);
+            toast({
+                title: t('rant.bookmarkAdded'),
+                description: t('rant.bookmarkAddedDesc'),
+                duration: 3000,
+            });
         }
     };
+
+    // Handle keyboard interaction for card and internal elements
+    // const handleCardKeyDown = (e: React.KeyboardEvent) => {
+    //     if (e.key === 'Enter' || e.key === ' ') {
+    //         e.preventDefault();
+    //         onClick?.();
+    //     }
+    // };
 
     // Calculate border width - make it thicker for optimistic updates
     const borderWidth = isOptimistic ? "2px 2px 5px 2px" : "1px 1px 4px 1px";
@@ -138,13 +195,12 @@ const RantCard: React.FC<RantCardProps> = ({
             onClick={onClick}
             role="article"
             aria-label={`${t('rant.by')} Anonymous #${rant.author_id?.slice(-3).toUpperCase() || "???"}, ${moodText} ${t('rant.mood')}, ${formattedTime}`}
-            tabIndex={0}
-            onKeyDown={handleCardKeyDown}
             id={`rant-${rant.id}`}
             className={cn(
                 "rounded-2xl p-4 sm:p-6 cursor-pointer relative backdrop-blur-sm overflow-hidden flex flex-col h-full",
                 isOptimistic ? "border-2 border-cyan-500/50" : "",
                 highContrast ? "high-contrast-card" : ""
+                // No focus-related classes
             )}
             style={{
                 backgroundColor: cardBackground,
@@ -152,6 +208,7 @@ const RantCard: React.FC<RantCardProps> = ({
                 borderColor: moodColor,
                 borderWidth: borderWidth,
                 boxShadow: highContrast ? `0 0 0 2px ${moodColor}` : `0 2px 10px ${moodColor}20`
+                // No focus-related styles
             }}
             initial={reducedMotion ? undefined : moodAnimation.initial}
             animate={reducedMotion ? undefined : moodAnimation.animate}
@@ -264,6 +321,40 @@ const RantCard: React.FC<RantCardProps> = ({
                                     transition={{ duration: reducedMotion ? 0 : 0.2 }}
                                 >
                                     {isLiked ? t('rant.alreadyLiked', { count: 0 }) : t('rant.likeAction', { count: 0 })}
+                                    <Tooltip.Arrow className="fill-[#1f1f1f]" />
+                                </motion.div>
+                            </Tooltip.Content>
+                        </Tooltip.Root>
+                    </Tooltip.Provider>
+
+                    {/* Bookmark button with accessible label */}
+                    <Tooltip.Provider delayDuration={100}>
+                        <Tooltip.Root>
+                            <Tooltip.Trigger asChild>
+                                <button
+                                    onClick={handleBookmarkClick}
+                                    aria-label={isBookmarked
+                                        ? t('rant.removeBookmark', 'Remove bookmark')
+                                        : t('rant.addBookmark', 'Bookmark this rant')
+                                    }
+                                    className="hover:scale-110 transition-transform"
+                                    aria-pressed={isBookmarked}
+                                >
+                                    {isBookmarked ? (
+                                        <BookmarkFilledIcon className="text-yellow-400 hover:text-yellow-300 w-3 h-3 sm:w-4 sm:h-4" aria-hidden="true" />
+                                    ) : (
+                                        <BookmarkIcon className="text-[#7b7b7b] hover:text-yellow-400 w-3 h-3 sm:w-4 sm:h-4" aria-hidden="true" />
+                                    )}
+                                </button>
+                            </Tooltip.Trigger>
+                            <Tooltip.Content asChild side="top" sideOffset={5}>
+                                <motion.div
+                                    className="text-xs bg-[#1f1f1f] text-white px-2 py-1 rounded-md shadow-md font-urbanist"
+                                    initial={reducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: -4 }}
+                                    animate={reducedMotion ? undefined : { opacity: 1, y: 0 }}
+                                    transition={{ duration: reducedMotion ? 0 : 0.2 }}
+                                >
+                                    {isBookmarked ? t('rant.removeBookmark', 'Remove bookmark') : t('rant.addBookmark', 'Bookmark this rant')}
                                     <Tooltip.Arrow className="fill-[#1f1f1f]" />
                                 </motion.div>
                             </Tooltip.Content>

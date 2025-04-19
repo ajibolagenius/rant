@@ -1,9 +1,9 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { getMoodColor, MoodType, getMoodUnicodeEmoji } from '@/lib/utils/mood';
 import MoodSelector from './MoodSelector';
-import { MessageCircle, Send, AlertCircle } from 'lucide-react';
+import { MessageCircle, Send, AlertCircle, History } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDraftPersistence } from '@/hooks/useDraftPersistence';
 import { useTypewriterEffect } from '@/hooks/useTypewriterEffect';
@@ -11,6 +11,7 @@ import { useElementDimension } from '@/hooks/useElementDimension';
 import { useTextareaAutosize } from '@/hooks/useTextareaAutosize';
 import { sanitizeInput, validateRantInput, checkRateLimit, getSecureAuthorId } from '@/utils/security';
 import { toast } from '@/hooks/use-toast';
+import { addMyRant } from '@/utils/userStorage';
 
 
 // Constants for the typewriter effect
@@ -25,27 +26,36 @@ const PLACEHOLDER_TEXTS = [
     "Feeling frustrated? Let's turn that frustration into a rant... 😡",
     "Say it loud (but type it quietly) — we're here for you. 🙃",
     "Got a hot take? Let it simmer here... 🔥",
-    "Your digital diary of doom awaits. 📓😶",
-    "Yell into the void — we promise it echoes back supportively. 🌌📣",
-    "One rant a day keeps the stress away! 🍵😮‍💨",
-    "Don't hold back — rage-type it all out! ⌨️💢",
+    "Your digital diary of doom awaits. 📓",
+    "Yell into the void — we promise it echoes back supportively. 📣",
+    "One rant a day keeps the stress away! 😮‍💨",
+    "Don't hold back — rage-type it all out! ⌨",
     "Unload your emotional backpack here. 🎒😔",
-    "Too much on your plate? Flip the table here. 🍽️🗯️",
-    "Anonymity is your superpower. Use it wisely. 🦸‍♂️💬",
-    "No filters. No judgments. Just pure you. 🧠🔊",
-    "We don't do 'calm down' here. Let it fly. 🪁💨",
+    "Too much on your plate? Flip the table here. 🍽️",
+    "Anonymity is your superpower. Use it wisely. 🦸‍♂️",
+    "No filters. No judgments. Just pure you. 🔊",
+    "We don't do 'calm down' here. Let it fly. 🪁",
 ];
 
 const TYPEWRITER_SPEED = 30;
 const PLACEHOLDER_DISPLAY_TIME = 3000;
 
 interface RantFormProps {
-    onSubmit: (content: string, mood: MoodType) => void;
+    onSubmit: (content: string, mood: MoodType) => Promise<any>;
 }
 
 const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
-    // Use custom hooks for complex logic
-    const { content, setContent, selectedMood, setSelectedMood, clearDraft } = useDraftPersistence();
+    // Use enhanced hook with draft loading functionality
+    const {
+        content,
+        setContent,
+        selectedMood,
+        setSelectedMood,
+        clearDraft,
+        hasSavedDrafts,
+        loadLatestDraft
+    } = useDraftPersistence();
+
     const placeholder = useTypewriterEffect(
         PLACEHOLDER_TEXTS,
         TYPEWRITER_SPEED,
@@ -56,6 +66,7 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
+    const [showDraftBanner, setShowDraftBanner] = useState(false);
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const formRef = useRef<HTMLDivElement>(null);
@@ -65,6 +76,13 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
 
     // Use textarea autosize hook
     useTextareaAutosize(textareaRef, content);
+
+    // Show draft banner if there are saved drafts
+    useEffect(() => {
+        if (hasSavedDrafts) {
+            setShowDraftBanner(true);
+        }
+    }, [hasSavedDrafts]);
 
     const maxLength = 560;
     const minLength = 30;
@@ -126,20 +144,37 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
 
             setIsSubmitting(true);
 
-            // Submit the rant with sanitized content
-            onSubmit(sanitizedText.trim(), selectedMood);
+            try {
+                // Submit the rant with sanitized content
+                const result = await onSubmit(sanitizedText.trim(), selectedMood);
 
-            // Clear the form after a short delay to allow for animation
-            setTimeout(() => {
-                clearDraft();
+                // Add to my rants if we have an ID
+                if (result && result.id) {
+                    addMyRant(result.id);
+                }
+
+                // Clear the form after a short delay to allow for animation
+                setTimeout(() => {
+                    clearDraft();
+                    setIsSubmitting(false);
+                    setShowConfirmation(false);
+
+                    // Focus back on the textarea
+                    if (textareaRef.current) {
+                        textareaRef.current.focus();
+                    }
+                }, 500);
+            } catch (error) {
+                console.error("Error posting rant:", error);
                 setIsSubmitting(false);
                 setShowConfirmation(false);
 
-                // Focus back on the textarea
-                if (textareaRef.current) {
-                    textareaRef.current.focus();
-                }
-            }, 500);
+                toast({
+                    title: "Error",
+                    description: "Failed to post your rant. Please try again.",
+                    variant: "destructive",
+                });
+            }
         }
     };
 
@@ -167,6 +202,36 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
                 borderColor: selectedMood ? getMoodColor(selectedMood) + '50' : '#333',
             }}
         >
+            {showDraftBanner && (
+                <div className="bg-cyan-900/30 border-b border-cyan-700/50 px-4 py-2 flex justify-between items-center">
+                    <div className="flex items-center gap-2 text-sm">
+                        <History className="text-cyan-400" size={16} />
+                        <span>You have a saved draft</span>
+                    </div>
+                    <div className="flex gap-2">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                                loadLatestDraft();
+                                setShowDraftBanner(false);
+                            }}
+                            className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-950/50"
+                        >
+                            Restore
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setShowDraftBanner(false)}
+                            className="text-gray-400 hover:text-gray-300"
+                        >
+                            Dismiss
+                        </Button>
+                    </div>
+                </div>
+            )}
+
             <div className="text-xl font-medium p-6 pb-0 flex items-center gap-2">
                 What's bothering you?
                 <MessageCircle className="text-cyan-400" size={20} />

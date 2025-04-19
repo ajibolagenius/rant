@@ -1,41 +1,74 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { MoodType } from '@/lib/utils/mood';
+import { saveDraft, getDrafts, clearDrafts } from '@/utils/userStorage';
+import { toast } from '@/hooks/use-toast';
 
-interface DraftState {
-    content: string;
-    selectedMood: MoodType | null;
-}
+export const useDraftPersistence = () => {
+  const [content, setContent] = useState('');
+  const [selectedMood, setSelectedMood] = useState<MoodType | null>(null);
+  const [hasSavedDrafts, setHasSavedDrafts] = useState(false);
 
-export function useDraftPersistence(initialState: DraftState = { content: '', selectedMood: null }) {
-    const [content, setContent] = useState(initialState.content);
-    const [selectedMood, setSelectedMood] = useState<MoodType | null>(initialState.selectedMood);
+  // Initialize from local storage
+  useEffect(() => {
+    const drafts = getDrafts();
+    if (drafts.length > 0) {
+      const latestDraft = drafts[0];
+      // Only auto-load if the draft is from the last 24 hours
+      const isDraftRecent = Date.now() - latestDraft.timestamp < 24 * 60 * 60 * 1000;
 
-    // Load draft from localStorage on mount
-    useEffect(() => {
-        const savedDraft = localStorage.getItem('rantDraft');
-        if (savedDraft) {
-            try {
-                const { content: savedContent, mood: savedMood } = JSON.parse(savedDraft);
-                setContent(savedContent || '');
-                setSelectedMood(savedMood || null);
-            } catch (e) {
-                console.error('Error parsing saved draft', e);
-            }
-        }
-    }, []);
+      if (isDraftRecent) {
+        setHasSavedDrafts(true);
+      }
+    }
+  }, []);
 
-    // Save draft to localStorage when content or mood changes
-    useEffect(() => {
-        if (content || selectedMood) {
-            localStorage.setItem('rantDraft', JSON.stringify({ content, mood: selectedMood }));
-        }
-    }, [content, selectedMood]);
+  // Function to load a specific draft
+  const loadDraft = useCallback((index: number = 0) => {
+    const drafts = getDrafts();
+    if (drafts.length > index) {
+      const draft = drafts[index];
+      setContent(draft.content || '');
+      setSelectedMood(draft.mood);
 
-    const clearDraft = () => {
-        setContent('');
-        setSelectedMood(null);
-        localStorage.removeItem('rantDraft');
-    };
+      toast({
+        title: "Draft loaded",
+        description: "Your saved draft has been restored.",
+        duration: 3000,
+      });
+    }
+  }, []);
 
-    return { content, setContent, selectedMood, setSelectedMood, clearDraft };
-}
+  // Function to load the most recent draft
+  const loadLatestDraft = useCallback(() => {
+    loadDraft(0);
+  }, [loadDraft]);
+
+  // Auto-save draft when content or mood changes
+  useEffect(() => {
+    const saveTimer = setTimeout(() => {
+      if (content.trim() || selectedMood) {
+        saveDraft(content, selectedMood);
+      }
+    }, 1000); // Save after 1 second of inactivity
+
+    return () => clearTimeout(saveTimer);
+  }, [content, selectedMood]);
+
+  // Clear draft from storage
+  const clearDraft = useCallback(() => {
+    setContent('');
+    setSelectedMood(null);
+    clearDrafts();
+  }, []);
+
+  return {
+    content,
+    setContent,
+    selectedMood,
+    setSelectedMood,
+    clearDraft,
+    hasSavedDrafts,
+    loadLatestDraft,
+    loadDraft
+  };
+};
