@@ -12,10 +12,9 @@ import {
 import { getAuthorId } from "@/utils/authorId";
 import { highlightText } from "@/lib/utils/highlight";
 import { formatDistanceToNow } from "date-fns";
-import { useLikeStatus } from "@/hooks/useLikeStatus"; // Import the custom hook
+import { useLikeStatus } from "@/hooks/useLikeStatus";
 import { toast } from "@/hooks/use-toast";
 
-// Update the RantCardProps interface to include the onClick handler and searchTerm
 interface RantCardProps {
     rant: Rant;
     index: number;
@@ -25,9 +24,7 @@ interface RantCardProps {
     onLike?: () => void;
 }
 
-// Custom comparison function for React.memo to prevent unnecessary re-renders
 const arePropsEqual = (prevProps: RantCardProps, nextProps: RantCardProps) => {
-    // Only re-render if these props change
     return (
         prevProps.rant.id === nextProps.rant.id &&
         prevProps.rant.likes === nextProps.rant.likes &&
@@ -55,8 +52,7 @@ const RantCard: React.FC<RantCardProps> = ({
     // Animation based on mood
     const moodAnimation = getMoodAnimation(rant.mood);
 
-    // Check if this is a new rant (less than 1 minute old)
-    // Update the isOptimistic check to also look for the is_optimistic flag
+    // Check if this is a new rant (less than 2 minutes old)
     useEffect(() => {
         if (rant.created_at) {
             const createdAt = new Date(rant.created_at);
@@ -79,13 +75,15 @@ const RantCard: React.FC<RantCardProps> = ({
     const handleLikeClick = async (e: React.MouseEvent) => {
         e.stopPropagation();
         if (!isLiked) {
-            // Update the backend to reflect the like
-            await setLikeStatus(true); // Call the function to update the backend
+            await setLikeStatus(true);
             if (onLike) {
                 onLike();
             }
         }
     };
+
+    // Calculate border width - make it thicker for optimistic updates
+    const borderWidth = isOptimistic ? "2px 2px 5px 2px" : "1px 1px 4px 1px";
 
     return (
         <motion.div
@@ -98,19 +96,19 @@ const RantCard: React.FC<RantCardProps> = ({
                     onClick?.();
                 }
             }}
-            className={`rounded-2xl p-6 cursor-pointer relative backdrop-blur-sm overflow-hidden flex flex-col h-full ${isOptimistic ? "border-2 border-cyan-500/50" : ""
-                }`}
+            className={`rounded-2xl p-6 cursor-pointer relative backdrop-blur-sm overflow-hidden flex flex-col h-full ${isOptimistic ? "border-2 border-cyan-500/50" : ""}`}
             style={{
                 backgroundColor: "rgba(26, 26, 46, 0.25)",
                 borderStyle: "solid",
-                borderColor: moodColor,
-                borderWidth: isOptimistic ? "2px 2px 5px 2px" : "1px 1px 5px 1px",
+                borderColor: moodColor, // Always use the mood color for border
+                borderWidth: borderWidth,
+                boxShadow: `0 2px 10px ${moodColor}20` // Add a subtle shadow with the mood color
             }}
             initial={moodAnimation.initial}
             animate={moodAnimation.animate}
             transition={{ duration: 0.35, delay: index ? index * 0.05 : 0 }}
             whileHover={{
-                boxShadow: "0 5px 20px rgba(0, 0, 0, 0.4)",
+                boxShadow: `0 5px 20px ${moodColor}40`,
                 border: `2px solid ${moodColor}`,
                 transformOrigin: "center bottom",
             }}

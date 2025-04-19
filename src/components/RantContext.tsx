@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { supabase, fetchRants, likeRant as likeRantInSupabase } from '@/lib/supabase';
 import { Rant } from '@/lib/types/rant';
 import { MoodType } from '@/lib/utils/mood';
-import { getAuthorId } from '@/utils/authorId';
+import { getSecureAuthorId } from '@/utils/security';
 
 interface RantContextType {
     rants: Rant[];
@@ -163,7 +163,8 @@ export const RantProvider: React.FC<RantProviderProps> = ({
     // Function to like a rant
     const likeRant = async (id: string) => {
         try {
-            const authorId = getAuthorId();
+            // Using secure author ID instead of regular getAuthorId
+            const authorId = getSecureAuthorId();
 
             // Optimistically update UI
             setRants(prev =>

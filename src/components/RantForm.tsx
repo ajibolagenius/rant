@@ -9,19 +9,35 @@ import { useDraftPersistence } from '@/hooks/useDraftPersistence';
 import { useTypewriterEffect } from '@/hooks/useTypewriterEffect';
 import { useElementDimension } from '@/hooks/useElementDimension';
 import { useTextareaAutosize } from '@/hooks/useTextareaAutosize';
-// import { toast } from '@/components/ui/toast'; // Assuming toast is imported
+import { sanitizeInput, validateRantInput, checkRateLimit, getSecureAuthorId } from '@/utils/security';
+import { toast } from '@/hooks/use-toast';
 
 
 // Constants for the typewriter effect
 const PLACEHOLDER_TEXTS = [
     "Type your rant here. No one will know it's from you! 🤐",
-    "Let it all out! Your secrets are safe with us...",
-    "Frustrated? Angry? Annoyed? Tell us about it...",
-    "What's on your mind? Vent freely and anonymously!",
-    "Go ahead, we're listening. Rant away..."
+    "Let it all out! Your secrets are safe with us... 🔐",
+    "Frustrated? Angry? Annoyed? Tell us about it... 😤",
+    "What's on your mind? Vent freely and anonymously! 💭",
+    "Go ahead, we're listening. Rant away... 👂",
+    "Ready to rant? Let's get this started... 💣",
+    "Ready to unleash your inner frustration? Let's do this... 💥",
+    "Feeling frustrated? Let's turn that frustration into a rant... 😡",
+    "Say it loud (but type it quietly) — we're here for you. 🙃",
+    "Got a hot take? Let it simmer here... 🔥",
+    "Your digital diary of doom awaits. 📓😶",
+    "Yell into the void — we promise it echoes back supportively. 🌌📣",
+    "One rant a day keeps the stress away! 🍵😮‍💨",
+    "Don't hold back — rage-type it all out! ⌨️💢",
+    "Unload your emotional backpack here. 🎒😔",
+    "Too much on your plate? Flip the table here. 🍽️🗯️",
+    "Anonymity is your superpower. Use it wisely. 🦸‍♂️💬",
+    "No filters. No judgments. Just pure you. 🧠🔊",
+    "We don't do 'calm down' here. Let it fly. 🪁💨",
 ];
-const TYPEWRITER_SPEED = 50;
-const PLACEHOLDER_DISPLAY_TIME = 5000;
+
+const TYPEWRITER_SPEED = 30;
+const PLACEHOLDER_DISPLAY_TIME = 3000;
 
 interface RantFormProps {
     onSubmit: (content: string, mood: MoodType) => void;
@@ -53,8 +69,17 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
     const maxLength = 560;
     const minLength = 30;
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!selectedMood) {
+            toast({
+                title: "Error",
+                description: "Please select a mood for your rant",
+                variant: "destructive",
+            });
+            return;
+        }
 
         if (content.trim().length < minLength) {
             toast({
@@ -65,7 +90,35 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
             return;
         }
 
-        if (content.trim() && selectedMood) {
+        // Sanitize input
+        const sanitizedText = sanitizeInput(content);
+
+        // Validate input
+        const validation = validateRantInput(sanitizedText);
+        if (!validation.valid) {
+            toast({
+                title: "Error",
+                description: validation.message,
+                variant: "destructive",
+            });
+            return;
+        }
+
+        // Get the secure author ID
+        const authorId = getSecureAuthorId();
+
+        // Check rate limiting
+        const rateLimitCheck = await checkRateLimit(authorId);
+        if (!rateLimitCheck.allowed) {
+            toast({
+                title: "Rate Limit Exceeded",
+                description: rateLimitCheck.message,
+                variant: "destructive",
+            });
+            return;
+        }
+
+        if (sanitizedText.trim() && selectedMood) {
             if (!showConfirmation) {
                 setShowConfirmation(true);
                 return;
@@ -73,8 +126,8 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
 
             setIsSubmitting(true);
 
-            // Submit the rant
-            onSubmit(content.trim(), selectedMood);
+            // Submit the rant with sanitized content
+            onSubmit(sanitizedText.trim(), selectedMood);
 
             // Clear the form after a short delay to allow for animation
             setTimeout(() => {
@@ -110,19 +163,22 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
         <Card
             className="bg-[#09090B] border border-[#222] rounded-2xl overflow-hidden"
             ref={formRef}
+            style={{
+                borderColor: selectedMood ? getMoodColor(selectedMood) + '50' : '#333',
+            }}
         >
             <div className="text-xl font-medium p-6 pb-0 flex items-center gap-2">
                 What's bothering you?
                 <MessageCircle className="text-cyan-400" size={20} />
             </div>
             <CardContent className="p-6">
-                <form onKeyDown={handleKeyDown}>
+                <form onKeyDown={handleKeyDown} >
                     <textarea
                         ref={textareaRef}
                         value={content}
                         onChange={(e) => setContent(e.target.value.substring(0, maxLength))}
                         placeholder={placeholder}
-                        className="w-full p-3 bg-transparent border border-[#333] focus:outline-none focus:ring-1 focus:ring-primary min-h-[120px] text-base rounded-lg transition-all duration-200"
+                        className="w-full p-3 bg-transparent border border-[#333] focus:outline-none min-h-[120px] max-h-[200px] text-base rounded-lg transition-all duration-200"
                         maxLength={maxLength}
                         disabled={isSubmitting}
                         style={{

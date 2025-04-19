@@ -99,6 +99,8 @@ const Index: React.FC = () => {
     const [shortcutsDialogOpen, setShortcutsDialogOpen] = useState(false);
     const [retryCount, setRetryCount] = useState(0);
     const [usingHashRouter, setUsingHashRouter] = useState(isHashBasedRouting());
+    const [optimisticRantIds, setOptimisticRantIds] = useState<Set<string>>(new Set());
+
 
     // State for auto-loading rants
     const [autoLoadFailed, setAutoLoadFailed] = useState(false);
