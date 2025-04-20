@@ -113,18 +113,18 @@ const MyRants: React.FC<MyRantsProps> = ({ onClose, onLike }) => {
 
     // Render empty state for both tabs
     const renderEmptyState = (isMyRants: boolean) => (
-        <div className="flex flex-col items-center justify-center py-16 px-4 bg-gray-900/20 rounded-xl border border-gray-800 mt-4">
-            <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mb-4">
+        <div className="flex flex-col items-center justify-center py-16 px-4 bg-background-secondary/20 rounded-xl border border-border-subtle mt-4">
+            <div className="w-16 h-16 bg-background-secondary rounded-full flex items-center justify-center mb-4">
                 {isMyRants ? (
-                    <PenLineIcon className="w-8 h-8 text-gray-400" />
+                    <PenLineIcon className="w-8 h-8 text-text-muted" />
                 ) : (
-                    <BookmarkIcon className="w-8 h-8 text-gray-400" />
+                    <BookmarkIcon className="w-8 h-8 text-text-muted" />
                 )}
             </div>
-            <h3 className="text-xl font-semibold text-white mb-2">
+            <h3 className="text-xl font-heading font-semibold text-text-strong mb-2">
                 {isMyRants ? "No Rants Yet" : "No Bookmarks Yet"}
             </h3>
-            <p className="text-gray-400 text-center mb-6 max-w-md">
+            <p className="text-text-muted text-center mb-6 max-w-md font-body">
                 {isMyRants
                     ? "When you post rants, they will appear here for you to manage."
                     : "You haven't bookmarked any rants yet. Click the bookmark icon on rants you want to save."}
@@ -141,13 +141,19 @@ const MyRants: React.FC<MyRantsProps> = ({ onClose, onLike }) => {
                             }
                         }, 100);
                     }}
-                    className="bg-cyan-700 hover:bg-cyan-600 text-white"
+                    className="bg-accent-teal hover:bg-accent-teal/90 text-background-dark font-ui font-medium"
                 >
                     Create Your First Rant
                 </Button>
             )}
         </div>
     );
+
+    // Handle tab change without closing the modal
+    const handleTabChange = (value: string) => {
+        console.log("Tab changed to:", value); // Debugging line
+        setActiveTab(value);
+    };
 
     return (
         <motion.div
@@ -158,36 +164,37 @@ const MyRants: React.FC<MyRantsProps> = ({ onClose, onLike }) => {
             transition={{ duration: 0.2 }}
             onClick={(e) => {
                 // Close if clicking the backdrop
+                console.log("Backdrop clicked"); // Debugging line
                 if (e.target === e.currentTarget) {
                     onClose();
                 }
             }}
         >
             <motion.div
-                className="bg-[#121217] border border-[#2e2e3a] rounded-xl overflow-hidden shadow-xl w-full max-w-5xl max-h-[90vh] flex flex-col"
+                className="bg-background-dark border border-border-subtle rounded-xl overflow-hidden shadow-high w-full max-w-5xl max-h-[90vh] flex flex-col"
                 initial={reducedMotion ? undefined : { opacity: 0, scale: 0.95 }}
                 animate={reducedMotion ? undefined : { opacity: 1, scale: 1 }}
                 exit={reducedMotion ? undefined : { opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.3 }}
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="border-b border-[#2e2e3a] bg-gradient-to-r from-[#121217] to-[#1a1a24] p-4">
+                <div className="border-b border-border-subtle bg-gradient-to-r from-background-dark to-background-secondary p-4">
                     <div className="flex items-center justify-between">
                         <Button
                             variant="ghost"
                             size="sm"
                             onClick={onClose}
-                            className="text-gray-400 hover:text-white hover:bg-[#252532]"
+                            className="text-text-muted hover:text-text-strong hover:bg-background-secondary font-ui"
                         >
                             <ArrowLeftIcon className="mr-2" size={16} />
                             Back
                         </Button>
-                        <h2 className="text-xl font-bold text-white">My Rants</h2>
+                        <h2 className="text-xl font-heading font-bold text-text-strong">My Rants</h2>
                         <Button
                             variant="ghost"
                             size="icon"
                             onClick={onClose}
-                            className="text-gray-400 hover:text-white hover:bg-[#252532] rounded-full"
+                            className="text-text-muted hover:text-text-strong hover:bg-background-secondary rounded-full"
                         >
                             <XIcon size={18} />
                         </Button>
@@ -198,20 +205,20 @@ const MyRants: React.FC<MyRantsProps> = ({ onClose, onLike }) => {
                     <Tabs
                         defaultValue="my-rants"
                         value={activeTab}
-                        onValueChange={setActiveTab}
+                        onValueChange={handleTabChange}
                         className="w-full flex flex-col h-full"
                     >
-                        <TabsList className="w-full grid grid-cols-2 bg-[#1a1a24] p-1 rounded-xl mb-4 border border-[#2e2e3a]">
+                        <TabsList className="w-full grid grid-cols-2 bg-background-secondary p-1 rounded-xl mb-4 border border-border-subtle">
                             <TabsTrigger
                                 value="my-rants"
-                                className="data-[state=active]:bg-cyan-800/30 data-[state=active]:text-white py-2 font-medium"
+                                className="data-[state=active]:bg-primary/30 data-[state=active]:text-text-strong py-2 font-ui font-medium"
                             >
                                 <PenLineIcon className="mr-2" size={16} />
                                 My Rants
                             </TabsTrigger>
                             <TabsTrigger
                                 value="bookmarks"
-                                className="data-[state=active]:bg-cyan-800/30 data-[state=active]:text-white py-2 font-medium"
+                                className="data-[state=active]:bg-primary/30 data-[state=active]:text-text-strong py-2 font-ui font-medium"
                             >
                                 <BookmarkIcon className="mr-2" size={16} />
                                 Bookmarks
@@ -222,7 +229,7 @@ const MyRants: React.FC<MyRantsProps> = ({ onClose, onLike }) => {
                             <TabsContent value="my-rants" className="m-0 outline-none h-full">
                                 {loading ? (
                                     <div className="flex justify-center items-center py-16">
-                                        <div className="h-10 w-10 animate-spin rounded-full border-4 border-cyan-500 border-t-transparent"></div>
+                                        <div className="h-10 w-10 animate-spin rounded-full border-4 border-accent-teal border-t-transparent"></div>
                                     </div>
                                 ) : myRants.length > 0 ? (
                                     <ScrollArea className="h-[calc(80vh-160px)]">
@@ -259,7 +266,7 @@ const MyRants: React.FC<MyRantsProps> = ({ onClose, onLike }) => {
                             <TabsContent value="bookmarks" className="m-0 outline-none h-full">
                                 {loading ? (
                                     <div className="flex justify-center items-center py-16">
-                                        <div className="h-10 w-10 animate-spin rounded-full border-4 border-cyan-500 border-t-transparent"></div>
+                                        <div className="h-10 w-10 animate-spin rounded-full border-4 border-accent-teal border-t-transparent"></div>
                                     </div>
                                 ) : bookmarkedRants.length > 0 ? (
                                     <ScrollArea className="h-[calc(80vh-160px)]">
@@ -297,16 +304,16 @@ const MyRants: React.FC<MyRantsProps> = ({ onClose, onLike }) => {
                 </div>
 
                 {/* Info footer */}
-                <div className="p-4 border-t border-[#2e2e3a] flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-gray-500 bg-[#0c0c0f]">
-                    <div className="flex items-center gap-1 text-center sm:text-left">
+                <div className="p-4 border-t border-border-subtle flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-text-muted bg-background-secondary/30">
+                    <div className="flex items-center gap-1 text-center sm:text-left font-body">
                         <InfoIcon size={12} />
                         <span>Your rants remain anonymous - data is stored only in your browser</span>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 font-ui">
                         <Button
                             variant="link"
                             size="sm"
-                            className="text-xs text-gray-400 hover:text-gray-300 p-0"
+                            className="text-xs text-text-muted hover:text-text-strong p-0"
                             onClick={onClose}
                         >
                             Close
@@ -314,7 +321,7 @@ const MyRants: React.FC<MyRantsProps> = ({ onClose, onLike }) => {
                         <Button
                             variant="link"
                             size="sm"
-                            className="text-xs text-cyan-400 hover:text-cyan-300 p-0"
+                            className="text-xs text-accent-teal hover:text-accent-teal/90 p-0"
                             onClick={() => {
                                 onClose();
                                 navigate('/my-rants');

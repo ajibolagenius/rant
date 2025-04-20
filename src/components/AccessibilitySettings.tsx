@@ -20,8 +20,8 @@ const AccessibilitySettings: React.FC = () => {
     return (
         <div className="space-y-6 p-2" role="region" aria-label="Accessibility settings">
             <div className="space-y-2">
-                <h3 className="text-lg font-medium">{t('accessibility.title')}</h3>
-                <p className="text-sm text-muted-foreground">{t('accessibility.description')}</p>
+                <h3 className="text-lg font-medium font-heading">Accessibility</h3>
+                <p className="text-sm text-muted-foreground font-body">Customize your experience for better accessibility</p>
             </div>
 
             <Separator />
@@ -29,44 +29,44 @@ const AccessibilitySettings: React.FC = () => {
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                        <Label htmlFor="high-contrast">{t('accessibility.highContrast')}</Label>
-                        <p className="text-sm text-muted-foreground">{t('accessibility.highContrastDescription')}</p>
+                        <Label htmlFor="high-contrast" className="font-ui">High Contrast</Label>
+                        <p className="text-sm text-muted-foreground font-body">Increases contrast for better readability</p>
                     </div>
                     <Switch
                         id="high-contrast"
                         checked={highContrast}
                         onCheckedChange={toggleHighContrast}
-                        aria-label={t('accessibility.highContrast')}
+                        aria-label="High Contrast"
                     />
                 </div>
 
                 <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                        <Label htmlFor="reduced-motion">{t('accessibility.reducedMotion')}</Label>
-                        <p className="text-sm text-muted-foreground">{t('accessibility.reducedMotionDescription')}</p>
+                        <Label htmlFor="reduced-motion" className="font-ui">Reduced Motion</Label>
+                        <p className="text-sm text-muted-foreground font-body">Minimizes animations throughout the interface</p>
                     </div>
                     <Switch
                         id="reduced-motion"
                         checked={reducedMotion}
                         onCheckedChange={toggleReducedMotion}
-                        aria-label={t('accessibility.reducedMotion')}
+                        aria-label="Reduced Motion"
                     />
                 </div>
 
                 <div className="space-y-2">
-                    <Label>{t('accessibility.fontSize')}</Label>
+                    <Label className="font-ui">Font Size</Label>
                     <RadioGroup value={fontSize} onValueChange={(value) => setFontSize(value as any)}>
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="normal" id="fontSize-normal" />
-                            <Label htmlFor="fontSize-normal">{t('accessibility.fontSizeNormal')}</Label>
+                            <Label htmlFor="fontSize-normal" className="font-body">Normal</Label>
                         </div>
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="large" id="fontSize-large" />
-                            <Label htmlFor="fontSize-large">{t('accessibility.fontSizeLarge')}</Label>
+                            <Label htmlFor="fontSize-large" className="font-body">Large</Label>
                         </div>
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="x-large" id="fontSize-x-large" />
-                            <Label htmlFor="fontSize-x-large">{t('accessibility.fontSizeXLarge')}</Label>
+                            <Label htmlFor="fontSize-x-large" className="font-body">Extra Large</Label>
                         </div>
                     </RadioGroup>
                 </div>

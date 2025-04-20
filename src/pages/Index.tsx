@@ -41,6 +41,7 @@ import {
     updateUrlParams,
     isHashBasedRouting,
 } from '@/utils/urlUtils';
+import { colors } from "@/utils/colors";
 
 type SortOption = "latest" | "popular" | "filter" | "search";
 
@@ -1146,7 +1147,7 @@ const Index: React.FC = () => {
 
     return (
         <RantErrorBoundary>
-            <div className="min-h-screen bg-[#09090B]">
+            <div className="min-h-screen bg-background-dark">
                 {/* Updated Navbar with My Rants button */}
                 <div className="flex justify-between items-center">
                     <Navbar />

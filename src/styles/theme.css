@@ -3,7 +3,7 @@
   --color-primary: #6C63FF;
   --color-primary-dark: #5C54DD;
   --color-primary-light: #7D76FF;
-  --color-background-dark: #121225;
+  --color-background-dark: #090913;
   --color-background-light: #F5F5F7;
   --color-on-primary: #FFFFFF;
 
@@ -44,7 +44,7 @@
 .theme-light {
   --background-primary: var(--color-background-light);
   --background-secondary: #FFFFFF;
-  --text-primary: #121225;
+  --text-primary: #090913;
   --text-secondary: #4B5563;
 }
 

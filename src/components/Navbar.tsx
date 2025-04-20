@@ -8,10 +8,12 @@ import { getAuthorId } from "@/utils/authorId";
 import { toast } from "@/hooks/use-toast";
 import { FileTextIcon, SettingsIcon } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
+import { useNavigate } from 'react-router-dom';
 
 const Navbar: React.FC = () => {
     const [showMyRants, setShowMyRants] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
+    const navigate = useNavigate();
 
     // Function to safely get author ID with fallback
     const getSafeAuthorId = (): string => {
@@ -43,36 +45,59 @@ const Navbar: React.FC = () => {
         }
     };
 
+    // Common button style class for all icon buttons
+    const iconButtonClass = "h-8 w-8 rounded-full text-primary hover:bg-primary/10 hover:text-primary focus:ring-2 focus:ring-accent-teal focus:ring-offset-1 focus:ring-offset-background-dark transition-colors";
+
+    const handleMyRantsClick = () => {
+        if (window.matchMedia('(min-width: 1024px)').matches) {
+            // Navigate to /my-rants on larger screens
+            navigate('/my-rants');
+        } else {
+            // Open modal on smaller screens
+            setShowMyRants(true);
+        }
+    };
+
     return (
         <>
-            <nav className="w-full py-6 px-6 flex justify-between items-center border-b border-[#222222] bg-background-dark">
-                <div className="text-primary text-3xl font-bold font-outfit bg-gradient-to-r from-[#6C63FF] to-[#2DD4BF] bg-clip-text text-transparent">rant</div>
+            <nav className="w-full py-4 px-6 flex justify-between items-center border-b border-border-subtle bg-background-dark shadow-low">
+                <div className="text-3xl font-bold font-heading bg-gradient-to-r from-primary to-accent-teal bg-clip-text text-transparent">
+                    rant
+                </div>
 
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2 mr-4">
-                        {/* Theme Toggle Button */}
-                        <ThemeToggle />
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => { }}
+                            className={iconButtonClass}
+                            aria-label="Toggle Theme"
+                            title="Toggle Theme"
+                        >
+                            <ThemeToggle />
+                        </Button>
 
                         <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => setShowMyRants(true)}
-                            className="h-8 w-8 rounded-full text-cyan-400 hover:bg-cyan-900/20 hover:text-cyan-300"
+                            onClick={handleMyRantsClick}
+                            className={iconButtonClass}
                             aria-label="My Rants"
                             title="My Rants"
                         >
-                            <FileTextIcon size={18} />
+                            <FileTextIcon size={16} />
                         </Button>
 
                         <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => setShowSettings(true)}
-                            className="h-8 w-8 rounded-full text-cyan-400 hover:bg-cyan-900/20 hover:text-cyan-300"
+                            className={iconButtonClass}
                             aria-label="Settings"
                             title="Settings"
                         >
-                            <SettingsIcon size={18} />
+                            <SettingsIcon size={16} />
                         </Button>
                     </div>
                 </div>

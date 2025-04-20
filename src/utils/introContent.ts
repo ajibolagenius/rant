@@ -46,8 +46,8 @@ export const headingContents: HeadingContent[] = [
 
 // Color schemes for headings
 export const colorSchemes = [
-    { heading: "text-white", subheading: "text-primary" },
-    { heading: "text-primary", subheading: "text-pink-400" },
-    { heading: "text-blue-400", subheading: "text-purple-400" },
-    { heading: "text-purple-400", subheading: "text-primary" }
+    { heading: "text-text-strong", subheading: "text-primary" },
+    { heading: "text-primary", subheading: "text-accent-rose" },
+    { heading: "text-accent-teal", subheading: "text-primary" },
+    { heading: "text-primary", subheading: "text-accent-amber" }
 ];

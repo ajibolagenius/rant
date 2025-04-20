@@ -128,18 +128,18 @@ const MyRantsPage: React.FC = () => {
 
     // Render empty state for both tabs
     const renderEmptyState = (isMyRants: boolean) => (
-        <div className="flex flex-col items-center justify-center py-16 px-4 bg-gray-900/20 rounded-xl border border-gray-800 mt-4">
-            <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mb-4">
+        <div className="flex flex-col items-center justify-center py-16 px-4 bg-background-secondary/20 rounded-xl border border-border-subtle mt-4">
+            <div className="w-16 h-16 bg-background-secondary rounded-full flex items-center justify-center mb-4">
                 {isMyRants ? (
-                    <PenLineIcon className="w-8 h-8 text-gray-400" />
+                    <PenLineIcon className="w-8 h-8 text-text-muted" />
                 ) : (
-                    <BookmarkIcon className="w-8 h-8 text-gray-400" />
+                    <BookmarkIcon className="w-8 h-8 text-text-muted" />
                 )}
             </div>
-            <h3 className="text-xl font-semibold text-white mb-2">
+            <h3 className="text-xl font-heading font-semibold text-text-strong mb-2">
                 {isMyRants ? "No Rants Yet" : "No Bookmarks Yet"}
             </h3>
-            <p className="text-gray-400 text-center mb-6 max-w-md">
+            <p className="text-text-muted text-center mb-6 max-w-md font-body">
                 {isMyRants
                     ? "When you post rants, they will appear here for you to manage."
                     : "You haven't bookmarked any rants yet. Click the bookmark icon on rants you want to save."}
@@ -147,7 +147,7 @@ const MyRantsPage: React.FC = () => {
             {isMyRants && (
                 <Button
                     onClick={() => navigate('/')}
-                    className="bg-cyan-700 hover:bg-cyan-600 text-white"
+                    className="bg-accent-teal hover:bg-accent-teal/90 text-background-dark font-ui font-medium"
                 >
                     Create Your First Rant
                 </Button>
@@ -156,28 +156,28 @@ const MyRantsPage: React.FC = () => {
     );
 
     return (
-        <div className="min-h-screen bg-[#09090B]">
+        <div className="min-h-screen bg-background-primary">
             <Navbar />
 
             <div className="container mx-auto px-4 py-8 max-w-6xl">
                 <motion.div
-                    className="bg-[#121217] border border-[#2e2e3a] rounded-xl overflow-hidden shadow-xl"
+                    className="bg-background-dark border border-border-subtle rounded-xl overflow-hidden shadow-high"
                     initial={reducedMotion ? undefined : { opacity: 0, y: 20 }}
                     animate={reducedMotion ? undefined : { opacity: 1, y: 0 }}
                     transition={{ duration: 0.3 }}
                 >
-                    <div className="border-b border-[#2e2e3a] bg-gradient-to-r from-[#121217] to-[#1a1a24] p-4 sm:p-6">
+                    <div className="border-b border-border-subtle bg-gradient-to-r from-background-dark to-background-secondary p-4 sm:p-6">
                         <div className="flex items-center justify-between">
                             <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => navigate('/')}
-                                className="text-gray-400 hover:text-white hover:bg-[#252532]"
+                                className="text-text-muted hover:text-text-strong hover:bg-background-secondary font-ui"
                             >
                                 <ArrowLeftIcon className="mr-2" size={16} />
                                 Back
                             </Button>
-                            <h1 className="text-xl sm:text-2xl font-bold text-white">My Rants</h1>
+                            <h1 className="text-xl sm:text-2xl font-heading font-bold text-text-strong">My Rants</h1>
                             <div className="w-[70px]"></div> {/* Spacer for centering */}
                         </div>
                     </div>
@@ -189,17 +189,17 @@ const MyRantsPage: React.FC = () => {
                             onValueChange={setActiveTab}
                             className="w-full"
                         >
-                            <TabsList className="w-full grid grid-cols-2 bg-[#1a1a24] p-1 rounded-xl mb-6 border border-[#2e2e3a]">
+                            <TabsList className="w-full grid grid-cols-2 bg-background-secondary p-1 rounded-xl mb-6 border border-border-subtle">
                                 <TabsTrigger
                                     value="my-rants"
-                                    className="data-[state=active]:bg-cyan-800/30 data-[state=active]:text-white py-2 font-medium"
+                                    className="data-[state=active]:bg-primary data-[state=active]:text-white py-2 font-ui font-medium"
                                 >
                                     <PenLineIcon className="mr-2" size={16} />
                                     My Rants
                                 </TabsTrigger>
                                 <TabsTrigger
                                     value="bookmarks"
-                                    className="data-[state=active]:bg-cyan-800/30 data-[state=active]:text-white py-2 font-medium"
+                                    className="data-[state=active]:bg-primary data-[state=active]:text-white py-2 font-ui font-medium"
                                 >
                                     <BookmarkIcon className="mr-2" size={16} />
                                     Bookmarks
@@ -210,7 +210,7 @@ const MyRantsPage: React.FC = () => {
                                 <TabsContent value="my-rants" className="p-0 m-0 outline-none">
                                     {loading ? (
                                         <div className="flex justify-center items-center py-16">
-                                            <div className="h-10 w-10 animate-spin rounded-full border-4 border-cyan-500 border-t-transparent"></div>
+                                            <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
                                         </div>
                                     ) : myRants.length > 0 ? (
                                         <ScrollArea className="h-[60vh] pr-4">
@@ -242,7 +242,7 @@ const MyRantsPage: React.FC = () => {
                                 <TabsContent value="bookmarks" className="p-0 m-0 outline-none">
                                     {loading ? (
                                         <div className="flex justify-center items-center py-16">
-                                            <div className="h-10 w-10 animate-spin rounded-full border-4 border-cyan-500 border-t-transparent"></div>
+                                            <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
                                         </div>
                                     ) : bookmarkedRants.length > 0 ? (
                                         <ScrollArea className="h-[60vh] pr-4">
@@ -274,16 +274,16 @@ const MyRantsPage: React.FC = () => {
                         </Tabs>
 
                         {/* Info footer */}
-                        <div className="mt-6 pt-4 border-t border-[#2e2e3a] flex items-center justify-between text-xs text-gray-500">
-                            <div className="flex items-center gap-1">
+                        <div className="mt-6 pt-4 border-t border-border-subtle flex items-center justify-between text-xs text-text-muted">
+                            <div className="flex items-center gap-1 font-body">
                                 <InfoIcon size={12} />
                                 <span>Your rants remain anonymous - data is stored only in your browser</span>
                             </div>
-                            <div>
+                            <div className="font-ui">
                                 <Button
                                     variant="link"
                                     size="sm"
-                                    className="text-xs text-cyan-400 hover:text-cyan-300 p-0"
+                                    className="text-xs text-primary hover:text-primary/90 p-0"
                                     onClick={() => navigate('/')}
                                 >
                                     Browse all rants

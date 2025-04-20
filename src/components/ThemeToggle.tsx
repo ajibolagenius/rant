@@ -1,46 +1,46 @@
-import React, { useEffect, useState } from 'react';
-import { SunIcon, MoonIcon } from '@radix-ui/react-icons';
-import Button from '@/components/Button.tsx';
+import React from 'react';
+import { SunIcon, MoonIcon } from 'lucide-react';
+import { useAccessibility } from '@/components/AccessibilityContext';
 
-const ThemeToggle: React.FC = () => {
-    const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+interface ThemeToggleProps {
+    className?: string;
+}
 
-    useEffect(() => {
-        // Initialize theme state from localStorage or system preference
-        const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-        if (savedTheme) {
-            setTheme(savedTheme);
-        } else {
-            setTheme(prefersDark ? 'dark' : 'light');
-        }
-    }, []);
+const ThemeToggle: React.FC<ThemeToggleProps> = ({ className }) => {
+    // Use the theme state and setTheme function from AccessibilityContext
+    const { theme, setTheme } = useAccessibility();
 
     const toggleTheme = () => {
+        // Toggle between light and dark themes
         const newTheme = theme === 'dark' ? 'light' : 'dark';
-        setTheme(newTheme);
 
-        // Update DOM and save preference
-        document.documentElement.classList.remove(`theme-${theme}`);
-        document.documentElement.classList.add(`theme-${newTheme}`);
-        localStorage.setItem('theme', newTheme);
+        // Use the context's setTheme function which should handle:
+        // - Updating the theme state
+        // - Updating DOM classes
+        // - Saving to localStorage
+        setTheme(newTheme);
     };
 
     return (
-        <Button
-            variant="ghost"
-            size="sm"
+        <div
             onClick={toggleTheme}
-            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
-            className="w-9 h-9 p-0 rounded-full"
+            className={className}
+            role="button"
+            aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+            tabIndex={0}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleTheme();
+                }
+            }}
         >
             {theme === 'dark' ? (
-                <SunIcon className="h-5 w-5" />
+                <SunIcon size={16} />
             ) : (
-                <MoonIcon className="h-5 w-5" />
+                <MoonIcon size={16} />
             )}
-        </Button>
+        </div>
     );
 };
 

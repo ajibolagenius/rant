@@ -5,7 +5,7 @@ import { headingContents, colorSchemes } from '@/utils/introContent';
 import TypewriterText from '@/components/TypewriterText';
 import { cn } from '@/lib/utils';
 import { useRantCount } from '@/hooks/useRantCount';
-import { colors } from '@/utils/colors';
+import { colors } from '@/lib/theme/colors';
 
 // Constants for animation and display values
 const ANIMATION = {
@@ -156,7 +156,7 @@ const IntroSection: React.FC<IntroSectionProps> = ({ onStartRanting, onExploreRa
                 className="flex items-center gap-2 mb-6"
                 variants={itemVariants}
             >
-                <div className="bg-background-dark text-primary border border-primary/30 px-4 py-1.5 rounded-full text-sm font-medium flex items-center backdrop-blur-sm shadow-lg font-ui">
+                <div className="bg-background-dark text-primary border border-border-subtle px-4 py-1.5 rounded-full text-sm font-medium flex items-center backdrop-blur-sm shadow-medium font-ui">
                     <span>Let it all out</span>
                     <motion.span
                         className="inline-block w-2 h-2 ml-2 bg-accent-teal rounded-full"
@@ -247,7 +247,7 @@ const IntroSection: React.FC<IntroSectionProps> = ({ onStartRanting, onExploreRa
                 >
                     <Button
                         onClick={onStartRanting}
-                        className="bg-gradient-to-r from-primary to-accent-teal hover:opacity-90 transition-all rounded-full px-8 py-6 text-base font-medium shadow-lg shadow-primary/20 font-ui"
+                        className="bg-gradient-to-r from-primary to-accent-teal hover:opacity-90 transition-all rounded-full px-8 py-6 text-base font-medium shadow-medium shadow-primary/20 font-ui"
                     >
                         Start Ranting
                     </Button>
@@ -269,18 +269,18 @@ const IntroSection: React.FC<IntroSectionProps> = ({ onStartRanting, onExploreRa
             </motion.div>
 
             <motion.div
-                className="flex items-center text-sm text-gray-400 gap-3"
+                className="flex items-center text-sm text-text-muted gap-3"
                 variants={itemVariants}
             >
                 <motion.div
-                    className="flex items-center justify-center w-6 h-6 rounded-full bg-black/30 border border-green-500/30"
-                    animate={{ borderColor: ['rgba(34, 197, 94, 0.3)', 'rgba(34, 197, 94, 0.8)', 'rgba(34, 197, 94, 0.3)'] }}
+                    className="flex items-center justify-center w-6 h-6 rounded-full bg-background-dark/30 border border-utility-success/30"
+                    animate={{ borderColor: ['rgba(52, 211, 153, 0.3)', 'rgba(52, 211, 153, 0.8)', 'rgba(52, 211, 153, 0.3)'] }}
                     transition={{ duration: ANIMATION.ONLINE_INDICATOR_DURATION, repeat: Infinity }}
                 >
-                    <div className="w-2 h-2 bg-green-500 rounded-full" />
+                    <div className="w-2 h-2 bg-utility-success rounded-full" />
                 </motion.div>
-                <span>
-                    <span className="text-green-400 font-medium">
+                <span className="font-ui">
+                    <span className="text-utility-success font-medium">
                         {countLoading ? '...' : activeUsers}
                     </span> people ranting now
                 </span>
