@@ -5,6 +5,7 @@ import { headingContents, colorSchemes } from '@/utils/introContent';
 import TypewriterText from '@/components/TypewriterText';
 import { cn } from '@/lib/utils';
 import { useRantCount } from '@/hooks/useRantCount';
+import { colors } from '@/utils/colors';
 
 // Constants for animation and display values
 const ANIMATION = {
@@ -102,7 +103,6 @@ const IntroSection: React.FC<IntroSectionProps> = ({ onStartRanting, onExploreRa
             currentHeading.subtext.length;
 
         // Base height plus additional height for longer content
-        // These values can be adjusted based on your specific design
         const estimatedHeight = Math.max(
             240, // Minimum height
             240 + Math.floor(totalTextLength / 50) * 30 // Add 30px for every 50 chars
@@ -156,10 +156,10 @@ const IntroSection: React.FC<IntroSectionProps> = ({ onStartRanting, onExploreRa
                 className="flex items-center gap-2 mb-6"
                 variants={itemVariants}
             >
-                <div className="bg-[#1A1A1A] text-primary border border-primary/30 px-4 py-1.5 rounded-full text-sm font-medium flex items-center backdrop-blur-sm shadow-lg">
+                <div className="bg-background-dark text-primary border border-primary/30 px-4 py-1.5 rounded-full text-sm font-medium flex items-center backdrop-blur-sm shadow-lg font-ui">
                     <span>Let it all out</span>
                     <motion.span
-                        className="inline-block w-2 h-2 ml-2 bg-primary rounded-full"
+                        className="inline-block w-2 h-2 ml-2 bg-accent-teal rounded-full"
                         animate={{
                             scale: [1, 1.2, 1],
                             opacity: [1, 0.8, 1]
@@ -191,7 +191,7 @@ const IntroSection: React.FC<IntroSectionProps> = ({ onStartRanting, onExploreRa
                             exit="exit"
                             className="h-full"
                         >
-                            <h1 className="text-6xl font-bold leading-tight">
+                            <h1 className="text-6xl font-bold leading-tight font-heading">
                                 <span className={colorSchemes[currentColorScheme].heading}>
                                     <TypewriterText
                                         text={headingContents[currentIndex].heading}
@@ -217,7 +217,7 @@ const IntroSection: React.FC<IntroSectionProps> = ({ onStartRanting, onExploreRa
                                 )}
                             </h1>
 
-                            <div className="text-xl text-gray-300 mt-6 max-w-xl leading-relaxed">
+                            <div className="text-xl text-text-muted mt-6 max-w-xl leading-relaxed font-body">
                                 <TypewriterText
                                     text={headingContents[currentIndex].subtext}
                                     delay={(headingContents[currentIndex].heading.length +
@@ -247,7 +247,7 @@ const IntroSection: React.FC<IntroSectionProps> = ({ onStartRanting, onExploreRa
                 >
                     <Button
                         onClick={onStartRanting}
-                        className="bg-gradient-to-r from-[#00C2FF] to-[#904FFF] hover:opacity-90 transition-all rounded-full px-8 py-6 text-base font-medium shadow-lg shadow-primary/20"
+                        className="bg-gradient-to-r from-primary to-accent-teal hover:opacity-90 transition-all rounded-full px-8 py-6 text-base font-medium shadow-lg shadow-primary/20 font-ui"
                     >
                         Start Ranting
                     </Button>
@@ -261,7 +261,7 @@ const IntroSection: React.FC<IntroSectionProps> = ({ onStartRanting, onExploreRa
                     <Button
                         onClick={onExploreRants}
                         variant="outline"
-                        className="border-[#333] bg-[#121212] hover:bg-[#1A1A1A] text-white rounded-full px-8 py-6 text-base font-medium backdrop-blur-sm"
+                        className="border-border-subtle bg-background-dark hover:bg-background-secondary text-text-strong rounded-full px-8 py-6 text-base font-medium backdrop-blur-sm font-ui"
                     >
                         Explore Rants
                     </Button>

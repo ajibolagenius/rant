@@ -1,0 +1,23 @@
+/* Import the required fonts */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Urbanist:wght@500;600&display=swap');
+
+/* Apply font families to elements */
+:root {
+  --font-heading: 'Outfit', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-ui: 'Urbanist', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+}
+
+body, p {
+  font-family: var(--font-body);
+}
+
+button, a, input, select, textarea, label {
+  font-family: var(--font-ui);
+}

@@ -1,8 +1,12 @@
+/* Import fonts */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=Urbanist:wght@300;400;500;600;700&display=swap');
 
+/* Import custom styles */
 @import "styles/animations.css";
+@import "styles/theme.css";
+@import "styles/fonts.css";
 
-
+/* Tailwind directives */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -97,6 +101,19 @@
         /* #27272A */
         --sidebar-ring: 288 95% 60%;
         /* #D946EF */
+
+        /* Design System Colors */
+        --color-primary: #6C63FF;
+        --color-primary-light: #9BA1FF;
+        --color-background-dark: #121225;
+        --color-background-light: #F5F5F7;
+        --color-on-primary: #FFFFFF;
+        --color-accent-teal: #2DD4BF;
+        --color-accent-amber: #F59E0B;
+        --color-accent-rose: #FB7185;
+        --color-text-muted: #A0AEC0;
+        --color-border-subtle: #2DD4BF22;
+        --color-border-strong: #6C63FF88;
     }
 
     /* Keep the dark theme the same as root for now */
@@ -191,7 +208,7 @@
         transform-origin: center center;
     }
 
-    .rant-card::before {
+    /* .rant-card::before {
         content: '';
         position: absolute;
         top: 0;
@@ -203,12 +220,12 @@
         pointer-events: none;
         z-index: 10;
         transition: all 0.3s ease;
-    }
+    } */
 
-    .rant-card:hover::before {
+    /* .rant-card:hover::before {
         border-color: hsl(var(--border));
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-    }
+    } */
 
 
     .rant-button {
@@ -252,4 +269,45 @@
         max-width: 100%;
         overflow-x: auto;
     }
+}
+
+/* Global styles from theme.css */
+:root {
+    /* Apply theme variables from theme.css */
+    --background-primary: var(--color-background-dark);
+    --background-secondary: var(--color-background-dark);
+    --text-primary: var(--color-on-primary);
+    --text-secondary: var(--color-text-muted);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--background-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-primary);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-primary-light);
+}
+
+/* Focus styles */
+/* :focus-visible {
+    outline: 2px solid var(--color-accent-teal);
+    outline-offset: 2px;
+} */
+
+/* Transition for theme changes */
+* {
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-duration: 0.2s;
+    transition-timing-function: ease-in-out;
 }

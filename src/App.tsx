@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import '@/lib/i18n';
 import '@/styles/accessibility.css';
+import '@/styles/fonts.css'; // Import our new fonts
+import '@/styles/theme.css'; // Import our theme styles
 
 // Error boundary component for catching rendering errors
 class ErrorBoundary extends React.Component<
@@ -36,10 +38,10 @@ class ErrorBoundary extends React.Component<
                 return this.props.fallback;
             }
             return (
-                <div className="min-h-screen flex items-center justify-center p-4 bg-[#09090B]">
-                    <Alert className="max-w-md border-red-200 bg-red-50">
-                        <AlertTitle className="text-red-800">Something went wrong</AlertTitle>
-                        <AlertDescription className="text-red-600">
+                <div className="min-h-screen flex items-center justify-center p-4 bg-background-dark">
+                    <Alert className="max-w-md border-error bg-error/10">
+                        <AlertTitle className="text-error">Something went wrong</AlertTitle>
+                        <AlertDescription className="text-error/80">
                             {this.state.error?.message || "An unexpected error occurred"}
                         </AlertDescription>
                         <Button
@@ -63,12 +65,12 @@ class ErrorBoundary extends React.Component<
 // Lazy load pages for better error isolation
 const Index = lazy(() => import("./pages/Index"));
 const NotFound = lazy(() => import("./pages/NotFound"));
-const MyRantsPage = lazy(() => import("./pages/MyRantsPage")); // We'll create this next
+const MyRantsPage = lazy(() => import("./pages/MyRantsPage"));
 
 // Loading fallback component
 const LoadingFallback = () => (
-    <div className="min-h-screen flex items-center justify-center bg-[#09090B]" role="status" aria-live="polite">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-cyan-500 border-t-transparent" aria-hidden="true"></div>
+    <div className="min-h-screen flex items-center justify-center bg-background-dark" role="status" aria-live="polite">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" aria-hidden="true"></div>
         <span className="sr-only">Loading...</span>
     </div>
 );
@@ -163,7 +165,7 @@ const App = () => {
         return () => window.removeEventListener('unhandledrejection', handleRejection);
     }, []);
 
-    // Listen for system preference changes for accessibility
+    // Listen for system preference changes for accessibility and theme
     useEffect(() => {
         const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
         const reducedMotionMediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -171,6 +173,14 @@ const App = () => {
         const handleDarkModeChange = (e: MediaQueryListEvent) => {
             if (localStorage.getItem('theme') === 'system') {
                 document.documentElement.classList.toggle('dark', e.matches);
+                // Apply our theme classes
+                if (e.matches) {
+                    document.documentElement.classList.remove('theme-light');
+                    document.documentElement.classList.add('theme-dark');
+                } else {
+                    document.documentElement.classList.remove('theme-dark');
+                    document.documentElement.classList.add('theme-light');
+                }
             }
         };
 
@@ -182,6 +192,18 @@ const App = () => {
 
         darkModeMediaQuery.addEventListener('change', handleDarkModeChange);
         reducedMotionMediaQuery.addEventListener('change', handleReducedMotionChange);
+
+        // Initialize theme based on saved preference or system preference
+        const savedTheme = localStorage.getItem('theme');
+        const prefersDark = darkModeMediaQuery.matches;
+
+        if (savedTheme === 'light') {
+            document.documentElement.classList.remove('theme-dark');
+            document.documentElement.classList.add('theme-light');
+        } else if (savedTheme === 'dark' || prefersDark) {
+            document.documentElement.classList.remove('theme-light');
+            document.documentElement.classList.add('theme-dark');
+        }
 
         return () => {
             darkModeMediaQuery.removeEventListener('change', handleDarkModeChange);
@@ -195,7 +217,7 @@ const App = () => {
                 <QueryClientProvider client={queryClient}>
                     <TooltipProvider>
                         <RantProvider>
-                            <div className="dark">
+                            <div className="theme-dark">
                                 <Toaster />
                                 <Sonner />
                                 <ErrorBoundary>

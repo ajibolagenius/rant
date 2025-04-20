@@ -17,6 +17,7 @@ import SearchHelp from "@/components/SearchHelp";
 import { useSearchParams, useLocation } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { colors } from "@/utils/colors";
 
 type SortOption = "latest" | "popular" | "filter" | "search";
 
@@ -560,7 +561,7 @@ const SortingBar: React.FC<SortingBarProps> = ({
                 <div id="rant-section" className="mb-4"></div>
 
                 {/* Section Title - Mobile */}
-                <h2 className="text-xl font-bold text-white mb-4">
+                <h2 className="text-xl font-bold font-heading text-text-strong mb-4">
                     {activeOption === "search"
                         ? "Search Results 🔍"
                         : activeOption === "popular"
@@ -574,42 +575,42 @@ const SortingBar: React.FC<SortingBarProps> = ({
                         onClick={handleSearchDropdownToggle}
                         variant="outline"
                         size="sm"
-                        className={`border-[#333] bg-[#121212] hover:bg-[#1A1A1A] text-white rounded-full flex-1 px-3 py-2 flex items-center gap-1 justify-center ${activeOption === "search" ? "ring-2 ring-white/30" : ""}`}
+                        className={`border-border-subtle bg-background-secondary hover:bg-background-secondary/80 text-text-strong rounded-full flex-1 px-3 py-2 flex items-center gap-1 justify-center ${activeOption === "search" ? "ring-2 ring-accent-teal" : ""}`}
                     >
                         <MagnifyingGlassIcon className="h-3 w-3" />
-                        <span className="text-xs">Search</span>
+                        <span className="text-xs font-ui">Search</span>
                     </Button>
 
                     <Button
                         onClick={handleLatestClick}
                         variant="outline"
                         size="sm"
-                        className={`border-[#333] bg-[#121212] hover:bg-[#1A1A1A] text-white rounded-full flex-1 px-3 py-2 flex items-center gap-1 justify-center ${activeOption === "latest" ? "ring-2 ring-white/30" : ""}`}
+                        className={`border-border-subtle bg-background-secondary hover:bg-background-secondary/80 text-text-strong rounded-full flex-1 px-3 py-2 flex items-center gap-1 justify-center ${activeOption === "latest" ? "ring-2 ring-accent-teal" : ""}`}
                     >
                         <ClockIcon className="h-3 w-3" />
-                        <span className="text-xs">Latest</span>
+                        <span className="text-xs font-ui">Latest</span>
                     </Button>
 
                     <Button
                         onClick={handlePopularClick}
                         variant="outline"
                         size="sm"
-                        className={`border-[#333] bg-[#121212] hover:bg-[#1A1A1A] text-white rounded-full flex-1 px-3 py-2 flex items-center gap-1 justify-center ${activeOption === "popular" ? "ring-2 ring-white/30" : ""}`}
+                        className={`border-border-subtle bg-background-secondary hover:bg-background-secondary/80 text-text-strong rounded-full flex-1 px-3 py-2 flex items-center gap-1 justify-center ${activeOption === "popular" ? "ring-2 ring-accent-teal" : ""}`}
                     >
                         <StarIcon className="h-3 w-3" />
-                        <span className="text-xs">Popular</span>
+                        <span className="text-xs font-ui">Popular</span>
                     </Button>
 
                     <Button
                         onClick={handleFilterDropdownToggle}
                         variant="outline"
                         size="sm"
-                        className={`border-[#333] bg-[#121212] hover:bg-[#1A1A1A] text-white rounded-full flex-1 px-3 py-2 flex items-center gap-1 justify-center ${activeOption === "filter" && selectedFilters.length > 0 ? "ring-2 ring-white/30" : ""}`}
+                        className={`border-border-subtle bg-background-secondary hover:bg-background-secondary/80 text-text-strong rounded-full flex-1 px-3 py-2 flex items-center gap-1 justify-center ${activeOption === "filter" && selectedFilters.length > 0 ? "ring-2 ring-accent-teal" : ""}`}
                     >
                         <MixerHorizontalIcon className="h-3 w-3" />
-                        <span className="text-xs">Filter</span>
+                        <span className="text-xs font-ui">Filter</span>
                         {selectedFilters.length > 0 && (
-                            <span className="inline-flex items-center justify-center w-4 h-4 ml-1 text-[10px] font-medium text-white bg-cyan-700 rounded-full">
+                            <span className="inline-flex items-center justify-center w-4 h-4 ml-1 text-[10px] font-medium text-background-dark bg-accent-teal rounded-full">
                                 {selectedFilters.length}
                             </span>
                         )}
@@ -623,12 +624,12 @@ const SortingBar: React.FC<SortingBarProps> = ({
                 >
                     <div
                         ref={searchDropdownRef}
-                        className="bg-[#121212] border border-[#333] rounded-lg p-4 shadow-lg w-full"
+                        className="bg-background-secondary border border-border-subtle rounded-lg p-4 shadow-medium w-full"
                     >
                         <div className="space-y-4">
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <MagnifyingGlassIcon className="h-4 w-4 text-gray-400" />
+                                    <MagnifyingGlassIcon className="h-4 w-4 text-text-muted" />
                                 </div>
                                 <Input
                                     ref={searchInputRef}
@@ -638,11 +639,11 @@ const SortingBar: React.FC<SortingBarProps> = ({
                                     onChange={handleSearchInputChange}
                                     onFocus={handleInputFocus}
                                     onKeyDown={handleKeyDown}
-                                    className="pl-10 pr-10 bg-[#1A1A1A] border-[#333] text-white"
+                                    className="pl-10 pr-10 bg-background-secondary border-border-subtle text-text-primary font-body"
                                 />
                                 {localSearchQuery && (
                                     <button
-                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white"
+                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-text-muted hover:text-text-strong"
                                         onClick={clearSearch}
                                     >
                                         <Cross1Icon className="h-4 w-4" />
@@ -654,10 +655,10 @@ const SortingBar: React.FC<SortingBarProps> = ({
                             {showHistory && searchHistory.length > 0 && (
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between">
-                                        <h4 className="text-sm font-medium text-gray-400">Recent searches:</h4>
+                                        <h4 className="text-sm font-medium font-ui text-text-muted">Recent searches:</h4>
                                         <button
                                             onClick={clearHistory}
-                                            className="text-xs text-gray-400 hover:text-white"
+                                            className="text-xs text-text-muted hover:text-text-strong font-ui"
                                         >
                                             Clear
                                         </button>
@@ -668,9 +669,9 @@ const SortingBar: React.FC<SortingBarProps> = ({
                                                 key={index}
                                                 onClick={() => handleHistoryItemClick(item)}
                                                 className="inline-flex items-center gap-2 px-2 py-1 text-xs rounded-full
-                                                    bg-[#1A1A1A] border border-[#333] hover:bg-[#252525] text-gray-300"
+                                                    bg-background-secondary border border-border-subtle hover:bg-background-secondary/80 text-text-muted font-ui"
                                             >
-                                                <MagnifyingGlassIcon className="h-3 w-3 text-gray-400" />
+                                                <MagnifyingGlassIcon className="h-3 w-3 text-text-muted" />
                                                 {item.query.length > 12 ? item.query.substring(0, 10) + "..." : item.query}
                                                 {item.mood && (
                                                     <img
@@ -687,7 +688,7 @@ const SortingBar: React.FC<SortingBarProps> = ({
 
                             {/* Mood filter buttons - Mobile */}
                             <div className="space-y-2">
-                                <h4 className="text-xs font-medium text-gray-400">Filter by mood:</h4>
+                                <h4 className="text-xs font-medium font-ui text-text-muted">Filter by mood:</h4>
                                 <div className="grid grid-cols-3 gap-2">
                                     {allMoods.slice(0, 9).map((mood) => (
                                         <button
@@ -695,11 +696,11 @@ const SortingBar: React.FC<SortingBarProps> = ({
                                             type="button"
                                             onClick={() => handleSearchMoodSelect(mood)}
                                             className={`
-                                                inline-flex items-center gap-1 px-2 py-1 text-[10px]
+                                                inline-flex items-center gap-1 px-2 py-1 text-[10px] font-ui
                                                 rounded-full transition-all duration-200
                                                 ${localSearchMood === mood
-                                                    ? 'bg-[#1A1A1A] border border-[#333] text-white font-medium'
-                                                    : 'bg-[#121212] border border-[#333] hover:bg-[#1A1A1A] text-gray-300'}
+                                                    ? 'bg-background-secondary border border-accent-teal text-text-strong font-medium'
+                                                    : 'bg-background-secondary border border-border-subtle hover:bg-background-secondary/80 text-text-muted'}
                                             `}
                                         >
                                             <img
@@ -723,9 +724,9 @@ const SortingBar: React.FC<SortingBarProps> = ({
                 >
                     <div
                         ref={dropdownRef}
-                        className="bg-[#121212] border border-[#333] rounded-lg p-4 shadow-lg w-full"
+                        className="bg-background-secondary border border-border-subtle rounded-lg p-4 shadow-medium w-full"
                     >
-                        <h3 className="text-sm font-medium text-white mb-3">Filter by Mood</h3>
+                        <h3 className="text-sm font-medium font-heading text-text-strong mb-3">Filter by Mood</h3>
                         {/* Mood Options - Mobile */}
                         <div className="mb-4 grid grid-cols-3 gap-2">
                             {allMoods.slice(0, 12).map((mood) => (
@@ -734,11 +735,11 @@ const SortingBar: React.FC<SortingBarProps> = ({
                                     type="button"
                                     onClick={() => handleFilterSelect(mood)}
                                     className={`
-                                        inline-flex items-center gap-1 px-2 py-1 text-[10px]
+                                        inline-flex items-center gap-1 px-2 py-1 text-[10px] font-ui
                                         rounded-full transition-all duration-200
                                         ${selectedFilters.includes(mood)
-                                            ? 'bg-[#1A1A1A] border border-[#333] text-white font-medium'
-                                            : 'bg-[#121212] border border-[#333] hover:bg-[#1A1A1A] text-gray-300'}
+                                            ? 'bg-background-secondary border border-accent-teal text-text-strong font-medium'
+                                            : 'bg-background-secondary border border-border-subtle hover:bg-background-secondary/80 text-text-muted'}
                                     `}
                                 >
                                     <img
@@ -756,7 +757,7 @@ const SortingBar: React.FC<SortingBarProps> = ({
                             <button
                                 onClick={clearAllFilters}
                                 className="w-full inline-flex items-center justify-center gap-2 px-2 py-1 text-xs rounded-full
-                                           bg-[#121212] border border-red-500/30 hover:bg-[#1A1A1A] text-red-400"
+                                           bg-background-secondary border border-error/30 hover:bg-background-secondary/80 text-error font-ui"
                             >
                                 <Cross1Icon className="w-3 h-3" />
                                 Clear All Filters
@@ -767,11 +768,11 @@ const SortingBar: React.FC<SortingBarProps> = ({
 
                 {/* Selected Filters Display - Mobile */}
                 {selectedFilters.length > 0 && activeOption === "filter" && !isDropdownOpen && (
-                    <div className="text-xs text-gray-400 flex flex-wrap gap-2 mb-4">
+                    <div className="text-xs text-text-muted flex flex-wrap gap-2 mb-4 font-ui">
                         <span>Filters:</span>
                         <div className="flex flex-wrap gap-1">
                             {selectedFilters.slice(0, 3).map(mood => (
-                                <span key={mood} className="inline-flex items-center gap-1 bg-[#121212] border border-[#333] px-1 py-0.5 rounded-full">
+                                <span key={mood} className="inline-flex items-center gap-1 bg-background-secondary border border-border-subtle px-1 py-0.5 rounded-full">
                                     <img
                                         src={getMoodEmoji(mood as MoodType)}
                                         alt={getMoodLabel(mood as MoodType)}
@@ -780,14 +781,14 @@ const SortingBar: React.FC<SortingBarProps> = ({
                                     <span className="truncate max-w-[60px]">{getMoodLabel(mood as MoodType)}</span>
                                     <button
                                         onClick={() => handleFilterSelect(mood)}
-                                        className="ml-1 text-gray-400 hover:text-white"
+                                        className="ml-1 text-text-muted hover:text-text-strong"
                                     >
                                         ×
                                     </button>
                                 </span>
                             ))}
                             {selectedFilters.length > 3 && (
-                                <span className="inline-flex items-center gap-1 bg-[#121212] border border-[#333] px-1 py-0.5 rounded-full">
+                                <span className="inline-flex items-center gap-1 bg-background-secondary border border-border-subtle px-1 py-0.5 rounded-full">
                                     +{selectedFilters.length - 3} more
                                 </span>
                             )}
@@ -797,17 +798,17 @@ const SortingBar: React.FC<SortingBarProps> = ({
 
                 {/* Active Search Query - Mobile */}
                 {activeOption === "search" && (searchQuery || searchMood) && !isSearchOpen && (
-                    <div className="text-xs text-gray-400 flex flex-wrap gap-2 mb-4">
+                    <div className="text-xs text-text-muted flex flex-wrap gap-2 mb-4 font-ui">
                         <span>Searching:</span>
                         <div className="flex flex-wrap gap-1">
                             {searchQuery && (
-                                <span className="inline-flex items-center gap-1 bg-[#121212] border border-[#333] px-1 py-0.5 rounded-full">
+                                <span className="inline-flex items-center gap-1 bg-background-secondary border border-border-subtle px-1 py-0.5 rounded-full">
                                     <MagnifyingGlassIcon className="w-3 h-3" />
                                     {searchQuery.length > 15 ? `"${searchQuery.substring(0, 12)}..."` : `"${searchQuery}"`}
                                 </span>
                             )}
                             {searchMood && (
-                                <span className="inline-flex items-center gap-1 bg-[#121212] border border-[#333] px-1 py-0.5 rounded-full">
+                                <span className="inline-flex items-center gap-1 bg-background-secondary border border-border-subtle px-1 py-0.5 rounded-full">
                                     <img
                                         src={getMoodEmoji(searchMood)}
                                         alt={getMoodLabel(searchMood)}
@@ -818,7 +819,7 @@ const SortingBar: React.FC<SortingBarProps> = ({
                             )}
                             <button
                                 onClick={clearSearch}
-                                className="inline-flex items-center gap-1 bg-[#121212] border border-red-500/30 px-1 py-0.5 rounded-full text-red-400"
+                                className="inline-flex items-center gap-1 bg-background-secondary border border-error/30 px-1 py-0.5 rounded-full text-error"
                             >
                                 <Cross1Icon className="w-3 h-3" />
                                 Clear
@@ -836,7 +837,7 @@ const SortingBar: React.FC<SortingBarProps> = ({
             <div id="rant-section" className="mb-4"></div>
             <div className="flex items-center justify-between mb-4">
                 {/* Section Title */}
-                <h2 className="text-xl font-bold text-white">
+                <h2 className="text-xl font-bold font-heading text-text-strong">
                     {activeOption === "search"
                         ? "Search Results 🔍"
                         : activeOption === "popular"
@@ -849,7 +850,7 @@ const SortingBar: React.FC<SortingBarProps> = ({
                     <Button
                         onClick={handleSearchDropdownToggle}
                         variant="outline"
-                        className={`border-[#333] bg-[#121212] hover:bg-[#1A1A1A] text-white rounded-full px-6 py-2 flex items-center gap-2 ${activeOption === "search" ? "ring-2 ring-white/30" : ""}`}
+                        className={`border-border-subtle bg-background-secondary hover:bg-background-secondary/80 text-text-strong rounded-full px-6 py-2 flex items-center gap-2 font-ui ${activeOption === "search" ? "ring-2 ring-accent-teal" : ""}`}
                     >
                         <MagnifyingGlassIcon className="mr-1 h-4 w-4" />
                         <span>Search</span>
@@ -859,7 +860,7 @@ const SortingBar: React.FC<SortingBarProps> = ({
                     <Button
                         onClick={handleLatestClick}
                         variant="outline"
-                        className={`border-[#333] bg-[#121212] hover:bg-[#1A1A1A] text-white rounded-full px-6 py-2 ${activeOption === "latest" ? "ring-2 ring-white/30" : ""
+                        className={`border-border-subtle bg-background-secondary hover:bg-background-secondary/80 text-text-strong rounded-full px-6 py-2 font-ui ${activeOption === "latest" ? "ring-2 ring-accent-teal" : ""
                             }`}
                     >
                         <ClockIcon className="mr-2 h-4 w-4" />
@@ -868,7 +869,7 @@ const SortingBar: React.FC<SortingBarProps> = ({
                     <Button
                         onClick={handlePopularClick}
                         variant="outline"
-                        className={`border-[#333] bg-[#121212] hover:bg-[#1A1A1A] text-white rounded-full px-6 py-2 ${activeOption === "popular" ? "ring-2 ring-white/30" : ""
+                        className={`border-border-subtle bg-background-secondary hover:bg-background-secondary/80 text-text-strong rounded-full px-6 py-2 font-ui ${activeOption === "popular" ? "ring-2 ring-accent-teal" : ""
                             }`}
                     >
                         <StarIcon className="mr-2 h-4 w-4" />
@@ -878,13 +879,13 @@ const SortingBar: React.FC<SortingBarProps> = ({
                     <Button
                         onClick={handleFilterDropdownToggle}
                         variant="outline"
-                        className={`border-[#333] bg-[#121212] hover:bg-[#1A1A1A] text-white rounded-full px-6 py-2 flex items-center gap-2 ${activeOption === "filter" && selectedFilters.length > 0 ? "ring-2 ring-white/30" : ""
+                        className={`border-border-subtle bg-background-secondary hover:bg-background-secondary/80 text-text-strong rounded-full px-6 py-2 flex items-center gap-2 font-ui ${activeOption === "filter" && selectedFilters.length > 0 ? "ring-2 ring-accent-teal" : ""
                             }`}
                     >
                         <MixerHorizontalIcon className="mr-1 h-4 w-4" />
                         <span>Filter</span>
                         {selectedFilters.length > 0 && (
-                            <span className="inline-flex items-center justify-center w-5 h-5 ml-1 text-xs font-medium text-white bg-cyan-700 rounded-full">
+                            <span className="inline-flex items-center justify-center w-5 h-5 ml-1 text-xs font-medium text-background-dark bg-accent-teal rounded-full">
                                 {selectedFilters.length}
                             </span>
                         )}
@@ -899,13 +900,13 @@ const SortingBar: React.FC<SortingBarProps> = ({
             >
                 <div
                     ref={searchDropdownRef}
-                    className="bg-[#121212] border border-[#333] rounded-lg p-4 shadow-lg w-full"
+                    className="bg-background-secondary border border-border-subtle rounded-lg p-4 shadow-medium w-full"
                 >
                     <div className="space-y-4">
-                        <h3 className="text-lg font-medium text-white">Search Rants</h3>
+                        <h3 className="text-lg font-medium font-heading text-text-strong">Search Rants</h3>
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <MagnifyingGlassIcon className="h-4 w-4 text-gray-400" />
+                                <MagnifyingGlassIcon className="h-4 w-4 text-text-muted" />
                             </div>
                             <Input
                                 ref={searchInputRef}
@@ -915,11 +916,11 @@ const SortingBar: React.FC<SortingBarProps> = ({
                                 onChange={handleSearchInputChange}
                                 onFocus={handleInputFocus}
                                 onKeyDown={handleKeyDown}
-                                className="pl-10 pr-10 bg-[#1A1A1A] border-[#333] text-white"
+                                className="pl-10 pr-10 bg-background-secondary border-border-subtle text-text-primary font-body"
                             />
                             {localSearchQuery && (
                                 <button
-                                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white"
+                                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-text-muted hover:text-text-strong"
                                     onClick={clearSearch}
                                 >
                                     <Cross1Icon className="h-4 w-4" />
@@ -931,10 +932,10 @@ const SortingBar: React.FC<SortingBarProps> = ({
                         {showHistory && searchHistory.length > 0 && (
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between">
-                                    <h4 className="text-sm font-medium text-gray-400">Recent searches:</h4>
+                                    <h4 className="text-sm font-medium font-ui text-text-muted">Recent searches:</h4>
                                     <button
                                         onClick={clearHistory}
-                                        className="text-xs text-gray-400 hover:text-white"
+                                        className="text-xs text-text-muted hover:text-text-strong font-ui"
                                     >
                                         Clear
                                     </button>
@@ -945,9 +946,9 @@ const SortingBar: React.FC<SortingBarProps> = ({
                                             key={index}
                                             onClick={() => handleHistoryItemClick(item)}
                                             className="inline-flex items-center gap-2 px-2 py-1 text-xs rounded-full
-                                                bg-[#1A1A1A] border border-[#333] hover:bg-[#252525] text-gray-300"
+                                                bg-background-secondary border border-border-subtle hover:bg-background-secondary/80 text-text-muted font-ui"
                                         >
-                                            <MagnifyingGlassIcon className="h-3 w-3 text-gray-400" />
+                                            <MagnifyingGlassIcon className="h-3 w-3 text-text-muted" />
                                             {item.query}
                                             {item.mood && (
                                                 <img
@@ -965,14 +966,14 @@ const SortingBar: React.FC<SortingBarProps> = ({
                         {/* Search suggestions */}
                         {showSuggestions && suggestions.length > 0 && (
                             <div className="space-y-2">
-                                <h4 className="text-sm font-medium text-gray-400">Suggestions:</h4>
+                                <h4 className="text-sm font-medium font-ui text-text-muted">Suggestions:</h4>
                                 <div className="flex flex-wrap gap-2">
                                     {suggestions.map((suggestion, index) => (
                                         <button
                                             key={index}
                                             onClick={() => handleSuggestionClick(suggestion)}
                                             className="inline-flex items-center gap-2 px-2 py-1 text-xs rounded-full
-                                                bg-[#1A1A1A] border border-[#333] hover:bg-[#252525] text-gray-300"
+                                                bg-background-secondary border border-border-subtle hover:bg-background-secondary/80 text-text-muted font-ui"
                                         >
                                             {suggestion}
                                         </button>
@@ -982,7 +983,7 @@ const SortingBar: React.FC<SortingBarProps> = ({
                         )}
 
                         <div className="space-y-2">
-                            <h4 className="text-sm font-medium text-gray-400">Filter by mood:</h4>
+                            <h4 className="text-sm font-medium font-ui text-text-muted">Filter by mood:</h4>
                             <div className="flex flex-wrap gap-2">
                                 {allMoods.map((mood) => (
                                     <button
@@ -990,11 +991,11 @@ const SortingBar: React.FC<SortingBarProps> = ({
                                         type="button"
                                         onClick={() => handleSearchMoodSelect(mood)}
                                         className={`
-                                            inline-flex items-center gap-2 px-2 py-1 text-xs
+                                            inline-flex items-center gap-2 px-2 py-1 text-xs font-ui
                                             rounded-full transition-all duration-200
                                             ${localSearchMood === mood
-                                                ? 'bg-[#1A1A1A] border border-[#333] text-white font-medium'
-                                                : 'bg-[#121212] border border-[#333] hover:bg-[#1A1A1A] text-gray-300'}
+                                                ? 'bg-background-secondary border border-accent-teal text-text-strong font-medium'
+                                                : 'bg-background-secondary border border-border-subtle hover:bg-background-secondary/80 text-text-muted'}
                                         `}
                                     >
                                         <img
@@ -1010,17 +1011,17 @@ const SortingBar: React.FC<SortingBarProps> = ({
 
                         {/* Display active search query inside the search panel */}
                         {(localSearchQuery || localSearchMood) && (
-                            <div className="text-sm text-gray-400 pt-2 border-t border-[#333]">
+                            <div className="text-sm text-text-muted pt-2 border-t border-border-subtle font-ui">
                                 <p className="mb-2">Current search:</p>
                                 <div className="flex flex-wrap gap-2">
                                     {localSearchQuery && (
-                                        <span className="inline-flex items-center gap-2 bg-[#1A1A1A] border border-[#333] px-2 py-1 rounded-full">
+                                        <span className="inline-flex items-center gap-2 bg-background-secondary border border-border-subtle px-2 py-1 rounded-full">
                                             <MagnifyingGlassIcon className="w-4 h-4" />
                                             "{localSearchQuery}"
                                         </span>
                                     )}
                                     {localSearchMood && (
-                                        <span className="inline-flex items-center gap-2 bg-[#1A1A1A] border border-[#333] px-2 py-1 rounded-full">
+                                        <span className="inline-flex items-center gap-2 bg-background-secondary border border-border-subtle px-2 py-1 rounded-full">
                                             <img
                                                 src={getMoodEmoji(localSearchMood)}
                                                 alt={getMoodLabel(localSearchMood)}
@@ -1034,9 +1035,9 @@ const SortingBar: React.FC<SortingBarProps> = ({
                         )}
 
                         {/* Advanced search help */}
-                        <div className="text-xs text-gray-500 pt-2 border-t border-[#333] flex items-center justify-between">
+                        <div className="text-xs text-text-muted pt-2 border-t border-border-subtle flex items-center justify-between font-ui">
                             <p className="mt-1">
-                                For filter and search tips: Use <kbd className="px-1 py-0.5 bg-gray-800 rounded">Shift + ?</kbd> to view the shortcuts and tip guide.
+                                For filter and search tips: Use <kbd className="px-1 py-0.5 bg-background-dark rounded">Shift + ?</kbd> to view the shortcuts and tip guide.
                             </p>
                             <SearchHelp />
                         </div>
@@ -1050,9 +1051,9 @@ const SortingBar: React.FC<SortingBarProps> = ({
             >
                 <div
                     ref={dropdownRef}
-                    className="bg-[#121212] border border-[#333] rounded-lg p-4 shadow-lg w-full"
+                    className="bg-background-secondary border border-border-subtle rounded-lg p-4 shadow-medium w-full"
                 >
-                    <h3 className="text-lg font-medium text-white mb-3">Filter by Mood</h3>
+                    <h3 className="text-lg font-medium font-heading text-text-strong mb-3">Filter by Mood</h3>
                     {/* Mood Options - Using smaller rounded pills like search */}
                     <div className="mb-4 flex flex-wrap gap-2">
                         {allMoods.map((mood) => (
@@ -1061,11 +1062,11 @@ const SortingBar: React.FC<SortingBarProps> = ({
                                 type="button"
                                 onClick={() => handleFilterSelect(mood)}
                                 className={`
-                                    inline-flex items-center gap-2 px-2 py-1 text-xs
+                                    inline-flex items-center gap-2 px-2 py-1 text-xs font-ui
                                     rounded-full transition-all duration-200
                                     ${selectedFilters.includes(mood)
-                                        ? 'bg-[#1A1A1A] border border-[#333] text-white font-medium'
-                                        : 'bg-[#121212] border border-[#333] hover:bg-[#1A1A1A] text-gray-300'}
+                                        ? 'bg-background-secondary border border-accent-teal text-text-strong font-medium'
+                                        : 'bg-background-secondary border border-border-subtle hover:bg-background-secondary/80 text-text-muted'}
                                 `}
                             >
                                 <img
@@ -1081,7 +1082,7 @@ const SortingBar: React.FC<SortingBarProps> = ({
                             <button
                                 onClick={clearAllFilters}
                                 className="inline-flex items-center gap-2 px-2 py-1 text-xs rounded-full
-                                           bg-[#121212] border border-red-500/30 hover:bg-[#1A1A1A] text-red-400"
+                                           bg-background-secondary border border-error/30 hover:bg-background-secondary/80 text-error font-ui"
                             >
                                 <Cross1Icon className="w-3 h-3" />
                                 Clear All
@@ -1090,20 +1091,20 @@ const SortingBar: React.FC<SortingBarProps> = ({
                     </div>
 
                     {/* Keyboard shortcut hint */}
-                    <div className="text-xs text-gray-500 pt-2 border-t border-[#333] flex items-center justify-between">
+                    <div className="text-xs text-text-muted pt-2 border-t border-border-subtle flex items-center justify-between font-ui">
                         <p className="mt-1">
-                            For filter and search tips: Use <kbd className="px-1 py-0.5 bg-gray-800 rounded">Shift + ?</kbd> to view the shortcuts and tip guide.
+                            For filter and search tips: Use <kbd className="px-1 py-0.5 bg-background-dark rounded">Shift + ?</kbd> to view the shortcuts and tip guide.
                         </p>
                         <SearchHelp />
                     </div>
 
                     {/* Display selected filters inside the filter panel */}
                     {selectedFilters.length > 0 && (
-                        <div className="text-sm text-gray-400 pt-2 border-t border-[#333]">
+                        <div className="text-sm text-text-muted pt-2 border-t border-border-subtle font-ui">
                             <p className="mb-2">Active filters:</p>
                             <div className="flex flex-wrap gap-2">
                                 {selectedFilters.map(mood => (
-                                    <span key={mood} className="inline-flex items-center gap-2 bg-[#1A1A1A] border border-[#333] px-2 py-1 rounded-full">
+                                    <span key={mood} className="inline-flex items-center gap-2 bg-background-secondary border border-border-subtle px-2 py-1 rounded-full">
                                         <img
                                             src={getMoodEmoji(mood as MoodType)}
                                             alt={getMoodLabel(mood as MoodType)}
@@ -1115,7 +1116,7 @@ const SortingBar: React.FC<SortingBarProps> = ({
                                                 e.stopPropagation();
                                                 handleFilterSelect(mood);
                                             }}
-                                            className="ml-1 text-gray-400 hover:text-white"
+                                            className="ml-1 text-text-muted hover:text-text-strong"
                                         >
                                             ×
                                         </button>
@@ -1128,10 +1129,10 @@ const SortingBar: React.FC<SortingBarProps> = ({
             </div>
             {/* Displaying Selected Filters outside the dropdown (only when dropdown is closed) */}
             {selectedFilters.length > 0 && activeOption === "filter" && !isDropdownOpen && (
-                <div className="text-sm text-gray-400 flex flex-wrap gap-2 mb-4">
+                <div className="text-sm text-text-muted flex flex-wrap gap-2 mb-4 font-ui">
                     <span>Active filters:</span>
                     {selectedFilters.map(mood => (
-                        <span key={mood} className="inline-flex items-center gap-2 bg-[#121212] border border-[#333] px-2 py-1 rounded-full">
+                        <span key={mood} className="inline-flex items-center gap-2 bg-background-secondary border border-border-subtle px-2 py-1 rounded-full">
                             <img
                                 src={getMoodEmoji(mood as MoodType)}
                                 alt={getMoodLabel(mood as MoodType)}
@@ -1140,7 +1141,7 @@ const SortingBar: React.FC<SortingBarProps> = ({
                             {getMoodLabel(mood as MoodType)}
                             <button
                                 onClick={() => handleFilterSelect(mood)}
-                                className="ml-1 text-gray-400 hover:text-white"
+                                className="ml-1 text-text-muted hover:text-text-strong"
                             >
                                 ×
                             </button>
@@ -1149,7 +1150,7 @@ const SortingBar: React.FC<SortingBarProps> = ({
                     <button
                         onClick={clearAllFilters}
                         className="inline-flex items-center gap-2 px-2 py-1 text-xs rounded-full
-                                   bg-[#121212] border border-red-500/30 hover:bg-[#1A1A1A] text-red-400"
+                                   bg-background-secondary border border-error/30 hover:bg-background-secondary/80 text-error font-ui"
                     >
                         <Cross1Icon className="w-3 h-3" />
                         Clear All
@@ -1158,22 +1159,22 @@ const SortingBar: React.FC<SortingBarProps> = ({
             )}
             {/* Display active search query outside the dropdown (only when dropdown is closed) */}
             {activeOption === "search" && (searchQuery || searchMood) && !isSearchOpen && (
-                <div className="text-sm text-gray-400 flex flex-wrap gap-2 mb-4">
+                <div className="text-sm text-text-muted flex flex-wrap gap-2 mb-4 font-ui">
                     <span>Searching for:</span>
                     {searchQuery && (
-                        <span className="inline-flex items-center gap-2 bg-[#121212] border border-[#333] px-2 py-1 rounded-full">
+                        <span className="inline-flex items-center gap-2 bg-background-secondary border border-border-subtle px-2 py-1 rounded-full">
                             <MagnifyingGlassIcon className="w-4 h-4" />
                             "{searchQuery}"
                             <button
                                 onClick={clearSearch}
-                                className="ml-1 text-gray-400 hover:text-white"
+                                className="ml-1 text-text-muted hover:text-text-strong"
                             >
                                 ×
                             </button>
                         </span>
                     )}
                     {searchMood && (
-                        <span className="inline-flex items-center gap-2 bg-[#121212] border border-[#333] px-2 py-1 rounded-full">
+                        <span className="inline-flex items-center gap-2 bg-background-secondary border border-border-subtle px-2 py-1 rounded-full">
                             <img
                                 src={getMoodEmoji(searchMood)}
                                 alt={getMoodLabel(searchMood)}
@@ -1182,7 +1183,7 @@ const SortingBar: React.FC<SortingBarProps> = ({
                             {getMoodLabel(searchMood)}
                             <button
                                 onClick={clearSearch}
-                                className="ml-1 text-gray-400 hover:text-white"
+                                className="ml-1 text-text-muted hover:text-text-strong"
                             >
                                 ×
                             </button>
@@ -1193,7 +1194,7 @@ const SortingBar: React.FC<SortingBarProps> = ({
 
             {/* URL Sync Status Indicator - only show in development */}
             {process.env.NODE_ENV === 'development' && (
-                <div className="text-xs text-gray-600 mt-2">
+                <div className="text-xs text-text-muted mt-2 font-ui">
                     <span>URL Sync: {isHashBasedRouting ? 'Hash-based (#/)' : 'Regular'}</span>
                     {isHashBasedRouting && (
                         <button
@@ -1201,7 +1202,7 @@ const SortingBar: React.FC<SortingBarProps> = ({
                                 localStorage.removeItem('useHashRouter');
                                 window.location.href = window.location.origin + window.location.pathname;
                             }}
-                            className="ml-2 underline hover:text-gray-400"
+                            className="ml-2 underline hover:text-text-strong"
                         >
                             Switch to regular routing
                         </button>
@@ -1215,7 +1216,7 @@ const SortingBar: React.FC<SortingBarProps> = ({
                                 const paramString = currentParams.toString();
                                 window.location.href = `${window.location.origin}${window.location.pathname}#/${paramString ? '?' + paramString : ''}`;
                             }}
-                            className="ml-2 underline hover:text-gray-400"
+                            className="ml-2 underline hover:text-text-strong"
                         >
                             Switch to hash-based routing
                         </button>

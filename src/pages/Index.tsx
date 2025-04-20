@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { QuestionMarkCircledIcon, SunIcon, MoonIcon } from "@radix-ui/react-icons";
+import { QuestionMarkCircledIcon } from "@radix-ui/react-icons";
 import { RefreshCw } from "lucide-react";
-import { useTranslation } from 'react-i18next';
 import { Rant } from "@/lib/types/rant";
 import { generateAlias, MoodType } from "@/lib/utils/mood";
 import RantForm from "@/components/RantForm";
@@ -30,7 +29,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useMoodKeyboardShortcuts } from '@/hooks/useMoodKeyboardShortcuts';
 import Settings from '@/components/Settings';
-import LanguageSelector from '@/components/LanguageSelector';
 import { useAccessibility } from '@/components/AccessibilityContext';
 import MyRants from '@/components/MyRants';
 import UndoDeleteNotification from '@/components/UndoDeleteNotification';
@@ -90,7 +88,6 @@ class RantErrorBoundary extends React.Component<
 }
 
 const Index: React.FC = () => {
-    const { t } = useTranslation();
     const { theme, setTheme } = useAccessibility();
     const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
@@ -128,14 +125,6 @@ const Index: React.FC = () => {
     const rantFormRef = useRef<HTMLDivElement>(null);
     const rantsListRef = useRef<HTMLDivElement>(null);
     const submittedRantIds = useRef<Set<string>>(new Set());
-
-    // Get the rant context - but make it optional to avoid errors if not available
-    let rantContext;
-    try {
-        rantContext = useRants();
-    } catch (error) {
-        console.warn("RantContext not available, using local state only");
-    }
 
     // Create fuzzy searcher with memoization
     const fuzzySearcher = useMemo(() => createFuzzySearcher(rantList), [rantList]);
@@ -846,16 +835,6 @@ const Index: React.FC = () => {
                 addMyRant(newRant.id);
             }
 
-            // Share the rant with the context if it exists
-            if (rantContext && rantContext.addRant) {
-                try {
-                    rantContext.addRant(newRant);
-                } catch (contextError) {
-                    console.error("Error updating rant context:", contextError);
-                    // Continue execution - this is non-critical
-                }
-            }
-
             toast({
                 title: "Rant Posted!",
                 description: "Your rant has been posted anonymously.",
@@ -897,16 +876,6 @@ const Index: React.FC = () => {
             // Then perform the actual like operation
             await likeRant(rantId, authorId);
             console.log("Rant liked successfully");
-
-            // Update the context if it exists
-            if (rantContext && rantContext.likeRant) {
-                try {
-                    rantContext.likeRant(rantId);
-                } catch (contextError) {
-                    console.error("Error updating rant context:", contextError);
-                    // Continue execution - this is non-critical
-                }
-            }
         } catch (error) {
             console.error("Error liking rant:", error);
 
@@ -944,11 +913,6 @@ const Index: React.FC = () => {
             // Remove from local state
             setRantList(prevRants => prevRants.filter(rant => rant.id !== id));
 
-            // If using the rant context, also update it
-            if (rantContext && rantContext.removeRant) {
-                rantContext.removeRant(id);
-            }
-
             toast({
                 title: "Rant Removed",
                 description: "The rant has been removed. Click Undo to restore it.",
@@ -969,11 +933,6 @@ const Index: React.FC = () => {
     const handleUndoDelete = (rant: Rant) => {
         // Add the rant back to the list
         setRantList(prev => [rant, ...prev.filter(r => r.id !== rant.id)]);
-
-        // If using the rant context, also update it
-        if (rantContext && rantContext.addRant) {
-            rantContext.addRant(rant);
-        }
 
         toast({
             title: "Rant Restored",
@@ -1240,8 +1199,8 @@ const Index: React.FC = () => {
                                 <button
                                     onClick={() => setShortcutsDialogOpen(true)}
                                     className="p-2 text-gray-400 hover:text-white transition-colors rounded-full hover:bg-gray-800"
-                                    aria-label={t('accessibility.keyboardShortcuts')}
-                                    title={t('accessibility.keyboardShortcutsHint')}
+                                    aria-label="Keyboard Shortcuts"
+                                    title="Keyboard Shortcuts"
                                 >
                                     <QuestionMarkCircledIcon className="w-5 h-5" />
                                 </button>
@@ -1252,26 +1211,26 @@ const Index: React.FC = () => {
                         {process.env.NODE_ENV === 'development' && (
                             <div className="mb-4 px-4 py-2 bg-gray-800 rounded-md text-xs text-gray-300 flex items-center justify-between">
                                 <div>
-                                    <span className="font-semibold">{t('development.urlMode')}:</span> {usingHashRouter ? t('development.hashBased') : t('development.regular')}
+                                    <span className="font-semibold">URL Mode:</span> {usingHashRouter ? 'Hash-Based' : 'Regular'}
                                     <span className="ml-2 text-gray-400">
                                         {usingHashRouter
-                                            ? t('development.hashBasedDescription')
-                                            : t('development.regularDescription')}
+                                            ? 'Using hash-based routing'
+                                            : 'Using regular routing'}
                                     </span>
                                 </div>
                                 <button
                                     onClick={toggleHashRouting}
                                     className="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-white text-xs"
-                                    aria-label={t('development.switchRoutingMode')}
+                                    aria-label="Toggle Routing Mode"
                                 >
-                                    {t('development.switchTo')} {usingHashRouter ? t('development.regular') : t('development.hashBased')} {t('development.routing')}
+                                    Switch to {usingHashRouter ? 'Regular' : 'Hash-Based'} Routing
                                 </button>
                             </div>
                         )}
 
                         {error && (
                             <Alert className="my-4 border-red-200 bg-red-50">
-                                <AlertTitle className="text-red-800">{t('errors.loadingRants')}</AlertTitle>
+                                <AlertTitle className="text-red-800">Error loading rants</AlertTitle>
                                 <AlertDescription className="text-red-600">
                                     {error}
                                 </AlertDescription>
@@ -1279,9 +1238,9 @@ const Index: React.FC = () => {
                                     variant="outline"
                                     className="mt-2"
                                     onClick={handleRetry}
-                                    aria-label={t('actions.tryAgain')}
+                                    aria-label="Try Again"
                                 >
-                                    <RefreshCw className="mr-2 h-4 w-4" /> {t('actions.tryAgain')}
+                                    <RefreshCw className="mr-2 h-4 w-4" /> Try Again
                                 </Button>
                             </Alert>
                         )}
@@ -1295,7 +1254,7 @@ const Index: React.FC = () => {
                                     exit={{ opacity: 0 }}
                                     className="w-full"
                                 >
-                                    <section className="w-full px-4 sm:px-8 py-10" aria-label={t('rants.loading')}>
+                                    <section className="w-full px-4 sm:px-8 py-10" aria-label="Loading Rants">
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                             {renderSkeletons()}
                                         </div>
@@ -1309,7 +1268,7 @@ const Index: React.FC = () => {
                                     exit={{ opacity: 0 }}
                                     className="w-full"
                                 >
-                                    <section className="w-full px-4 sm:px-8 py-10" aria-label={t('rants.list')}>
+                                    <section className="w-full px-4 sm:px-8 py-10" aria-label="Rant List">
                                         <RantErrorBoundary>
                                             <MasonryGrid
                                                 rants={rantList}
@@ -1341,7 +1300,7 @@ const Index: React.FC = () => {
                                                     role="alert"
                                                     aria-live="assertive"
                                                 >
-                                                    {t('notifications.newRant')}
+                                                    New rant just posted!
                                                 </div>
                                             )}
                                         </RantErrorBoundary>
@@ -1357,21 +1316,21 @@ const Index: React.FC = () => {
                                 >
                                     <EmptyState
                                         title={
-                                            error ? t('errors.failedToLoad') :
+                                            error ? 'Failed to load rants' :
                                                 sortOption === "search"
-                                                    ? t('search.noResults')
+                                                    ? 'No results found'
                                                     : sortOption === "filter"
-                                                        ? t('filter.noResults')
-                                                        : t('rants.empty')
+                                                        ? 'No rants match your filters'
+                                                        : 'No rants yet. Be the first to post one!'
                                         }
                                         description={
-                                            error ? t('errors.tryAgain') :
+                                            error ? 'Please try again later' :
                                                 sortOption === "search" || sortOption === "filter"
-                                                    ? t('search.adjustFilters')
-                                                    : t('rants.beFirst')
+                                                    ? 'Adjust your filters or search terms'
+                                                    : 'Join the community by posting the first rant'
                                         }
                                         action={error ? handleRetry : scrollToRantForm}
-                                        actionLabel={error ? t('actions.tryAgain') : t('actions.startRanting')}
+                                        actionLabel={error ? 'Try Again' : 'Post the First Rant'}
                                     />
                                 </motion.div>
                             )}
@@ -1389,9 +1348,9 @@ const Index: React.FC = () => {
                                     <button
                                         onClick={() => loadMoreRants()}
                                         className="px-6 py-2 bg-cyan-700 hover:bg-cyan-600 text-white rounded-md transition-colors"
-                                        aria-label={t('actions.loadMore')}
+                                        aria-label="Load More Rants"
                                     >
-                                        {t('actions.loadMoreRants')}
+                                        Load More Rants
                                     </button>
                                 )}
                             </div>
@@ -1406,15 +1365,15 @@ const Index: React.FC = () => {
                             ? "w-10 h-10 overflow-hidden opacity-50 hover:opacity-90"
                             : "max-w-xs p-3 opacity-70 hover:opacity-100"
                             }`}
-                        aria-label={t('shortcuts.moodFilters')}
+                        aria-label="Mood Shortcuts"
                     >
                         {shortcutsCollapsed ? (
                             // Collapsed state - just show an icon button
                             <button
                                 onClick={() => setShortcutsCollapsed(false)}
                                 className="w-full h-full flex items-center justify-center"
-                                aria-label={t('shortcuts.expand')}
-                                title={t('shortcuts.expand')}
+                                aria-label="Expand Mood Shortcuts"
+                                title="Expand Mood Shortcuts"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                     <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
@@ -1424,12 +1383,12 @@ const Index: React.FC = () => {
                             // Expanded state - show full content with collapse button
                             <>
                                 <div className="flex justify-between items-center mb-1">
-                                    <p className="font-semibold">{t('shortcuts.moodFilters')}:</p>
+                                    <p className="font-semibold">Mood Filters:</p>
                                     <button
                                         onClick={() => setShortcutsCollapsed(true)}
                                         className="text-gray-400 hover:text-white transition-colors"
-                                        aria-label={t('shortcuts.collapse')}
-                                        title={t('shortcuts.collapse')}
+                                        aria-label="Collapse Mood Shortcuts"
+                                        title="Collapse Mood Shortcuts"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                             <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -1438,32 +1397,32 @@ const Index: React.FC = () => {
                                 </div>
                                 <div className="grid grid-cols-2 gap-x-2 gap-y-1">
                                     <p>
-                                        <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+S</kbd> {t('moods.sad')}
+                                        <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+S</kbd> Sad
                                     </p>
                                     <p>
-                                        <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+A</kbd> {t('moods.angry')}
+                                        <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+A</kbd> Angry
                                     </p>
                                     <p>
-                                        <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+C</kbd> {t('moods.confused')}
+                                        <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+C</kbd> Confused
                                     </p>
                                     <p>
-                                        <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+G</kbd> {t('moods.smiling')}
+                                        <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+G</kbd> Smiling
                                     </p>
                                     <p>
-                                        <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+L</kbd> {t('moods.loved')}
+                                        <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+L</kbd> Loved
                                     </p>
                                     <p>
-                                        <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+M</kbd> {t('moods.mindBlown')}
+                                        <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+M</kbd> Mind Blown
                                     </p>
                                 </div>
                                 <p className="mt-1 text-center">
-                                    <kbd className="px-1 py-0.5 bg-gray-700 rounded">Esc</kbd> {t('shortcuts.clearFilters')}
+                                    <kbd className="px-1 py-0.5 bg-gray-700 rounded">Esc</kbd> Clear Filters
                                 </p>
                                 <button
                                     className="mt-2 text-cyan-400 hover:text-cyan-300 text-xs w-full text-center"
                                     onClick={() => setShortcutsDialogOpen(true)}
                                 >
-                                    {t('shortcuts.viewAll')}
+                                    View All Shortcuts
                                 </button>
                             </>
                         )}

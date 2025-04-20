@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Rant } from '@/lib/types/rant';
-import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 
 // Function to determine column count based on screen width
@@ -41,7 +40,6 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({
     onNewRantAppear,
     onRemove
 }) => {
-    const { t } = useTranslation();
     const [columns, setColumns] = useState(getColumnCount());
     const observerRef = useRef<IntersectionObserver | null>(null);
     const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
@@ -222,11 +220,11 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({
         return (
             <div className="flex flex-col items-center justify-center py-16 text-center">
                 <div className="text-6xl mb-4">🔍</div>
-                <h3 className="text-xl font-medium text-white mb-2">{t('rants.noRantsFound', 'No rants found')}</h3>
+                <h3 className="text-xl font-medium text-white mb-2">No rants found</h3>
                 <p className="text-gray-400 max-w-md">
                     {searchTerm
-                        ? t('rants.noMatchingRants', 'No rants matching "{{searchTerm}}" were found. Try a different search term.', { searchTerm })
-                        : t('rants.beFirstToPost', 'Be the first to post a rant!')}
+                        ? `No rants matching "${searchTerm}" were found. Try a different search term.`
+                        : 'Be the first to post a rant!'}
                 </p>
             </div>
         );
@@ -237,7 +235,7 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({
             ref={containerRef}
             className="w-full"
             role="region"
-            aria-label={t('rants.feed', 'Rants feed')}
+            aria-label="Rants feed"
         >
             <div className="flex" style={{ gap: `${gap}px` }}>
                 {columnArrays.map((columnRants, columnIndex) => (
@@ -252,7 +250,7 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({
                             const isFocused = focusedRantIndex === overallIndex;
 
                             return (
-                                <>
+                                <div key={rant.id || `rant-${columnIndex}-${rantIndex}`} ref={isNewRant ? newRantRef : null}>
                                     {renderItem ? renderItem(rant, overallIndex) : (
                                         <>
                                             <p>By: {rant.userAlias || 'Anonymous'}</p>
@@ -260,7 +258,7 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({
                                             <p style={{ color: 'gray', fontSize: '12px' }}>Posted on: {new Date(rant.created_at).toLocaleString()}</p>
                                         </>
                                     )}
-                                </>
+                                </div>
                             );
                         })}
                     </div>

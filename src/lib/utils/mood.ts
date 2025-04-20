@@ -1,6 +1,10 @@
+import { moodColors, moodGradients } from '@/utils/colors.ts';
+
 export type MoodType =
     | 'sad'
     | 'crying'
+    | 'happy'
+    | 'neutral'
     | 'angry'
     | 'eyeRoll'
     | 'heartbroken'
@@ -15,33 +19,21 @@ export type MoodType =
     | 'confident'
     | 'loved';
 
-export const getMoodColor = (mood: MoodType): string => {
-    const moodColors: Record<MoodType, string> = {
-        sad: '#8B93A7',
-        crying: '#6A89CC',
-        angry: '#E74C3C',
-        eyeRoll: '#9B59B6',
-        heartbroken: '#E83E8C',
-        mindBlown: '#8E44AD',
-        speechless: '#5D6D7E',
-        confused: '#F39C12',
-        tired: '#7F8C8D',
-        nervous: '#D35400',
-        smiling: '#F1C40F',
-        laughing: '#F7DC6F',
-        celebratory: '#2ECC71',
-        confident: '#3498DB',
-        loved: '#FF66B2'
-    };
+    export const getMoodColor = (mood: MoodType): string => {
+        return moodColors[mood] || moodColors.sad;
+      };
 
-    return moodColors[mood] || '#8B93A7';
-};
+      export const getMoodGradient = (mood: MoodType): string => {
+        return moodGradients[mood] || moodGradients.sad;
+      };
 
 // Updated to return GIF emoji paths instead of Unicode emojis
 export const getMoodEmoji = (mood: MoodType): string => {
     const emojiMap: Record<MoodType, string> = {
         sad: "/assets/emojis/sad.gif",
         crying: "/assets/emojis/crying.gif",
+        happy: "/assets/emojis/happy.gif",
+        neutral: "/assets/emojis/neutral.gif",
         angry: "/assets/emojis/angry.gif",
         eyeRoll: "/assets/emojis/eyeRoll.gif",
         heartbroken: "/assets/emojis/heartbroken.gif",
@@ -54,7 +46,7 @@ export const getMoodEmoji = (mood: MoodType): string => {
         laughing: "/assets/emojis/laughing.gif",
         celebratory: "/assets/emojis/celebratory.gif",
         confident: "/assets/emojis/confident.gif",
-        loved: "/assets/emojis/loved.gif"
+        loved: "/assets/emojis/loved.gif",
     };
 
     return emojiMap[mood] || "/assets/emojis/neutral.gif";
@@ -65,6 +57,8 @@ export const getMoodUnicodeEmoji = (mood: MoodType): string => {
     const emojiMap: Record<MoodType, string> = {
         sad: "😞",
         crying: "😭",
+        happy: "😊",
+        neutral: "😐",
         angry: "😡",
         eyeRoll: "🙄",
         heartbroken: "💔",
@@ -77,7 +71,7 @@ export const getMoodUnicodeEmoji = (mood: MoodType): string => {
         laughing: "😂",
         celebratory: "🎉",
         confident: "😎",
-        loved: "🥰"
+        loved: "🥰",
     };
 
     return emojiMap[mood] || "💭";
@@ -87,6 +81,8 @@ export const getMoodAnimation = (mood: MoodType) => {
     const animationMap: Record<MoodType, { y: number; scale: number; ease: string }> = {
         sad: { y: 30, scale: 0.95, ease: "easeInOut" },
         crying: { y: 40, scale: 0.92, ease: "anticipate" },
+        happy: { y: 20, scale: 1.02, ease: "easeOut" },
+        neutral: { y: 30, scale: 0.95, ease: "easeInOut" },
         angry: { y: 60, scale: 0.9, ease: "easeOut" },
         eyeRoll: { y: 25, scale: 0.97, ease: "easeInOut" },
         heartbroken: { y: 35, scale: 0.94, ease: "easeOut" },
@@ -99,7 +95,7 @@ export const getMoodAnimation = (mood: MoodType) => {
         laughing: { y: 15, scale: 1, ease: "easeOut" },
         celebratory: { y: 10, scale: 1.05, ease: "easeOut" },
         confident: { y: 10, scale: 1.03, ease: "easeOut" },
-        loved: { y: 25, scale: 1.02, ease: "easeOut" }
+        loved: { y: 25, scale: 1.02, ease: "easeOut" },
     };
 
     return animationMap[mood] || { y: 30, scale: 0.95, ease: "easeInOut" };
@@ -149,6 +145,8 @@ export const getMoodTailwindClass = (mood: MoodType): string => {
     const moodClasses: Record<MoodType, string> = {
         sad: 'bg-mood-sad',
         crying: 'bg-mood-crying',
+        happy: 'bg-mood-happy',
+        neutral: 'bg-mood-neutral',
         angry: 'bg-mood-angry',
         eyeRoll: 'bg-mood-eyeRoll',
         heartbroken: 'bg-mood-heartbroken',
@@ -161,7 +159,7 @@ export const getMoodTailwindClass = (mood: MoodType): string => {
         laughing: 'bg-mood-laughing',
         celebratory: 'bg-mood-celebratory',
         confident: 'bg-mood-confident',
-        loved: 'bg-mood-loved'
+        loved: 'bg-mood-loved',
     };
 
     return moodClasses[mood] || 'bg-mood-sad';
@@ -171,6 +169,8 @@ export const getMoodBorderClass = (mood: MoodType): string => {
     const moodClasses: Record<MoodType, string> = {
         sad: 'border-mood-sad',
         crying: 'border-mood-crying',
+        happy: 'border-mood-happy',
+        neutral: 'border-mood-neutral',
         angry: 'border-mood-angry',
         eyeRoll: 'border-mood-eyeRoll',
         heartbroken: 'border-mood-heartbroken',
@@ -183,7 +183,7 @@ export const getMoodBorderClass = (mood: MoodType): string => {
         laughing: 'border-mood-laughing',
         celebratory: 'border-mood-celebratory',
         confident: 'border-mood-confident',
-        loved: 'border-mood-loved'
+        loved: 'border-mood-loved',
     };
 
     return moodClasses[mood] || 'border-mood-sad';
@@ -193,6 +193,8 @@ export const getMoodLabel = (mood: MoodType): string => {
     const labels: Record<MoodType, string> = {
         sad: 'Sad',
         crying: 'Crying',
+        happy: 'Happy',
+        neutral: 'Neutral',
         angry: 'Angry',
         eyeRoll: 'Eye Roll',
         heartbroken: 'Heartbroken',
@@ -205,7 +207,7 @@ export const getMoodLabel = (mood: MoodType): string => {
         laughing: 'Laughing',
         celebratory: 'Celebratory',
         confident: 'Confident',
-        loved: 'Loved'
+        loved: 'Loved',
     };
 
     return labels[mood] || 'Sad';
@@ -213,9 +215,9 @@ export const getMoodLabel = (mood: MoodType): string => {
 
 // This is the list of all moods available in the app
 export const allMoods: MoodType[] = [
-  'sad', 'crying', 'angry', 'eyeRoll', 'heartbroken',
+  'sad', 'crying', 'happy', 'neutral', 'angry', 'eyeRoll', 'heartbroken',
   'mindBlown', 'speechless', 'confused', 'tired', 'nervous',
-  'smiling', 'laughing', 'celebratory', 'confident', 'loved'
+  'smiling', 'laughing', 'celebratory', 'confident', 'loved',
 ];
 
 export const generateAlias = (): string => {
