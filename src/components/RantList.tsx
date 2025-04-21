@@ -16,7 +16,7 @@ const RantList: React.FC<RantListProps> = ({
     onRantClick,
     searchTerm = ""
 }) => {
-    const { rants, loading, loadMoreRants, likeRant, hasMore, filterByMoods, sortBy, searchRants } = useRants();
+    const { rants, loading, loadMoreRants, likeRant, hasMore, fetchRants } = useRants();
     const isEmpty = rants.length === 0;
     const [searchParams, setSearchParams] = useSearchParams();
     const location = useLocation();
@@ -30,21 +30,27 @@ const RantList: React.FC<RantListProps> = ({
         const sort = searchParams.get('sort');
 
         // Apply filters based on URL parameters
+        const options: Partial<UseRantsOptions> = {};
+
         if (moodsParam) {
             const moods = moodsParam.split(',').filter(Boolean);
-            if (moods.length > 0 && filterByMoods) {
-                filterByMoods(moods);
+            if (moods.length > 0) {
+                options.moods = moods;
             }
         }
 
-        if (sort && sortBy) {
-            sortBy(sort);
+        if (sort) {
+            options.sortBy = sort as 'latest' | 'popular';
         }
 
-        if ((query || mood) && searchRants) {
-            searchRants(query || '', mood || null);
+        if (query || mood) {
+            options.searchQuery = query || '';
+            options.searchMood = mood as MoodType | null;
         }
-    }, [searchParams, filterByMoods, sortBy, searchRants]);
+
+        // Update rants based on options
+        fetchRants(true);
+    }, [searchParams, fetchRants]);
 
     // Update URL when filters change
     const updateUrlParams = useCallback((params: Record<string, string | null>) => {
@@ -83,6 +89,7 @@ const RantList: React.FC<RantListProps> = ({
         likeRant(rantId);
     }, [likeRant]);
 
+    // Ensure RantList integrates with responsive MasonryGrid
     return (
         <section className="w-full px-2 sm:px-4 md:px-8 py-6 sm:py-10">
             {loading && isEmpty ? (
@@ -94,94 +101,35 @@ const RantList: React.FC<RantListProps> = ({
                     </div>
                 </div>
             ) : (
-                <>
-                    <MasonryGrid
-                        rants={rants}
-                        gap={16}
-                        searchTerm={searchTerm}
-                        onLike={handleLike}
-                        onLoadMore={handleLoadMore}
-                        isLoading={loading}
-                        hasMore={hasMore}
-                        renderItem={(rant, index) => {
-                            const moodAnim = getMoodAnimation(rant.mood);
-                            return (
-                                <motion.div
-                                    key={rant.id}
-                                    initial={{ opacity: 0, scale: moodAnim.scale, y: moodAnim.y }}
-                                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                                    transition={{
-                                        delay: Math.min(index * 0.05, 0.5), // Cap the delay to avoid too much staggering
-                                        duration: 0.8,
-                                        ease: moodAnim.ease as any
-                                    }}
-                                    onClick={() => onRantClick?.(rant)}
-                                    className={`w-full overflow-hidden ${onRantClick ? "cursor-pointer" : ""}`}
-                                >
-                                    <div className="w-full max-w-full overflow-hidden">
-                                        <RantCard
-                                            rant={rant}
-                                            index={index}
-                                            searchTerm={searchTerm}
-                                            onLike={() => handleLike(rant.id)}
-                                        />
-                                    </div>
-                                </motion.div>
-                            );
-                        }}
-                    />
-
-                    {loading && rants.length > 0 && !isEmpty && (
-                        <div className="flex justify-center py-4 sm:py-6 mt-2 sm:mt-4">
-                            <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-t-2 border-b-2 border-cyan-500"></div>
-                        </div>
+                <MasonryGrid
+                    rants={rants}
+                    gap={16}
+                    searchTerm={searchTerm}
+                    onLike={handleLike}
+                    onLoadMore={handleLoadMore}
+                    isLoading={loading}
+                    hasMore={hasMore}
+                    renderItem={(rant, index) => (
+                        <motion.div
+                            key={rant.id}
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{
+                                delay: Math.min(index * 0.05, 0.5),
+                                duration: 0.8,
+                                ease: "easeOut"
+                            }}
+                            className="w-full overflow-hidden"
+                        >
+                            <RantCard
+                                rant={rant}
+                                index={index}
+                                searchTerm={searchTerm}
+                                onLike={() => handleLike(rant.id)}
+                            />
+                        </motion.div>
                     )}
-
-                    {!loading && (
-                        <>
-                            {!hasMore && !isEmpty && (
-                                <motion.div
-                                    className="text-center text-gray-400 py-4 sm:py-6 mt-2 sm:mt-4 text-sm sm:text-base"
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{
-                                        duration: 0.8,
-                                        ease: "easeOut"
-                                    }}
-                                >
-                                    You've reached the end of the rants! Come back later for more.
-                                </motion.div>
-                            )}
-
-                            {isEmpty && (
-                                <motion.div
-                                    className="text-center text-gray-400 py-8 sm:py-10"
-                                    initial={{ opacity: 0, scale: 0.8 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{
-                                        duration: 0.7,
-                                        ease: "easeOut"
-                                    }}
-                                >
-                                    <motion.span
-                                        initial={{ y: 0 }}
-                                        animate={{ y: [0, -5, 0] }}
-                                        transition={{
-                                            duration: 1.5,
-                                            ease: "easeInOut",
-                                            repeat: Infinity,
-                                            repeatDelay: 1
-                                        }}
-                                        style={{ display: "inline-block" }}
-                                        className="text-sm sm:text-base"
-                                    >
-                                        No rants found. Be the first to post one!
-                                    </motion.span>
-                                </motion.div>
-                            )}
-                        </>
-                    )}
-                </>
+                />
             )}
         </section>
     );

@@ -1,73 +1,126 @@
-# Welcome to your Lovable project
+# bentoRant
 
-## Project info
+An anonymous platform for sharing your thoughts, frustrations, and celebrations with the world.
 
-**URL**: https://lovable.dev/projects/3b3940f7-bd69-4fa2-9f78-7b1014423104
+## About bentoRant
 
-## How can I edit this code?
+bentoRant is a modern, anonymous ranting platform that allows users to express themselves freely without revealing their identity. Share your thoughts, vent your frustrations, or celebrate your wins - all in a safe, anonymous environment.
 
-There are several ways of editing your application.
+## Features
 
-**Use Lovable**
+- **Anonymous Posting**: Share your thoughts without revealing your identity
+- **Mood Expression**: Choose from a variety of moods to express how you feel
+- **Real-time Updates**: See new rants appear in real-time
+- **Interactive UI**: Like, share, and explore rants from others
+- **Advanced Filtering**: Filter rants by mood or search for specific content
+- **Keyboard Shortcuts**: Navigate and interact efficiently with keyboard shortcuts
+- **Responsive Design**: Enjoy a seamless experience on any device
+- **Accessibility Options**: Customize your experience with high contrast mode, font size adjustments, and reduced motion
+- **Theme Options**: Choose between light, dark, or system theme
+- **Internationalization**: Support for multiple languages
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/3b3940f7-bd69-4fa2-9f78-7b1014423104) and start prompting.
+## Technologies Used
 
-Changes made via Lovable will be committed automatically to this repo.
+- **Frontend**:
+  - React with TypeScript
+  - Vite for fast development and building
+  - Tailwind CSS for styling
+  - shadcn/ui for UI components
+  - Framer Motion for smooth animations
+  - React Router for navigation
 
-**Use your preferred IDE**
+- **Backend**:
+  - Supabase for database and real-time subscriptions
+  - CryptoJS for client-side encryption
+  - DOMPurify for content sanitization
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- **Development Tools**:
+  - ESLint and Prettier for code quality
+  - React Query for data fetching
+  - React Hook Form for form handling
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## Getting Started
 
-Follow these steps:
+### Prerequisites
+
+- Node.js (v16 or higher)
+- npm or yarn
+
+### Installation
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Clone the repository
+git clone <repository-url>
+cd bentoRant
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Install dependencies
+npm install
+# or
+yarn install
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Set up environment variables
+cp .env.example .env.local
+# Edit .env.local with your Supabase credentials
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start the development server
 npm run dev
+# or
+yarn dev
 ```
 
-**Edit a file directly in GitHub**
+### Environment Variables
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Create a `.env.local` file with the following variables:
 
-**Use GitHub Codespaces**
+```
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Usage
 
-## What technologies are used for this project?
+### Keyboard Shortcuts
 
-This project is built with:
+bentoRant comes with a variety of keyboard shortcuts to enhance your experience:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- `n` - Create a new rant
+- `e` - Explore rants
+- `l` - Sort by latest
+- `p` - Sort by popular
+- `f` - Filter rants
+- `s` - Search rants
+- `?` - Show keyboard shortcuts
+- `t` - Scroll to top
+- `Shift + [Mood Letter]` - Filter by specific mood (e.g., `Shift+S` for Sad)
+- `Esc` - Clear all filters
 
-## How can I deploy this project?
+Press `Shift + ?` at any time to view the complete list of shortcuts.
 
-Simply open [Lovable](https://lovable.dev/projects/3b3940f7-bd69-4fa2-9f78-7b1014423104) and click on Share -> Publish.
+## Deployment
 
-## Can I connect a custom domain to my Lovable project?
+This project can be deployed to any static hosting service:
 
-Yes, you can!
+```sh
+# Build the project
+npm run build
+# or
+yarn build
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+# The build output will be in the 'dist' directory
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgements
+
+- [Supabase](https://supabase.io/) for the backend infrastructure
+- [shadcn/ui](https://ui.shadcn.com/) for the beautiful UI components
+- [Framer Motion](https://www.framer.com/motion/) for the smooth animations
+- [Tailwind CSS](https://tailwindcss.com/) for the utility-first CSS framework
+- [Vite](https://vitejs.dev/) for the blazing fast development experience

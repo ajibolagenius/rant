@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { QuestionMarkCircledIcon } from "@radix-ui/react-icons";
@@ -42,6 +42,7 @@ import {
     isHashBasedRouting,
 } from '@/utils/urlUtils';
 import { colors } from "@/utils/colors";
+import { v4 as uuidv4 } from 'uuid';
 
 type SortOption = "latest" | "popular" | "filter" | "search";
 
@@ -626,7 +627,7 @@ const Index: React.FC = () => {
                 toast({
                     title: "Error",
                     description: "Failed to load rants. Please try again later.",
-                    variant: "destructive",
+                    variant: "error", // Updated to valid ToastVariant
                 });
             }
         } finally {
@@ -674,7 +675,7 @@ const Index: React.FC = () => {
 
             // Add search params if in search mode
             if (sortOption === "search") {
-                params.sort = sortOption;
+                params.sort = option;
 
                 if (searchQuery) {
                     params.q = searchQuery;
@@ -702,7 +703,7 @@ const Index: React.FC = () => {
                 params.q = null;
                 params.mood = null;
             }
-            // For other sort options
+            // For other sort optionsxa
             else {
                 // Only include sort option if it's not the default
                 params.sort = sortOption !== "latest" ? sortOption : null;
@@ -790,12 +791,13 @@ const Index: React.FC = () => {
     }, [sortOption, selectedMoods]);
 
     const handleRantSubmit = async (content: string, mood: MoodType) => {
+        let rantId: string; // Declare rantId at the top of the function for proper scoping
+
         try {
+            rantId = uuidv4(); // Assign value within the try block
+
             const authorId = getSafeAuthorId();
             const safeMood = getSafeMood(mood);
-
-            // Generate a unique ID for the rant to prevent duplicates
-            const rantId = crypto.randomUUID();
 
             // Add to tracking set to prevent duplicate display from real-time subscription
             submittedRantIds.current.add(rantId);
@@ -808,8 +810,8 @@ const Index: React.FC = () => {
                 author_id: authorId,
                 likes: 0,
                 created_at: new Date().toISOString(),
-                // Add a flag to indicate this is an optimistic update
-                is_optimistic: true
+                comments: 0,
+                userAlias: "Anonymous",
             };
 
             // Optimistically add to the list to improve perceived performance
@@ -853,7 +855,7 @@ const Index: React.FC = () => {
             toast({
                 title: "Error",
                 description: "Failed to post your rant. Please try again.",
-                variant: "destructive",
+                variant: "error", // Updated to valid ToastVariant
             });
 
             throw error;
@@ -892,7 +894,7 @@ const Index: React.FC = () => {
             toast({
                 title: "Error",
                 description: "Failed to like this rant. You may have already liked it.",
-                variant: "destructive",
+                variant: "error", // Updated to valid ToastVariant
             });
         }
     };
@@ -925,7 +927,7 @@ const Index: React.FC = () => {
             toast({
                 title: "Error",
                 description: "Failed to remove the rant. Please try again.",
-                variant: "destructive",
+                variant: "error", // Updated to valid ToastVariant
             });
         }
     };
@@ -1018,11 +1020,11 @@ const Index: React.FC = () => {
     };
 
     // Function to handle retry when loading fails
-    const handleRetry = () => {
+    const handleRetry = useCallback(() => {
         setRetryCount(prev => prev + 1);
         setError(null);
         loadRants(true);
-    };
+    }, [loadRants]); // Added useCallback to stabilize the function
 
     // Custom render function for MasonryGrid with error handling
     const renderRantItem = (rant: Rant, index: number) => {
@@ -1050,7 +1052,7 @@ const Index: React.FC = () => {
                     transition={{
                         delay: index * 0.08,
                         duration: 1.2,
-                        ease: moodAnim.ease as any
+                        ease: moodAnim.ease,
                     }}
                     className="w-full h-full overflow-hidden"
                 >
@@ -1095,7 +1097,7 @@ const Index: React.FC = () => {
 
         window.addEventListener("online", handleOnline);
         return () => window.removeEventListener("online", handleOnline);
-    }, [error]);
+    }, [error, handleRetry]); // Added 'handleRetry' to the dependency array
 
     // Function to toggle hash-based routing
     const toggleHashRouting = () => {

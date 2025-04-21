@@ -71,11 +71,12 @@ export function useRants(options: UseRantsOptions = {}) {
             const transformedData: Rant[] = data.map(item => ({
                 id: item.id,
                 content: item.content,
-                mood: item.mood as MoodType,
-                createdAt: item.created_at,
-                likes: item.likes || 0,
-                comments: item.comments || 0,
-                userAlias: 'Anonymous',
+                mood: item.mood,
+                created_at: item.created_at, // Correct property name
+                likes: item.likes,
+                comments: item.comments,
+                author_id: item.author_id, // Add missing property
+                userAlias: item.userAlias
             }));
 
             setRants(prev => reset ? transformedData : [...prev, ...transformedData]);
@@ -96,45 +97,22 @@ export function useRants(options: UseRantsOptions = {}) {
 
     // Initial fetch
     useEffect(() => {
-        fetchRants(true);
-    }, [sortBy, moods.join(','), searchQuery, searchMood]);
+        fetchRants();
+    }, [sortBy, moods, searchQuery, searchMood, fetchRants]); // Include moods directly in dependencies
 
     // Set up real-time subscription
     useEffect(() => {
         const subscription = supabase
-            .channel('public:rants')
-            .on('INSERT', payload => {
+            .from('rants')
+            .on('INSERT', (payload) => {
                 const newRant = payload.new;
-
-                // Transform to match Rant type
-                const transformedRant: Rant = {
-                    id: newRant.id,
-                    content: newRant.content,
-                    mood: newRant.mood as MoodType,
-                    createdAt: newRant.created_at,
-                    likes: newRant.likes || 0,
-                    comments: newRant.comments || 0,
-                    userAlias: 'Anonymous',
-                };
-
-                // Check if the rant matches current filters
-                let shouldAdd = true;
-
-                if (moods.length > 0) {
-                    shouldAdd = moods.includes(newRant.mood);
-                }
-
-                if (shouldAdd && searchMood) {
-                    shouldAdd = newRant.mood === searchMood;
-                }
-
-                if (shouldAdd && searchQuery) {
-                    shouldAdd = newRant.content.toLowerCase().includes(searchQuery.toLowerCase());
-                }
-
-                if (shouldAdd) {
-                    setRants(prev => [transformedRant, ...prev]);
-                }
+                setRants((prev) => [
+                    {
+                        ...newRant,
+                        created_at: newRant.created_at, // Correct property name
+                    },
+                    ...prev,
+                ]);
             })
             .subscribe();
 
@@ -174,12 +152,13 @@ export function useRants(options: UseRantsOptions = {}) {
         }
     }, []);
 
+    // Expose fetchRants from useRants
     return {
         rants,
         loading,
         error,
         hasMore,
-        loadMoreRants,
-        likeRant
+        fetchRants,
+        setPage
     };
 }

@@ -37,7 +37,7 @@ const PLACEHOLDER_TEXTS = [
     "We don't do 'calm down' here. Let it fly. 🪁",
 ];
 
-const TYPEWRITER_SPEED = 30;
+const TYPEWRITER_SPEED = 50;
 const PLACEHOLDER_DISPLAY_TIME = 3000;
 
 interface RantFormProps {
@@ -90,11 +90,14 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        // Prevent multiple submissions
+        if (isSubmitting) return;
+
         if (!selectedMood) {
             toast({
                 title: "Error",
                 description: "Please select a mood for your rant",
-                variant: "destructive",
+                variant: "error",
             });
             return;
         }
@@ -103,7 +106,7 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
             toast({
                 title: "Rant too short",
                 description: `Your rant needs to be at least ${minLength} characters.`,
-                variant: "destructive",
+                variant: "error",
             });
             return;
         }
@@ -117,7 +120,7 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
             toast({
                 title: "Error",
                 description: validation.message,
-                variant: "destructive",
+                variant: "error",
             });
             return;
         }
@@ -131,7 +134,7 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
             toast({
                 title: "Rate Limit Exceeded",
                 description: rateLimitCheck.message,
-                variant: "destructive",
+                variant: "error",
             });
             return;
         }
@@ -153,17 +156,15 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
                     addMyRant(result.id);
                 }
 
-                // Clear the form after a short delay to allow for animation
-                setTimeout(() => {
-                    clearDraft();
-                    setIsSubmitting(false);
-                    setShowConfirmation(false);
+                // Clear the form after submission
+                clearDraft();
+                setIsSubmitting(false);
+                setShowConfirmation(false);
 
-                    // Focus back on the textarea
-                    if (textareaRef.current) {
-                        textareaRef.current.focus();
-                    }
-                }, 500);
+                // Focus back on the textarea
+                if (textareaRef.current) {
+                    textareaRef.current.focus();
+                }
             } catch (error) {
                 console.error("Error posting rant:", error);
                 setIsSubmitting(false);
@@ -172,7 +173,7 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
                 toast({
                     title: "Error",
                     description: "Failed to post your rant. Please try again.",
-                    variant: "destructive",
+                    variant: "error",
                 });
             }
         }
@@ -188,24 +189,24 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
             e.preventDefault();
             if (!showConfirmation) {
                 setShowConfirmation(true);
-            } else {
-                handleSubmit(e as any);
+            } else if (!isSubmitting) { // Prevent multiple submissions via keyboard shortcut
+                handleSubmit(e as React.FormEvent);
             }
         }
     };
 
     return (
         <Card
-            className="bg-[#09090B] border border-[#222] rounded-2xl overflow-hidden"
+            className="bg-[transparent] border rounded-2xl overflow-hidden"
             ref={formRef}
             style={{
                 borderColor: selectedMood ? getMoodColor(selectedMood) + '50' : '#333',
             }}
         >
             {showDraftBanner && (
-                <div className="bg-cyan-900/30 border-b border-cyan-700/50 px-4 py-2 flex justify-between items-center">
-                    <div className="flex items-center gap-2 text-sm">
-                        <History className="text-cyan-400" size={16} />
+                <div className="bg-background-secondary/80 border-b border-border-subtle px-4 py-2 flex justify-between items-center">
+                    <div className="flex items-center gap-2 text-xs sm:text-sm font-ui">
+                        <History className="text-primary" size={16} />
                         <span>You have a saved draft</span>
                     </div>
                     <div className="flex gap-2">
@@ -216,7 +217,7 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
                                 loadLatestDraft();
                                 setShowDraftBanner(false);
                             }}
-                            className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-950/50"
+                            className="text-primary hover:text-primary hover:bg-primary/10 text-xs sm:text-sm font-ui"
                         >
                             Restore
                         </Button>
@@ -224,7 +225,7 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
                             variant="ghost"
                             size="sm"
                             onClick={() => setShowDraftBanner(false)}
-                            className="text-gray-400 hover:text-gray-300"
+                            className="text-text-muted hover:text-text-strong hover:bg-background-dark text-xs sm:text-sm font-ui"
                         >
                             Dismiss
                         </Button>
@@ -232,26 +233,26 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
                 </div>
             )}
 
-            <div className="text-xl font-medium p-6 pb-0 flex items-center gap-2">
+            <div className="text-base sm:text-lg md:text-xl font-medium p-4 sm:p-5 md:p-6 pb-0 flex items-center gap-2 font-heading">
                 What's bothering you?
-                <MessageCircle className="text-cyan-400" size={20} />
+                <MessageCircle className="text-primary" size={18} />
             </div>
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-5 md:p-6">
                 <form onKeyDown={handleKeyDown} >
                     <textarea
                         ref={textareaRef}
                         value={content}
                         onChange={(e) => setContent(e.target.value.substring(0, maxLength))}
                         placeholder={placeholder}
-                        className="w-full p-3 bg-transparent border border-[#333] focus:outline-none min-h-[120px] max-h-[200px] text-base rounded-lg transition-all duration-200"
+                        className="w-full p-3 bg-transparent border border-border-subtle focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/30 min-h-[120px] max-h-[200px] text-sm sm:text-base font-body rounded-lg transition-all duration-200"
                         maxLength={maxLength}
                         disabled={isSubmitting}
                         style={{
-                            borderColor: selectedMood ? getMoodColor(selectedMood) + '50' : '#333',
+                            borderColor: selectedMood ? getMoodColor(selectedMood) + '50' : undefined,
                         }}
                     />
-                    <div className="flex justify-between text-xs text-gray-400">
-                        <span className={content.length < minLength && content.length > 0 ? "text-red-400" : ""}>
+                    <div className="flex justify-between text-xs text-text-muted font-ui mt-2">
+                        <span className={content.length < minLength && content.length > 0 ? "text-utility-error" : ""}>
                             {content.length < minLength && content.length > 0 && (
                                 <span className="flex items-center gap-1">
                                     <AlertCircle size={12} />
@@ -262,20 +263,20 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
                         <span>{maxLength - content.length} characters left</span>
                     </div>
 
-                    <div className="mt-6">
-                        <p className="text-sm font-medium mb-2">Current mood:</p>
+                    <div className="mt-5 sm:mt-6">
+                        <p className="text-xs sm:text-sm font-medium mb-2 font-ui">Current mood:</p>
                         <MoodSelector selectedMood={selectedMood} onMoodSelect={setSelectedMood} />
 
                         {/* Keyboard shortcut hint - single line with responsive break */}
-                        <div className="mt-4 flex flex-row flex-wrap items-center justify-start gap-2 bg-[#121212] hover:bg-[#1A1A1A] px-3 py-2 rounded-lg border border-[#222] transition-colors">
-                            <div className="text-xs text-cyan-500 font-medium whitespace-nowrap">Pro tip:</div>
-                            <div className="flex flex-wrap items-center gap-1.5 text-xs text-gray-400">
+                        <div className="mt-4 flex flex-row flex-wrap items-center justify-start gap-2 bg-background-dark hover:bg-background-secondary/50 px-3 py-2 rounded-lg border border-border-subtle transition-colors duration-200">
+                            <div className="text-xs text-primary font-medium whitespace-nowrap font-ui">Pro tip:</div>
+                            <div className="flex flex-wrap items-center gap-1.5 text-xs text-text-muted font-ui">
                                 <span>Press</span>
-                                <kbd className="px-1.5 py-0.5 text-xs font-medium bg-[#1A1A1A] border border-[#333] rounded text-white shadow-sm">
+                                <kbd className="px-1.5 py-0.5 text-xs font-medium bg-background-secondary border border-border-subtle rounded text-text-strong shadow-sm">
                                     Ctrl
                                 </kbd>
                                 <span>+</span>
-                                <kbd className="px-1.5 py-0.5 text-xs font-medium bg-[#1A1A1A] border border-[#333] rounded text-white shadow-sm">
+                                <kbd className="px-1.5 py-0.5 text-xs font-medium bg-background-secondary border border-border-subtle rounded text-text-strong shadow-sm">
                                     Enter
                                 </kbd>
                                 <span>to submit your rant</span>
@@ -285,7 +286,7 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
 
                 </form>
             </CardContent>
-            <CardFooter className="px-6 pb-6">
+            <CardFooter className="px-4 sm:px-5 md:px-6 pb-4 sm:pb-5 md:pb-6">
                 <AnimatePresence mode="wait">
                     {showConfirmation ? (
                         <motion.div
@@ -297,14 +298,14 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
                         >
                             <Button
                                 onClick={cancelSubmission}
-                                className="flex-1 py-6 bg-gray-700 hover:bg-gray-600 rounded-full"
+                                className="flex-1 py-5 sm:py-6 bg-background-secondary hover:bg-background-secondary/70 rounded-full text-sm sm:text-base font-ui transition-colors duration-200"
                             >
                                 Cancel
                             </Button>
                             <Button
                                 onClick={handleSubmit}
                                 disabled={isSubmitting}
-                                className="w-full py-6 text-base font-medium rounded-full flex items-center gap-2 justify-center"
+                                className="w-full py-5 sm:py-6 text-sm sm:text-base font-medium rounded-full flex items-center gap-2 justify-center font-ui transition-all duration-300"
                                 style={{
                                     background: `linear-gradient(90deg, #00C2FF, #904FFF)`,
                                 }}
@@ -314,9 +315,10 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
                                         <motion.div
                                             animate={{ rotate: 360 }}
                                             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                                            className="w-5 h-5"
+                                            className="w-4 h-4 sm:w-5 sm:h-5"
                                         >
-                                            <Send size={18} />
+                                            <Send size={16} className="sm:hidden" />
+                                            <Send size={18} className="hidden sm:block" />
                                         </motion.div>
                                         <span>Posting...</span>
                                     </>
@@ -336,7 +338,7 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
                             <Button
                                 onClick={handleSubmit}
                                 disabled={!content.trim() || !selectedMood || content.length < minLength || isSubmitting}
-                                className="w-full py-6 text-base font-medium rounded-full flex items-center gap-2 justify-center transition-all duration-300"
+                                className="w-full py-5 sm:py-6 text-sm sm:text-base font-medium rounded-full flex items-center gap-2 justify-center transition-all duration-300 font-ui hover:opacity-90"
                                 style={{
                                     background: selectedMood
                                         ? `linear-gradient(90deg, ${getMoodColor(selectedMood)}aa, ${getMoodColor(selectedMood)})`

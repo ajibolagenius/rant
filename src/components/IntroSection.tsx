@@ -5,14 +5,14 @@ import { headingContents, colorSchemes } from '@/utils/introContent';
 import TypewriterText from '@/components/TypewriterText';
 import { cn } from '@/lib/utils';
 import { useRantCount } from '@/hooks/useRantCount';
-import { colors } from '@/lib/theme/colors';
+import { colors } from '@/utils/colors';
 
 // Constants for animation and display values
 const ANIMATION = {
     HEADING_ROTATION: 8000,
     CONTENT_TRANSITION: 500,
     TYPEWRITER_SPEED: 30,
-    SUBTEXT_TYPEWRITER_SPEED: 15,
+    SUBTEXT_TYPEWRITER_SPEED: 10,
     CARET_BLINK_DURATION: 0.8,
     BUTTON_SPRING_STIFFNESS: 400,
     BUTTON_SPRING_DAMPING: 10,
@@ -147,7 +147,7 @@ const IntroSection: React.FC<IntroSectionProps> = ({ onStartRanting, onExploreRa
 
     return (
         <motion.div
-            className="max-w-3xl"
+            className="max-w-3xl w-full"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
@@ -175,10 +175,10 @@ const IntroSection: React.FC<IntroSectionProps> = ({ onStartRanting, onExploreRa
 
             {/* Animated heading section with typewriter effect - dynamic height */}
             <div
-                className="mb-24"
+                className="mb-12 sm:mb-16 md:mb-24"
                 style={{
-                    height: `${contentHeight}px`,
-                    transition: "height 0.5s ease-in-out"
+                    minHeight: `${contentHeight}px`,
+                    transition: "min-height 0.5s ease-in-out"
                 }}
             >
                 <AnimatePresence mode="wait">
@@ -191,7 +191,7 @@ const IntroSection: React.FC<IntroSectionProps> = ({ onStartRanting, onExploreRa
                             exit="exit"
                             className="h-full"
                         >
-                            <h1 className="text-6xl font-bold leading-tight font-heading">
+                            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight font-heading">
                                 <span className={colorSchemes[currentColorScheme].heading}>
                                     <TypewriterText
                                         text={headingContents[currentIndex].heading}
@@ -200,24 +200,9 @@ const IntroSection: React.FC<IntroSectionProps> = ({ onStartRanting, onExploreRa
                                         onComplete={hasSubheading ? undefined : handleTypingComplete}
                                     />
                                 </span>
-
-                                {hasSubheading && (
-                                    <>
-                                        {" "}
-                                        <span className={colorSchemes[currentColorScheme].subheading}>
-                                            <TypewriterText
-                                                text={headingContents[currentIndex].subheading || ""}
-                                                delay={headingContents[currentIndex].heading.length * ANIMATION.TYPEWRITER_SPEED + 200}
-                                                showCaret={true}
-                                                speed={ANIMATION.TYPEWRITER_SPEED}
-                                                onComplete={handleTypingComplete}
-                                            />
-                                        </span>
-                                    </>
-                                )}
                             </h1>
 
-                            <div className="text-xl text-text-muted mt-6 max-w-xl leading-relaxed font-body">
+                            <div className="text-base sm:text-lg md:text-xl text-text-muted mt-4 sm:mt-6 max-w-xl leading-relaxed font-body">
                                 <TypewriterText
                                     text={headingContents[currentIndex].subtext}
                                     delay={(headingContents[currentIndex].heading.length +
@@ -231,7 +216,7 @@ const IntroSection: React.FC<IntroSectionProps> = ({ onStartRanting, onExploreRa
             </div>
 
             <motion.div
-                className="flex flex-wrap gap-5 mb-10"
+                className="flex flex-col sm:flex-row w-full justify-center sm:justify-start flex-wrap gap-5 mb-10"
                 variants={itemVariants}
                 initial={{ opacity: 0 }}
                 animate={{
@@ -244,10 +229,11 @@ const IntroSection: React.FC<IntroSectionProps> = ({ onStartRanting, onExploreRa
                     variants={buttonVariants}
                     whileHover="hover"
                     whileTap="tap"
+                    className="w-full sm:w-auto"
                 >
                     <Button
                         onClick={onStartRanting}
-                        className="bg-gradient-to-r from-primary to-accent-teal hover:opacity-90 transition-all rounded-full px-8 py-6 text-base font-medium shadow-medium shadow-primary/20 font-ui"
+                        className="w-full bg-gradient-to-r from-primary to-accent-teal hover:opacity-90 transition-all rounded-full px-8 py-6 text-base font-medium shadow-medium shadow-primary/20 font-ui"
                     >
                         Start Ranting
                     </Button>
@@ -257,11 +243,12 @@ const IntroSection: React.FC<IntroSectionProps> = ({ onStartRanting, onExploreRa
                     variants={buttonVariants}
                     whileHover="hover"
                     whileTap="tap"
+                    className="w-full sm:w-auto"
                 >
                     <Button
                         onClick={onExploreRants}
                         variant="outline"
-                        className="border-border-subtle bg-background-dark hover:bg-background-secondary text-text-strong rounded-full px-8 py-6 text-base font-medium backdrop-blur-sm font-ui"
+                        className="w-full border-border-subtle bg-background-dark hover:bg-background-secondary text-text-strong rounded-full px-8 py-6 text-base font-medium backdrop-blur-sm font-ui"
                     >
                         Explore Rants
                     </Button>

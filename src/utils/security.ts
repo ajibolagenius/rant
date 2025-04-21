@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import CryptoJS from 'crypto-js';
 import DOMPurify from 'dompurify';
 import { supabase } from '@/lib/supabase.ts';
+import { v4 as uuidv4 } from 'uuid';
 
 // Initialize Supabase client
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
@@ -104,8 +105,8 @@ export const validateRantInput = (text: string): { valid: boolean; message?: str
         return { valid: false, message: 'Rant cannot be empty' };
     }
 
-    if (text.length > 300) {
-        return { valid: false, message: 'Rant cannot exceed 300 characters' };
+    if (text.length > 560) {
+        return { valid: false, message: 'Rant cannot exceed 560 characters' };
     }
 
     return { valid: true };
@@ -189,8 +190,7 @@ export const getSecureAuthorId = (): string => {
                     newId = crypto.randomUUID();
                 } else {
                     // Fallback to a simple random ID
-                    newId = 'id-' + Math.random().toString(36).substring(2, 15) +
-                           Math.random().toString(36).substring(2, 15);
+                    newId = uuidv4();
                 }
             } catch (idGenError) {
                 // Ultimate fallback

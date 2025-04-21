@@ -7,8 +7,7 @@ interface MoodSelectorProps {
 
 const MoodSelector: React.FC<MoodSelectorProps> = ({ selectedMood, onMoodSelect }) => {
     const moods: MoodType[] = [
-        'sad', 'crying', 'happy', 'neutral', 'angry', 'eyeRoll', 'heartbroken', 'loved',
-        'mindBlown', 'speechless', 'confused', 'tired', 'nervous',
+        'sad', 'crying', 'happy', 'neutral', 'angry', 'eyeRoll', 'heartbroken', 'loved', 'mindBlown', 'speechless', 'confused', 'tired', 'nervous',
         'smiling', 'laughing', 'celebratory', 'confident',
     ];
 

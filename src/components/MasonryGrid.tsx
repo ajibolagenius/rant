@@ -160,37 +160,12 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({
         };
     }, [setupObserver]);
 
-    // Calculate fixed column width based on container width
-    useEffect(() => {
-        const handleResize = () => {
-            if (containerRef.current) {
-                const containerWidth = containerRef.current.offsetWidth;
-                const columnWidth = (containerWidth - (gap * (columns - 1))) / columns;
-
-                // Apply fixed width to all column divs
-                const columnDivs = containerRef.current.querySelectorAll('.masonry-column');
-                columnDivs.forEach((div) => {
-                    (div as HTMLElement).style.width = `${columnWidth}px`;
-                });
-            }
-        };
-
-        // Initial calculation
-        handleResize();
-
-        // Set up resize observer
-        // Store the current value of containerRef in a local variable
-        const currentContainer = containerRef.current;
-
-        // Set up resize observer
-        if (currentContainer) {
-            const resizeObserver = new ResizeObserver(handleResize);
-            resizeObserver.observe(currentContainer);
-            return () => {
-                resizeObserver.disconnect();
-            };
-        }
-    }, [columns, gap]);
+    // Calculate column width based on container width and number of columns
+    const getColumnWidth = () => {
+        // Calculate percentage width for each column, accounting for gaps
+        const gapSpace = (columns - 1) * gap;
+        return `calc((100% - ${gapSpace}px) / ${columns})`;
+    };
 
     // Focus the rant when focusedRantIndex changes
     useEffect(() => {
@@ -214,7 +189,6 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({
         const columnIndex = index % columns;
         columnArrays[columnIndex].push(rant);
     });
-
 
     if (rants.length === 0 && !isLoading) {
         return (
@@ -241,16 +215,34 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({
                 {columnArrays.map((columnRants, columnIndex) => (
                     <div
                         key={columnIndex}
-                        className="masonry-column flex-shrink-0"
-                        style={{ display: 'flex', flexDirection: 'column', gap: `${gap}px` }}
+                        className="masonry-column"
+                        style={{
+                            width: getColumnWidth(),
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: `${gap}px`
+                        }}
                     >
                         {columnRants.map((rant, rantIndex) => {
                             const overallIndex = rantIndex * columns + columnIndex;
                             const isNewRant = rant.id === newRantId;
-                            const isFocused = focusedRantIndex === overallIndex;
 
                             return (
-                                <div key={rant.id || `rant-${columnIndex}-${rantIndex}`} ref={isNewRant ? newRantRef : null}>
+                                <div
+                                    key={rant.id || `rant-${columnIndex}-${rantIndex}`}
+                                    ref={(el) => {
+                                        // Store reference for keyboard navigation
+                                        if (rant.id) {
+                                            rantRefs.current[rant.id] = el;
+                                        }
+
+                                        // Store reference for new rant scrolling
+                                        if (isNewRant) {
+                                            newRantRef.current = el;
+                                        }
+                                    }}
+                                    className={cn(isNewRant ? 'new-rant' : '')}
+                                >
                                     {renderItem ? renderItem(rant, overallIndex) : (
                                         <>
                                             <p>By: {rant.userAlias || 'Anonymous'}</p>
@@ -264,6 +256,18 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({
                     </div>
                 ))}
             </div>
+
+            {/* Load more trigger */}
+            {hasMore && (
+                <div
+                    ref={loadMoreTriggerRef}
+                    className="h-20 w-full flex items-center justify-center mt-4"
+                >
+                    {isLoadingMore && (
+                        <div className="text-sm text-gray-400">Loading more rants...</div>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

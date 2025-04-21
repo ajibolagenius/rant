@@ -37,17 +37,17 @@ const KeyboardShortcutsDialog: React.FC<KeyboardShortcutsDialogProps> = ({
     if (!shortcuts || !Array.isArray(shortcuts) || shortcuts.length === 0) {
         return (
             <Dialog open={open} onOpenChange={onOpenChange}>
-                <DialogContent className="sm:max-w-[700px] bg-[#09090B] border-[#333] text-white">
+                <DialogContent className="sm:max-w-[700px] bg-background-dark border-border-subtle text-text-strong">
                     <DialogHeader>
-                        <DialogTitle>Keyboard Shortcuts</DialogTitle>
-                        <DialogDescription className="text-gray-400">
+                        <DialogTitle className="text-lg sm:text-xl font-heading font-semibold">Keyboard Shortcuts</DialogTitle>
+                        <DialogDescription className="text-sm font-body text-text-muted">
                             No shortcuts available at this time.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
                         <Button
                             onClick={() => onOpenChange(false)}
-                            className="bg-cyan-700 hover:bg-cyan-600 text-white"
+                            className="bg-accent-teal hover:bg-accent-teal/90 text-background-dark font-ui text-sm"
                         >
                             Close
                         </Button>
@@ -97,9 +97,9 @@ const KeyboardShortcutsDialog: React.FC<KeyboardShortcutsDialogProps> = ({
                 {keys.map((key, index) => (
                     <span key={index} className="flex items-center">
                         {index > 0 && (
-                            <span className="text-gray-500 mx-1">+</span>
+                            <span className="text-text-muted mx-1">+</span>
                         )}
-                        <kbd className="inline-flex h-6 items-center justify-center rounded px-2 font-mono text-xs font-medium bg-[#1A1A1A] border border-[#333] text-white shadow-sm">
+                        <kbd className="inline-flex h-5 sm:h-6 items-center justify-center rounded px-1.5 sm:px-2 font-mono text-2xs sm:text-xs font-medium bg-background-secondary border border-border-subtle text-text-strong shadow-low">
                             {key}
                         </kbd>
                     </span>
@@ -153,16 +153,16 @@ const KeyboardShortcutsDialog: React.FC<KeyboardShortcutsDialogProps> = ({
             <div
                 key={index}
                 className={cn(
-                    "flex justify-between items-center p-3 rounded-lg transition-colors",
-                    "bg-[#121212] hover:bg-[#1A1A1A] border border-[#222]"
+                    "flex justify-between items-center p-2 sm:p-3 rounded-lg transition-colors",
+                    "bg-background-secondary hover:bg-background-secondary/80 border border-border-subtle"
                 )}
             >
-                <span className="text-sm text-gray-200 flex items-center">
+                <span className="text-2xs sm:text-sm text-text-strong flex items-center">
                     {moodName && (
                         <img
                             src={getMoodEmoji(moodName)}
                             alt={getMoodLabel(moodName)}
-                            className="w-4 h-4 mr-2"
+                            className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2"
                             onError={(e) => {
                                 // Fallback if emoji fails to load
                                 (e.target as HTMLImageElement).style.display = 'none';
@@ -179,14 +179,14 @@ const KeyboardShortcutsDialog: React.FC<KeyboardShortcutsDialogProps> = ({
     // Function to render a search tip item
     const renderSearchTipItem = (title: string, description: React.ReactNode, example?: string, explanation?: string) => {
         return (
-            <div className="bg-[#121212] hover:bg-[#1A1A1A] border border-[#222] p-3 rounded-lg">
-                <h4 className="font-medium text-sm text-white mb-1">{title}</h4>
-                <div className="text-sm text-gray-300 mb-2">{description}</div>
+            <div className="bg-background-secondary hover:bg-background-secondary/80 border border-border-subtle p-2 sm:p-3 rounded-lg">
+                <h4 className="font-medium text-xs sm:text-sm text-text-strong mb-1 font-heading">{title}</h4>
+                <div className="text-2xs sm:text-sm text-text-muted mb-1.5 sm:mb-2 font-body">{description}</div>
                 {example && (
-                    <div className="bg-[#1A1A1A] p-2 rounded border border-[#333]">
-                        <code className="text-xs text-cyan-400">{example}</code>
+                    <div className="bg-background-dark p-1.5 sm:p-2 rounded border border-border-subtle">
+                        <code className="text-3xs sm:text-xs text-accent-teal">{example}</code>
                         {explanation && (
-                            <p className="text-xs text-gray-400 mt-1">{explanation}</p>
+                            <p className="text-3xs sm:text-xs text-text-muted mt-0.5 sm:mt-1">{explanation}</p>
                         )}
                     </div>
                 )}
@@ -196,35 +196,35 @@ const KeyboardShortcutsDialog: React.FC<KeyboardShortcutsDialogProps> = ({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[700px] max-h-[95vh] bg-[#09090B] border-[#333] text-white overflow-hidden flex flex-col">
-                <DialogHeader className="pb-4 border-b border-[#333]">
-                    <DialogTitle className="text-xl font-bold flex items-center">
-                        <KeyboardIcon className="h-5 w-5 mr-2 text-cyan-500" />
+            <DialogContent className="sm:max-w-[700px] max-h-[95vh] bg-background-dark border-border-subtle text-text-strong overflow-hidden flex flex-col">
+                <DialogHeader className="pb-3 sm:pb-4 border-b border-border-subtle">
+                    <DialogTitle className="text-lg sm:text-xl font-bold flex items-center font-heading">
+                        <KeyboardIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2 text-accent-teal" />
                         Keyboard Shortcuts & Tips
                     </DialogTitle>
-                    <DialogDescription className="text-gray-400">
+                    <DialogDescription className="text-xs sm:text-sm text-text-muted font-body">
                         Use these shortcuts and tips to navigate and interact with the application more efficiently.
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="flex-1 overflow-hidden flex flex-col mt-4">
+                <div className="flex-1 overflow-hidden flex flex-col mt-3 sm:mt-4">
                     <Tabs defaultValue="general" className="flex-1 overflow-hidden flex flex-col">
-                        <TabsList className="flex bg-[#121212] p-1 rounded-lg mb-4 overflow-x-auto justify-center">
+                        <TabsList className="flex bg-background-secondary p-0.5 sm:p-1 rounded-lg mb-3 sm:mb-4 overflow-x-auto justify-center">
                             <TabsTrigger
                                 value="general"
-                                className="flex-shrink-0 data-[state=active]:bg-[#252525] data-[state=active]:text-white data-[state=active]:shadow-sm"
+                                className="text-xs sm:text-sm flex-shrink-0 data-[state=active]:bg-primary data-[state=active]:text-on-primary data-[state=active]:shadow-low font-ui"
                             >
                                 General Shortcuts
                             </TabsTrigger>
                             <TabsTrigger
                                 value="moods"
-                                className="flex-shrink-0 data-[state=active]:bg-[#252525] data-[state=active]:text-white data-[state=active]:shadow-sm"
+                                className="text-xs sm:text-sm flex-shrink-0 data-[state=active]:bg-primary data-[state=active]:text-on-primary data-[state=active]:shadow-low font-ui"
                             >
                                 Mood Shortcuts
                             </TabsTrigger>
                             <TabsTrigger
                                 value="search"
-                                className="flex-shrink-0 data-[state=active]:bg-[#252525] data-[state=active]:text-white data-[state=active]:shadow-sm"
+                                className="text-xs sm:text-sm flex-shrink-0 data-[state=active]:bg-primary data-[state=active]:text-on-primary data-[state=active]:shadow-low font-ui"
                             >
                                 Search Tips
                             </TabsTrigger>
@@ -235,8 +235,8 @@ const KeyboardShortcutsDialog: React.FC<KeyboardShortcutsDialogProps> = ({
                             className="flex-1 overflow-hidden data-[state=active]:animate-in data-[state=active]:fade-in-50"
                         >
                             <div className="flex-1" style={{ height: 'calc(60vh - 120px)' }}>
-                                <ScrollArea className="h-full pr-4">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                <ScrollArea className="h-full pr-3 sm:pr-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 sm:gap-2">
                                         {generalShortcuts.map((shortcut, index) => (
                                             renderShortcutItem(shortcut, index)
                                         ))}
@@ -250,8 +250,8 @@ const KeyboardShortcutsDialog: React.FC<KeyboardShortcutsDialogProps> = ({
                             className="flex-1 overflow-hidden data-[state=active]:animate-in data-[state=active]:fade-in-50"
                         >
                             <div className="flex-1" style={{ height: 'calc(60vh - 120px)' }}>
-                                <ScrollArea className="h-full pr-4">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                <ScrollArea className="h-full pr-3 sm:pr-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 sm:gap-2">
                                         {moodShortcuts.map((shortcut, index) => (
                                             renderShortcutItem(shortcut, index)
                                         ))}
@@ -259,8 +259,8 @@ const KeyboardShortcutsDialog: React.FC<KeyboardShortcutsDialogProps> = ({
 
                                     {/* If there are no mood shortcuts in the array, show all possible moods */}
                                     {moodShortcuts.length === 0 && (
-                                        <div className="text-center text-gray-400 py-4">
-                                            <p>No mood shortcuts configured.</p>
+                                        <div className="text-center text-text-muted py-3 sm:py-4">
+                                            <p className="text-xs sm:text-sm font-body">No mood shortcuts configured.</p>
                                         </div>
                                     )}
                                 </ScrollArea>
@@ -273,8 +273,8 @@ const KeyboardShortcutsDialog: React.FC<KeyboardShortcutsDialogProps> = ({
                             className="flex-1 overflow-hidden data-[state=active]:animate-in data-[state=active]:fade-in-50"
                         >
                             <div className="flex-1" style={{ height: 'calc(60vh - 120px)' }}>
-                                <ScrollArea className="h-full pr-4">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <ScrollArea className="h-full pr-3 sm:pr-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
                                         {renderSearchTipItem(
                                             "Basic Search",
                                             "Type any word or phrase to find matching rants.",
@@ -284,14 +284,14 @@ const KeyboardShortcutsDialog: React.FC<KeyboardShortcutsDialogProps> = ({
 
                                         {renderSearchTipItem(
                                             "Exact Phrases",
-                                            <>Use quotes for exact phrase matching: <code className="bg-[#252525] px-1 rounded">"exactly this phrase"</code></>,
+                                            <>Use quotes for exact phrase matching: <code className="bg-background-secondary px-1 rounded text-3xs sm:text-xs">"exactly this phrase"</code></>,
                                             "\"bad day at work\"",
                                             "Finds rants with this exact phrase"
                                         )}
 
                                         {renderSearchTipItem(
                                             "Mood Filter",
-                                            <>Use <code className="bg-[#252525] px-1 rounded">mood:angry</code> to find rants with a specific mood.</>,
+                                            <>Use <code className="bg-background-secondary px-1 rounded text-3xs sm:text-xs">mood:angry</code> to find rants with a specific mood.</>,
                                             "mood:angry",
                                             "Finds angry rants"
                                         )}
@@ -305,13 +305,13 @@ const KeyboardShortcutsDialog: React.FC<KeyboardShortcutsDialogProps> = ({
 
                                         {renderSearchTipItem(
                                             "Available Moods",
-                                            <div className="text-xs grid grid-cols-2 gap-1">
+                                            <div className="text-3xs sm:text-xs grid grid-cols-2 gap-0.5 sm:gap-1">
                                                 {allMoods.map(mood => (
-                                                    <div key={mood} className="flex items-center gap-1">
+                                                    <div key={mood} className="flex items-center gap-0.5 sm:gap-1">
                                                         <img
                                                             src={getMoodEmoji(mood)}
                                                             alt={getMoodLabel(mood)}
-                                                            className="w-3 h-3"
+                                                            className="w-2.5 h-2.5 sm:w-3 sm:h-3"
                                                         />
                                                         <span>{mood}</span>
                                                     </div>
@@ -321,18 +321,24 @@ const KeyboardShortcutsDialog: React.FC<KeyboardShortcutsDialogProps> = ({
 
                                         {renderSearchTipItem(
                                             "Search Shortcuts",
-                                            <div className="space-y-2">
+                                            <div className="space-y-1 sm:space-y-2">
                                                 <div className="flex justify-between items-center">
-                                                    <span>Focus search box</span>
-                                                    <kbd className="px-1.5 py-0.5 bg-[#1A1A1A] border border-[#333] rounded text-xs">/</kbd>
+                                                    <span className="text-2xs sm:text-xs">Focus search box</span>
+                                                    <kbd className="px-1 sm:px-1.5 py-0.5 bg-background-secondary border border-border-subtle rounded text-3xs sm:text-xs">
+                                                        /
+                                                    </kbd>
                                                 </div>
                                                 <div className="flex justify-between items-center">
-                                                    <span>Search mode</span>
-                                                    <kbd className="px-1.5 py-0.5 bg-[#1A1A1A] border border-[#333] rounded text-xs">S</kbd>
+                                                    <span className="text-2xs sm:text-xs">Search mode</span>
+                                                    <kbd className="px-1 sm:px-1.5 py-0.5 bg-background-secondary border border-border-subtle rounded text-3xs sm:text-xs">
+                                                        S
+                                                    </kbd>
                                                 </div>
                                                 <div className="flex justify-between items-center">
-                                                    <span>Clear search</span>
-                                                    <kbd className="px-1.5 py-0.5 bg-[#1A1A1A] border border-[#333] rounded text-xs">Esc</kbd>
+                                                    <span className="text-2xs sm:text-xs">Clear search</span>
+                                                    <kbd className="px-1 sm:px-1.5 py-0.5 bg-background-secondary border border-border-subtle rounded text-3xs sm:text-xs">
+                                                        Esc
+                                                    </kbd>
                                                 </div>
                                             </div>
                                         )}
@@ -343,13 +349,13 @@ const KeyboardShortcutsDialog: React.FC<KeyboardShortcutsDialogProps> = ({
                     </Tabs>
                 </div>
 
-                <DialogFooter className="pt-4 mt-4 border-t border-[#333] flex flex-col sm:flex-row justify-between items-center gap-2">
-                    <div className="text-xs text-gray-500">
-                        Press <kbd className="px-1.5 py-0.5 bg-[#1A1A1A] border border-[#333] rounded text-xs">Shift + ?</kbd> anytime to show this dialog
+                <DialogFooter className="pt-3 sm:pt-4 mt-3 sm:mt-4 border-t border-border-subtle flex flex-col sm:flex-row justify-between items-center gap-1.5 sm:gap-2">
+                    <div className="text-3xs sm:text-xs text-text-muted font-body">
+                        Press <kbd className="px-1 sm:px-1.5 py-0.5 bg-background-secondary border border-border-subtle rounded text-3xs sm:text-xs">Shift + ?</kbd> anytime to show this dialog
                     </div>
                     <Button
                         onClick={() => onOpenChange(false)}
-                        className="bg-cyan-700 hover:bg-cyan-600 text-white"
+                        className="bg-accent-teal hover:bg-accent-teal/90 text-background-dark font-ui text-xs sm:text-sm"
                     >
                         Close
                     </Button>

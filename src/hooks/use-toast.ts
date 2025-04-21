@@ -67,7 +67,7 @@ type State = {
 
 let memoryState: State = { toasts: [] }
 
-let listeners: ((state: State) => void)[] = []
+const listeners: ((state: State) => void)[] = []
 
 function dispatch(action: ToastActionType) {
   memoryState = reducer(memoryState, action)
@@ -184,29 +184,13 @@ export function useToast() {
 }
 
 // Singleton instance for importing directly
-const toast = {
-  default: (props: Omit<ToastProps, "id" | "variant">) => {
-    const { toast } = useToast()
-    return toast({ ...props, variant: "default" })
-  },
-  success: (props: Omit<ToastProps, "id" | "variant">) => {
-    const { toast } = useToast()
-    return toast({ ...props, variant: "success" })
-  },
-  error: (props: Omit<ToastProps, "id" | "variant">) => {
-    const { toast } = useToast()
-    return toast({ ...props, variant: "error" })
-  },
-  info: (props: Omit<ToastProps, "id" | "variant">) => {
-    const { toast } = useToast()
-    return toast({ ...props, variant: "info" })
-  },
-  dismiss: (toastId?: string) => {
-    dispatch({ type: "DISMISS_TOAST", toastId })
-  },
-  remove: (toastId?: string) => {
-    dispatch({ type: "REMOVE_TOAST", toastId })
-  }
+function toast({ title, description, variant = 'default', action }: Omit<ToastProps, 'id'>) {
+  const id = generateId();
+  dispatch({
+    type: 'ADD_TOAST',
+    toast: { id, title, description, variant, action },
+  });
+  addToRemoveQueue(id);
 }
 
-export { toast }
+export { toast };
