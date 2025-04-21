@@ -18,6 +18,7 @@ import { useSearchParams, useLocation } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { colors } from "@/utils/colors";
+import { Rant } from "@/lib/types/rant"; // Assuming Rant type exists
 
 type SortOption = "latest" | "popular" | "filter" | "search";
 
@@ -29,7 +30,7 @@ interface SortingBarProps {
     selectedFilters?: string[];
     searchQuery?: string;
     searchMood?: MoodType | null;
-    rants?: any[]; // For search suggestions
+    rants?: Rant[]; // For search suggestions
 }
 
 const SortingBar: React.FC<SortingBarProps> = ({
@@ -833,11 +834,11 @@ const SortingBar: React.FC<SortingBarProps> = ({
 
     // Desktop view (original layout with minor improvements)
     return (
-        <div className="flex flex-col mt-10 mb-5 px-4">
+        <div className="flex flex-col mt-10 mb-5 px-4 sm:px-6 md:px-8 lg:px-10">
             <div id="rant-section" className="mb-4"></div>
             <div className="flex items-center justify-between mb-4">
                 {/* Section Title */}
-                <h2 className="text-xl font-bold font-heading text-text-strong">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold font-heading text-text-strong">
                     {activeOption === "search"
                         ? "Search Results 🔍"
                         : activeOption === "popular"
@@ -845,12 +846,12 @@ const SortingBar: React.FC<SortingBarProps> = ({
                             : "Hottest Rants 🔥"}
                 </h2>
                 {/* Buttons Section */}
-                <div className="flex gap-4 items-center">
+                <div className="flex flex-wrap gap-2 sm:gap-4 items-center">
                     {/* Search Button */}
                     <Button
                         onClick={handleSearchDropdownToggle}
                         variant="outline"
-                        className={`border-border-subtle bg-background-secondary hover:bg-background-secondary/80 text-text-strong rounded-full px-6 py-2 flex items-center gap-2 font-ui ${activeOption === "search" ? "ring-2 ring-accent-teal" : ""}`}
+                        className={`border-border-subtle bg-background-secondary hover:bg-background-secondary/80 text-text-strong rounded-full px-4 sm:px-6 py-2 flex items-center gap-2 font-ui ${activeOption === "search" ? "ring-2 ring-accent-teal" : ""}`}
                     >
                         <MagnifyingGlassIcon className="mr-1 h-4 w-4" />
                         <span>Search</span>
@@ -860,8 +861,8 @@ const SortingBar: React.FC<SortingBarProps> = ({
                     <Button
                         onClick={handleLatestClick}
                         variant="outline"
-                        className={`border-border-subtle bg-background-secondary hover:bg-background-secondary/80 text-text-strong rounded-full px-6 py-2 font-ui ${activeOption === "latest" ? "ring-2 ring-accent-teal" : ""
-                            }`}
+                        className={`border-border-subtle bg-background-secondary hover:bg-background-secondary/80 text-text-strong rounded-full px-4 sm:px-6 py-2 font-ui ${activeOption === "latest" ? "ring-2 ring-accent-teal" : ""}`}
+                        data-active={activeOption === "latest"}
                     >
                         <ClockIcon className="mr-2 h-4 w-4" />
                         Latest
@@ -869,8 +870,7 @@ const SortingBar: React.FC<SortingBarProps> = ({
                     <Button
                         onClick={handlePopularClick}
                         variant="outline"
-                        className={`border-border-subtle bg-background-secondary hover:bg-background-secondary/80 text-text-strong rounded-full px-6 py-2 font-ui ${activeOption === "popular" ? "ring-2 ring-accent-teal" : ""
-                            }`}
+                        className={`border-border-subtle bg-background-secondary hover:bg-background-secondary/80 text-text-strong rounded-full px-4 sm:px-6 py-2 font-ui ${activeOption === "popular" ? "ring-2 ring-accent-teal" : ""}`}
                     >
                         <StarIcon className="mr-2 h-4 w-4" />
                         Popular
@@ -879,8 +879,7 @@ const SortingBar: React.FC<SortingBarProps> = ({
                     <Button
                         onClick={handleFilterDropdownToggle}
                         variant="outline"
-                        className={`border-border-subtle bg-background-secondary hover:bg-background-secondary/80 text-text-strong rounded-full px-6 py-2 flex items-center gap-2 font-ui ${activeOption === "filter" && selectedFilters.length > 0 ? "ring-2 ring-accent-teal" : ""
-                            }`}
+                        className={`border-border-subtle bg-background-secondary hover:bg-background-secondary/80 text-text-strong rounded-full px-4 sm:px-6 py-2 flex items-center gap-2 font-ui ${activeOption === "filter" && selectedFilters.length > 0 ? "ring-2 ring-accent-teal" : ""}`}
                     >
                         <MixerHorizontalIcon className="mr-1 h-4 w-4" />
                         <span>Filter</span>
