@@ -156,7 +156,16 @@ const IntroSection: React.FC<IntroSectionProps> = ({ onStartRanting, onExploreRa
                 className="flex items-center gap-2 mb-6"
                 variants={itemVariants}
             >
-                <div className="bg-background-dark text-primary border border-border-subtle px-4 py-1.5 rounded-full text-sm font-medium flex items-center backdrop-blur-sm shadow-medium font-ui">
+                <motion.div
+                    className="bg-background-dark text-primary border border-border-subtle px-4 py-1.5 rounded-full text-sm font-medium flex items-center backdrop-blur-sm shadow-medium font-ui"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+
+                    drag
+                    dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+                    dragElastic={0.1} // the higher the value, the more "bouncy" the drag
+                >
                     <span>Let it all out</span>
                     <motion.span
                         className="inline-block w-2 h-2 ml-2 bg-accent-teal rounded-full"
@@ -170,7 +179,7 @@ const IntroSection: React.FC<IntroSectionProps> = ({ onStartRanting, onExploreRa
                             ease: "easeInOut"
                         }}
                     />
-                </div>
+                </motion.div>
             </motion.div>
 
             {/* Animated heading section with typewriter effect - dynamic height */}
@@ -272,7 +281,7 @@ const IntroSection: React.FC<IntroSectionProps> = ({ onStartRanting, onExploreRa
                     </span> people ranting now
                 </span>
             </motion.div>
-        </motion.div>
+        </motion.div >
     );
 };
 
