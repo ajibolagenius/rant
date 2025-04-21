@@ -16,6 +16,7 @@ import { useLikeStatus } from "@/hooks/useLikeStatus";
 import { toast } from "@/hooks/use-toast";
 import { useAccessibility } from "@/components/AccessibilityContext";
 import { cn } from "@/lib/utils";
+import { highlightText } from "@/lib/utils/highlight";
 
 // We'll add a function to manage bookmarks in localStorage
 const getBookmarks = (): string[] => {
@@ -66,7 +67,7 @@ const RantCard: React.FC<RantCardProps> = ({
     const moodColor = getMoodColor(rant.mood);
     const moodEmojiPath = getMoodEmoji(rant.mood);
     const moodUnicode = getMoodUnicodeEmoji(rant.mood);
-    const moodText = `Mood: ${rant.mood}`;
+    const moodText = `${rant.mood.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}`;
     const [isNew, setIsNew] = useState(false);
     const [isOptimistic, setIsOptimistic] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
@@ -78,7 +79,7 @@ const RantCard: React.FC<RantCardProps> = ({
 
     // Animation based on mood - respect reduced motion preference
     const moodAnimation = reducedMotion
-        ? { initial: {}, animate: {} }
+        ? { y: 0, scale: 1, ease: "easeOut" } // Default animation for reduced motion
         : getMoodAnimation(rant.mood);
 
     // Check device width for responsive design
@@ -146,7 +147,6 @@ const RantCard: React.FC<RantCardProps> = ({
             toast({
                 title: 'Bookmark Removed',
                 description: 'This rant has been removed from your bookmarks.',
-                duration: 3000,
             });
         } else {
             // Add to bookmarks
@@ -156,7 +156,6 @@ const RantCard: React.FC<RantCardProps> = ({
             toast({
                 title: 'Bookmark Added',
                 description: 'This rant has been added to your bookmarks.',
-                duration: 3000,
             });
         }
     };
@@ -196,9 +195,9 @@ const RantCard: React.FC<RantCardProps> = ({
             style={{
                 backgroundColor: highContrast ? "var(--background-dark)" : "var(--background-secondary)",
             }}
-            initial={reducedMotion ? undefined : moodAnimation.initial}
-            animate={reducedMotion ? undefined : moodAnimation.animate}
-            transition={{ duration: reducedMotion ? 0 : 0.35, delay: reducedMotion ? 0 : (index ? index * 0.05 : 0) }}
+            initial={reducedMotion ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: moodAnimation.y, scale: moodAnimation.scale }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: reducedMotion ? 0 : 0.35, ease: moodAnimation.ease, delay: reducedMotion ? 0 : (index ? index * 0.05 : 0) }}
             whileHover={reducedMotion ? undefined : {
                 y: -5,
                 transition: { duration: 0.2 }
@@ -240,7 +239,7 @@ const RantCard: React.FC<RantCardProps> = ({
                             <div className={`${isMobile ? 'w-5 h-5' : 'w-6 h-6'} flex items-center justify-center`}>
                                 <img
                                     src={moodEmojiPath}
-                                    alt=""
+                                    alt={`Mood emoji for ${moodText}`}
                                     className="w-full h-full object-contain"
                                     onError={(e) => {
                                         e.currentTarget.src = "/assets/emojis/neutral.gif"; // Fallback emoji
@@ -255,7 +254,7 @@ const RantCard: React.FC<RantCardProps> = ({
 
                     {/* Author info */}
                     <div className="text-xs text-text-muted font-ui">
-                        {`Anonymous Author #${rant.author_id?.slice(-3).toUpperCase() || "???"}`}
+                        {`Anonymous ${rant.author_id?.slice(-3).toUpperCase() || "👻"}`}
                     </div>
                 </div>
 
@@ -267,13 +266,7 @@ const RantCard: React.FC<RantCardProps> = ({
                     className={`${getFontSizeClass()} text-text-primary leading-relaxed mb-4 font-body break-words flex-grow`}
                     aria-label={`Rant content`}
                 >
-                    {searchTerm ? (
-                        <div dangerouslySetInnerHTML={{
-                            __html: highlightText(rant.content, searchTerm)
-                        }} />
-                    ) : (
-                        rant.content
-                    )}
+                    {highlightText(rant.content, searchTerm)}
                 </div>
 
                 {/* Footer with timestamp and actions */}
@@ -296,46 +289,49 @@ const RantCard: React.FC<RantCardProps> = ({
                                             : `Like this rant ${likeCount} times`
                                         }
                                         className="hover:scale-110 transition-transform flex items-center gap-1"
-                                        disabled={isLiked || isLoading}
-                                        aria-pressed={isLiked}
                                     >
                                         {isLiked ? (
-                                            <HeartFilledIcon className="text-rose hover:text-rose/80 w-3 h-3 sm:w-4 sm:h-4" aria-hidden="true" />
+                                            <HeartFilledIcon className="text-accent-danger w-4 h-4" aria-hidden="true" />
                                         ) : (
-                                            <HeartIcon className="text-text-muted hover:text-rose w-3 h-3 sm:w-4 sm:h-4" aria-hidden="true" />
+                                            <HeartIcon className="text-text-muted w-4 h-4" aria-hidden="true" />
                                         )}
-                                        <span className="text-xs text-text-muted">{likeCount}</span>
+                                        <span className="text-xs font-ui text-text-muted">
+                                            {likeCount}
+                                        </span>
                                     </button>
                                 </Tooltip.Trigger>
-                                <Tooltip.Content asChild side="top" sideOffset={5}>
+                                <Tooltip.Content>
                                     <motion.div
-                                        className="text-xs bg-background-dark text-text-strong px-2 py-1 rounded-md shadow-medium font-ui"
-                                        initial={reducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: -4 }}
-                                        animate={reducedMotion ? undefined : { opacity: 1, y: 0 }}
-                                        transition={{ duration: reducedMotion ? 0 : 0.2 }}
+                                        initial={reducedMotion ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: moodAnimation.y, scale: moodAnimation.scale }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        transition={{ ease: moodAnimation.ease, duration: 0.5 }}
+                                        className="bg-background-dark text-xs px-2 py-1 rounded-md text-text-primary font-ui"
                                     >
-                                        {isLiked ? `Already Liked` : `Like this rant`}
+                                        {`Like this rant`}
                                         <Tooltip.Arrow className="fill-background-dark" />
                                     </motion.div>
                                 </Tooltip.Content>
                             </Tooltip.Root>
                         </Tooltip.Provider>
 
-                        {/* Comment button with accessible label */}
+                        {/* Comment button */}
                         <Tooltip.Provider delayDuration={100}>
                             <Tooltip.Root>
                                 <Tooltip.Trigger asChild>
                                     <button
                                         onClick={(e) => e.stopPropagation()}
                                         aria-label={`Comment on this rant`}
-                                        className="hover:scale-110 transition-transform"
+                                        className="hover:scale-110 transition-transform flex items-center gap-1"
                                     >
-                                        <ChatBubbleIcon className="text-text-muted hover:text-accent-info w-3 h-3 sm:w-4 sm:h-4" aria-hidden="true" />
+                                        <ChatBubbleIcon className="text-text-muted w-4 h-4" aria-hidden="true" />
+                                        <span className="text-xs font-ui text-text-muted">
+                                            {rant.comments || 0}
+                                        </span>
                                     </button>
                                 </Tooltip.Trigger>
-                                <Tooltip.Content asChild side="top" sideOffset={5}>
+                                <Tooltip.Content>
                                     <motion.div
-                                        className="text-xs bg-background-dark text-text-strong px-2 py-1 rounded-md shadow-medium font-ui"
+                                        className="bg-background-dark text-xs px-2 py-1 rounded-md text-text-primary font-ui"
                                         initial={reducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: -4 }}
                                         animate={reducedMotion ? undefined : { opacity: 1, y: 0 }}
                                         transition={{ duration: reducedMotion ? 0 : 0.2 }}
@@ -347,7 +343,7 @@ const RantCard: React.FC<RantCardProps> = ({
                             </Tooltip.Root>
                         </Tooltip.Provider>
 
-                        {/* Bookmark button with accessible label */}
+                        {/* Bookmark button */}
                         <Tooltip.Provider delayDuration={100}>
                             <Tooltip.Root>
                                 <Tooltip.Trigger asChild>
@@ -361,15 +357,15 @@ const RantCard: React.FC<RantCardProps> = ({
                                         aria-pressed={isBookmarked}
                                     >
                                         {isBookmarked ? (
-                                            <BookmarkFilledIcon className="text-accent-warm hover:text-accent-warm/80 w-3 h-3 sm:w-4 sm:h-4" aria-hidden="true" />
+                                            <BookmarkFilledIcon className="text-accent-warning w-4 h-4" aria-hidden="true" />
                                         ) : (
-                                            <BookmarkIcon className="text-text-muted hover:text-accent-warm w-3 h-3 sm:w-4 sm:h-4" aria-hidden="true" />
+                                            <BookmarkIcon className="text-text-muted w-4 h-4" aria-hidden="true" />
                                         )}
                                     </button>
                                 </Tooltip.Trigger>
-                                <Tooltip.Content asChild side="top" sideOffset={5}>
+                                <Tooltip.Content>
                                     <motion.div
-                                        className="text-xs bg-background-dark text-text-strong px-2 py-1 rounded-md shadow-medium font-ui"
+                                        className="bg-background-dark text-xs px-2 py-1 rounded-md text-text-primary font-ui"
                                         initial={reducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: -4 }}
                                         animate={reducedMotion ? undefined : { opacity: 1, y: 0 }}
                                         transition={{ duration: reducedMotion ? 0 : 0.2 }}
@@ -381,33 +377,29 @@ const RantCard: React.FC<RantCardProps> = ({
                             </Tooltip.Root>
                         </Tooltip.Provider>
 
-                        {/* Share button with accessible label */}
+                        {/* Share button */}
                         <Tooltip.Provider delayDuration={100}>
                             <Tooltip.Root>
                                 <Tooltip.Trigger asChild>
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            // Copy a shareable link to clipboard
-                                            const shareText = `${t('rant.shareMessage')}: "${rant.content.substring(0, 50)}${rant.content.length > 50 ? "..." : ""}"`;
+                                            const shareText = `${rant.content.substring(0, 50)}${rant.content.length > 50 ? "..." : ""}`;
                                             navigator.clipboard.writeText(shareText);
-
-                                            // Show toast notification
                                             toast({
                                                 title: 'Copied to Clipboard',
                                                 description: 'Share link has been copied to clipboard.',
-                                                duration: 3000,
                                             });
                                         }}
                                         aria-label={`Share this rant`}
                                         className="hover:scale-110 transition-transform"
                                     >
-                                        <Share1Icon className="text-text-muted hover:text-accent-success w-3 h-3 sm:w-4 sm:h-4" aria-hidden="true" />
+                                        <Share1Icon className="text-text-muted w-4 h-4" aria-hidden="true" />
                                     </button>
                                 </Tooltip.Trigger>
-                                <Tooltip.Content asChild side="top" sideOffset={5}>
+                                <Tooltip.Content>
                                     <motion.div
-                                        className="text-xs bg-background-dark text-text-strong px-2 py-1 rounded-md shadow-medium font-ui"
+                                        className="bg-background-dark text-xs px-2 py-1 rounded-md text-text-primary font-ui"
                                         initial={reducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: -4 }}
                                         animate={reducedMotion ? undefined : { opacity: 1, y: 0 }}
                                         transition={{ duration: reducedMotion ? 0 : 0.2 }}
@@ -421,34 +413,8 @@ const RantCard: React.FC<RantCardProps> = ({
                     </div>
                 </div>
             </div>
-
-            {/* Optimistic update indicator with reduced motion support */}
-            {isOptimistic && !reducedMotion && (
-                <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-accent-teal/10 to-primary/10 pointer-events-none"
-                    animate={{ opacity: [0.2, 0.1, 0] }}
-                    transition={{ duration: 2 }}
-                    aria-hidden="true"
-                />
-            )}
-
-            {/* Static indicator for optimistic updates when reduced motion is enabled */}
-            {isOptimistic && reducedMotion && (
-                <div
-                    className="absolute inset-0 bg-accent-teal/5 pointer-events-none"
-                    aria-hidden="true"
-                />
-            )}
         </motion.div>
     );
 };
 
-// Missing function from the original code
-const highlightText = (text: string, query: string): string => {
-    if (!query) return text;
-    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-    return text.replace(regex, '<mark class="bg-accent-warm/30 text-text-strong">$1</mark>');
-};
-
-// Export the RantCard component with React.memo for performance optimization
 export default React.memo(RantCard, arePropsEqual);

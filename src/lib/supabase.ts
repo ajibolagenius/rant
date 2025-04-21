@@ -1,8 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Get Supabase URL and anon key from environment variables
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'http://127.0.0.1:54321';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0';
+
+// Add logging to verify Supabase client initialization
+console.log('Supabase URL:', supabaseUrl);
+console.log('Supabase Anon Key:', supabaseAnonKey);
 
 // Create Supabase client
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
@@ -160,4 +163,10 @@ export async function getActiveUserCount() {
         // Return a fallback count
         return Math.floor(50 + Math.random() * 100);
     }
+}
+
+// Add logging for debugging Supabase API requests
+export async function logSupabaseRequest(endpoint, method, payload) {
+    console.log(`Supabase Request - Endpoint: ${endpoint}, Method: ${method}`);
+    console.log('Payload:', payload);
 }

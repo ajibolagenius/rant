@@ -113,20 +113,28 @@ export function useLikeStatus(rantId: string) {
 
             // Check if the current user has liked this rant from database
             try {
-                const { data: likeData } = await supabase
+                const { data: likeData, error: likeError } = await supabase
                     .from('likes_log')
                     .select('*')
                     .eq('rant_id', rantId)
                     .eq('author_id', authorId)
-                    .single();
+                    .maybeSingle(); // Use maybeSingle to handle no rows gracefully
 
-                // Get the total like count
-                const { count } = await supabase
+                if (likeError) {
+                    console.error('Error fetching like status:', likeError);
+                    return;
+                }
+
+                const { count, error: countError } = await supabase
                     .from('likes_log')
                     .select('*', { count: 'exact', head: true })
-                    .eq('rant_id', rantId);
+                    .eq('rant_id', rantId); // Removed unnecessary headers
 
-                // Update state with database values
+                if (countError) {
+                    console.error('Error fetching like count:', countError);
+                    return;
+                }
+
                 const serverIsLiked = !!likeData;
                 setIsLiked(serverIsLiked);
                 setLikeCount(count || 0);
@@ -138,26 +146,22 @@ export function useLikeStatus(rantId: string) {
                         let likedRantsArray = [];
 
                         if (likedRantsStr && likedRantsStr.trim().startsWith('[')) {
-                            try {
-                                likedRantsArray = JSON.parse(likedRantsStr);
-                            } catch (e) {
-                                likedRantsArray = [];
-                            }
+                            likedRantsArray = JSON.parse(likedRantsStr);
                         }
 
-                        if (serverIsLiked && !likedRantsArray.includes(rantId)) {
+                        if (serverIsLiked) {
                             likedRantsArray.push(rantId);
-                        } else if (!serverIsLiked && likedRantsArray.includes(rantId)) {
-                            likedRantsArray = likedRantsArray.filter((id: string) => id !== rantId);
+                        } else {
+                            likedRantsArray = likedRantsArray.filter(id => id !== rantId);
                         }
 
                         secureStorage.setItem('liked_rants', JSON.stringify(likedRantsArray));
-                    } catch (error) {
-                        console.error('Error updating liked rants in storage:', error);
+                    } catch (storageError) {
+                        console.error('Error updating secure storage:', storageError);
                     }
                 }
             } catch (error) {
-                console.error('Error fetching like status from database:', error);
+                console.error('Unexpected error checking like status:', error);
             } finally {
                 setIsLoading(false);
             }
