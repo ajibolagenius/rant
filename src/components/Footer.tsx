@@ -17,12 +17,12 @@ const Footer: React.FC = () => {
     return (
         <footer className="py-8 px-6 border-t border-border-subtle mt-16 bg-background-secondary">
             <div className="max-w-7xl mx-auto">
-                <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div className="text-xl font-bold font-heading bg-gradient-to-r from-primary to-accent-teal bg-clip-text text-transparent">rant</div>
-                    <div className="text-sm text-text-muted font-body">
+                <div className="flex flex-col md:flex-row md:justify-between items-center gap-6 md:gap-4">
+                    <div className="text-xl font-bold font-heading bg-gradient-to-r from-primary to-accent-teal bg-clip-text text-transparent">rant:</div>
+                    <div className="text-sm text-center text-text-muted font-body md:text-center">
                         The anonymous space for your unfiltered thoughts.
                     </div>
-                    <div className="text-sm text-text-muted font-body flex items-center gap-1">
+                    <div className="text-sm text-text-muted font-body flex items-center gap-1 md:justify-end">
                         Made with <Heart size={16} className="text-rose" /> for the chronically online.
                     </div>
                 </div>
