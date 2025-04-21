@@ -1147,6 +1147,67 @@ const Index: React.FC = () => {
         };
     }, []);
 
+
+    {/* Script to handle auto-collapse with genie effect */ }
+    const [autoCollapseTriggered, setAutoCollapseTriggered] = useState(false);
+    const hintBoxRef = useRef<HTMLDivElement>(null);
+    const autoCollapseTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Effect to handle auto-collapse with genie effect
+    useEffect(() => {
+        if (showMoodShortcutsHint && !shortcutsCollapsed && !autoCollapseTriggered) {
+            // Clear any existing timer
+            if (autoCollapseTimerRef.current) {
+                clearTimeout(autoCollapseTimerRef.current);
+            }
+
+            // Set a timer to auto-collapse
+            autoCollapseTimerRef.current = setTimeout(() => {
+                setAutoCollapseTriggered(true);
+
+                // Apply genie effect
+                if (hintBoxRef.current) {
+                    // First scale horizontally to create squeezing effect
+                    hintBoxRef.current.style.transition = 'transform 700ms cubic-bezier(0.2, 0, 0, 1)';
+                    hintBoxRef.current.style.transform = 'scaleX(0.3) scaleY(1)';
+
+                    // Then after a short delay, add the vertical scale for complete genie effect
+                    setTimeout(() => {
+                        if (hintBoxRef.current) {
+                            hintBoxRef.current.style.transition = 'transform 300ms cubic-bezier(0.7, 0, 0.84, 0)';
+                            hintBoxRef.current.style.transform = 'scaleX(0.3) scaleY(0.1)';
+
+                            // Finally set the state to collapsed after animation completes
+                            setTimeout(() => {
+                                setShortcutsCollapsed(true);
+
+                                // Reset styles to let the component's classes take over
+                                if (hintBoxRef.current) {
+                                    hintBoxRef.current.style.transition = '';
+                                    hintBoxRef.current.style.transform = '';
+                                }
+                            }, 300);
+                        }
+                    }, 700);
+                } else {
+                    // Fallback if ref is not available
+                    setShortcutsCollapsed(true);
+                }
+            }, 5000); // Auto-collapse after 5 seconds
+
+            return () => {
+                if (autoCollapseTimerRef.current) {
+                    clearTimeout(autoCollapseTimerRef.current);
+                }
+            };
+        }
+
+        // Reset the auto-collapse trigger when shortcuts are manually expanded
+        if (shortcutsCollapsed === false) {
+            setAutoCollapseTriggered(false);
+        }
+    }, [showMoodShortcutsHint, shortcutsCollapsed, autoCollapseTriggered]);
+
     return (
         <RantErrorBoundary>
             <div className="min-h-screen bg-background-dark">
@@ -1356,9 +1417,11 @@ const Index: React.FC = () => {
                 {/* Mood Shortcuts Hint Box */}
                 {showMoodShortcutsHint && (
                     <div
-                        className={`fixed bottom-20 right-4 bg-gray-800 rounded-lg shadow-lg text-xs text-gray-300 transition-all duration-300 ${shortcutsCollapsed
-                            ? "w-10 h-10 overflow-hidden opacity-50 hover:opacity-90"
-                            : "max-w-xs p-3 opacity-70 hover:opacity-100"
+                        ref={hintBoxRef}
+                        className={`fixed bottom-20 right-4 bg-background-dark rounded-lg shadow-medium text-xs transition-all duration-300 font-ui border border-border-subtle
+                            ${shortcutsCollapsed
+                                ? "w-10 h-10 overflow-hidden opacity-50 hover:opacity-90 scale-y-100 origin-bottom-right"
+                                : "max-w-xs p-3 opacity-80 hover:opacity-100 scale-y-100 origin-bottom-right"
                             }`}
                         aria-label="Mood Shortcuts"
                     >
@@ -1366,7 +1429,7 @@ const Index: React.FC = () => {
                             // Collapsed state - just show an icon button
                             <button
                                 onClick={() => setShortcutsCollapsed(false)}
-                                className="w-full h-full flex items-center justify-center"
+                                className="w-full h-full flex items-center justify-center text-accent-teal hover:text-primary transition-colors"
                                 aria-label="Expand Mood Shortcuts"
                                 title="Expand Mood Shortcuts"
                             >
@@ -1378,10 +1441,10 @@ const Index: React.FC = () => {
                             // Expanded state - show full content with collapse button
                             <>
                                 <div className="flex justify-between items-center mb-1">
-                                    <p className="font-semibold">Mood Filters:</p>
+                                    <p className="font-semibold font-heading text-text-strong">Mood Filters:</p>
                                     <button
                                         onClick={() => setShortcutsCollapsed(true)}
-                                        className="text-gray-400 hover:text-white transition-colors"
+                                        className="text-text-muted hover:text-text-strong transition-colors"
                                         aria-label="Collapse Mood Shortcuts"
                                         title="Collapse Mood Shortcuts"
                                     >
@@ -1391,30 +1454,30 @@ const Index: React.FC = () => {
                                     </button>
                                 </div>
                                 <div className="grid grid-cols-2 gap-x-2 gap-y-1">
-                                    <p>
-                                        <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+S</kbd> Sad
+                                    <p className="text-text-strong">
+                                        <kbd className="px-1 py-0.5 bg-background-secondary rounded border border-border-subtle">Shift+S</kbd> <span className="text-text-muted">Sad</span>
                                     </p>
-                                    <p>
-                                        <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+A</kbd> Angry
+                                    <p className="text-text-strong">
+                                        <kbd className="px-1 py-0.5 bg-background-secondary rounded border border-border-subtle">Shift+A</kbd> <span className="text-text-muted">Angry</span>
                                     </p>
-                                    <p>
-                                        <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+C</kbd> Confused
+                                    <p className="text-text-strong">
+                                        <kbd className="px-1 py-0.5 bg-background-secondary rounded border border-border-subtle">Shift+C</kbd> <span className="text-text-muted">Confused</span>
                                     </p>
-                                    <p>
-                                        <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+G</kbd> Smiling
+                                    <p className="text-text-strong">
+                                        <kbd className="px-1 py-0.5 bg-background-secondary rounded border border-border-subtle">Shift+G</kbd> <span className="text-text-muted">Smiling</span>
                                     </p>
-                                    <p>
-                                        <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+L</kbd> Loved
+                                    <p className="text-text-strong">
+                                        <kbd className="px-1 py-0.5 bg-background-secondary rounded border border-border-subtle">Shift+L</kbd> <span className="text-text-muted">Loved</span>
                                     </p>
-                                    <p>
-                                        <kbd className="px-1 py-0.5 bg-gray-700 rounded">Shift+M</kbd> Mind Blown
+                                    <p className="text-text-strong">
+                                        <kbd className="px-1 py-0.5 bg-background-secondary rounded border border-border-subtle">Shift+M</kbd> <span className="text-text-muted">Mind Blown</span>
                                     </p>
                                 </div>
-                                <p className="mt-1 text-center">
-                                    <kbd className="px-1 py-0.5 bg-gray-700 rounded">Esc</kbd> Clear Filters
+                                <p className="mt-1 text-center text-text-strong">
+                                    <kbd className="px-1 py-0.5 bg-background-secondary rounded border border-border-subtle">Esc</kbd> <span className="text-text-muted">Clear Filters</span>
                                 </p>
                                 <button
-                                    className="mt-2 text-cyan-400 hover:text-cyan-300 text-xs w-full text-center"
+                                    className="mt-2 text-accent-teal hover:text-accent-teal/80 text-xs w-full text-center font-ui"
                                     onClick={() => setShortcutsDialogOpen(true)}
                                 >
                                     View All Shortcuts
