@@ -1212,15 +1212,7 @@ const Index: React.FC = () => {
 
                         {/* URL Routing Mode Indicator - only show in development */}
                         {process.env.NODE_ENV === 'development' && (
-                            <div className="mb-4 px-4 py-2 bg-gray-800 rounded-md text-xs text-gray-300 flex items-center justify-between">
-                                <div>
-                                    <span className="font-semibold">URL Mode:</span> {usingHashRouter ? 'Hash-Based' : 'Regular'}
-                                    <span className="ml-2 text-gray-400">
-                                        {usingHashRouter
-                                            ? 'Using hash-based routing'
-                                            : 'Using regular routing'}
-                                    </span>
-                                </div>
+                            <div className="flex justify-end">
                                 <button
                                     onClick={toggleHashRouting}
                                     className="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-white text-xs"

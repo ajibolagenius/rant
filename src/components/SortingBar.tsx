@@ -640,7 +640,7 @@ const SortingBar: React.FC<SortingBarProps> = ({
                                     onChange={handleSearchInputChange}
                                     onFocus={handleInputFocus}
                                     onKeyDown={handleKeyDown}
-                                    className="pl-10 pr-10 bg-background-secondary border-border-subtle text-text-primary font-body"
+                                    className="pl-10 pr-10 bg-background-primary border border-border-subtle focus:ring-2 focus:ring-accent-teal focus:outline-none hover:border-accent-teal text-text-primary font-body rounded-md transition duration-200"
                                 />
                                 {localSearchQuery && (
                                     <button
@@ -915,7 +915,7 @@ const SortingBar: React.FC<SortingBarProps> = ({
                                 onChange={handleSearchInputChange}
                                 onFocus={handleInputFocus}
                                 onKeyDown={handleKeyDown}
-                                className="pl-10 pr-10 bg-background-secondary border-border-subtle text-text-primary font-body"
+                                className="pl-10 pr-10 bg-background-primary border border-border-subtle focus:ring-2 focus:ring-accent-teal focus:outline-none hover:border-accent-teal text-text-primary font-body rounded-md transition duration-200"
                             />
                             {localSearchQuery && (
                                 <button
@@ -1191,37 +1191,7 @@ const SortingBar: React.FC<SortingBarProps> = ({
                 </div>
             )}
 
-            {/* URL Sync Status Indicator - only show in development */}
-            {process.env.NODE_ENV === 'development' && (
-                <div className="text-xs text-text-muted mt-2 font-ui">
-                    <span>URL Sync: {isHashBasedRouting ? 'Hash-based (#/)' : 'Regular'}</span>
-                    {isHashBasedRouting && (
-                        <button
-                            onClick={() => {
-                                localStorage.removeItem('useHashRouter');
-                                window.location.href = window.location.origin + window.location.pathname;
-                            }}
-                            className="ml-2 underline hover:text-text-strong"
-                        >
-                            Switch to regular routing
-                        </button>
-                    )}
-                    {!isHashBasedRouting && (
-                        <button
-                            onClick={() => {
-                                localStorage.setItem('useHashRouter', 'true');
-                                // Preserve current URL parameters when switching
-                                const currentParams = new URLSearchParams(window.location.search);
-                                const paramString = currentParams.toString();
-                                window.location.href = `${window.location.origin}${window.location.pathname}#/${paramString ? '?' + paramString : ''}`;
-                            }}
-                            className="ml-2 underline hover:text-text-strong"
-                        >
-                            Switch to hash-based routing
-                        </button>
-                    )}
-                </div>
-            )}
+
         </div>
     );
 };
