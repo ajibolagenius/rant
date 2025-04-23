@@ -78,7 +78,7 @@ const MyRantsPage: React.FC = () => {
 
     const handleLikeRant = async (rantId: string) => {
         try {
-            const authorId = getAuthorId();
+            const authorId = getAnonymousUserId();
 
             // Optimistically update the UI
             const updateRants = (rants: Rant[]) =>
@@ -90,7 +90,7 @@ const MyRantsPage: React.FC = () => {
             setBookmarkedRants(updateRants);
 
             // Perform the actual like operation
-            await likeRant(rantId, authorId);
+            await likeRant(rantId, getAnonymousUserId());
         } catch (error) {
             console.error('Error liking rant:', error);
             toast({
