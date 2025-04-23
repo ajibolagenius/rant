@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { likeRant } from '@/lib/supabase';
-import { getAuthorId } from '@/utils/authorId';
+import { getAnonymousUserId } from '@/utils/authorId';
 import { toast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import { useAccessibility } from '@/components/AccessibilityContext';
