@@ -52,14 +52,27 @@ export function handleSupabaseError(error: PostgrestError | null | unknown): str
 }
 
 /**
+ * Logs errors to the console and optionally sends them to a monitoring service.
+ * @param context A string describing the context of the error.
+ * @param error The error object to log.
+ */
+export function logError(context: string, error: any): void {
+    console.error(`[${context}]`, error);
+    // Optionally send the error to a monitoring service like Sentry
+    // Sentry.captureException(error, { tags: { context } });
+}
+
+/**
  * Wraps a Supabase query with error handling
  * @param queryFn Function that performs the Supabase query
  * @param errorHandler Optional custom error handler
+ * @param context A string describing the context of the query
  * @returns Promise with data and error
  */
 export async function safeSupabaseQuery<T>(
     queryFn: () => Promise<{ data: T | null; error: PostgrestError | null }>,
-    errorHandler?: (error: any) => void
+    errorHandler?: (error: any) => void,
+    context: string = "Supabase Query"
 ): Promise<{ data: T | null; error: string | null }> {
     try {
         const { data, error } = await queryFn();
@@ -78,6 +91,7 @@ export async function safeSupabaseQuery<T>(
                 });
             }
 
+            logError(context, error);
             return { data: null, error: errorMessage };
         }
 
@@ -95,6 +109,7 @@ export async function safeSupabaseQuery<T>(
             });
         }
 
+        logError(context, err);
         return { data: null, error: errorMessage };
     }
 }

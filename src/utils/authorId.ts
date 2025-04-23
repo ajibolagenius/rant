@@ -1,15 +1,20 @@
 import { v4 as uuidv4 } from 'uuid';
 
 /**
- * Gets the author ID from localStorage or creates a new one if it doesn't exist
+ * Gets the anonymous user ID from localStorage or creates a new one if it doesn't exist
  */
-export function getAuthorId(): string {
-    let authorId = localStorage.getItem('authorId');
+export function getAnonymousUserId(): string {
+    let anonymousUserId = localStorage.getItem('anonymous_user_id');
 
-    if (!authorId) {
-        authorId = uuidv4();
-        localStorage.setItem('authorId', authorId);
+    try {
+        if (!anonymousUserId) {
+            anonymousUserId = uuidv4();
+            localStorage.setItem('anonymous_user_id', anonymousUserId);
+        }
+    } catch (error) {
+        console.error('Failed to access or store anonymous_user_id:', error);
+        anonymousUserId = uuidv4(); // Fallback to a temporary ID
     }
 
-    return authorId;
+    return anonymousUserId;
 }

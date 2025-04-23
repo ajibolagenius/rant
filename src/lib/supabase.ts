@@ -1,11 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
+import { logError } from "@/utils/supabaseErrorHandler";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'http://127.0.0.1:54321';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0';
 
 // Add logging to verify Supabase client initialization
-console.log('Supabase URL:', supabaseUrl);
-console.log('Supabase Anon Key:', supabaseAnonKey);
+// console.log('Supabase URL:', supabaseUrl);
+// console.log('Supabase Anon Key:', supabaseAnonKey);
 
 // Create Supabase client
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
@@ -55,13 +56,13 @@ export async function fetchRants({
 
         return data || [];
     } catch (error) {
-        console.error('Error fetching rants:', error);
+        logError('Error fetching rants', error);
         throw error;
     }
 }
 
 // Function to add a new rant
-export async function addRant({ id, content, mood, author_id }) {
+export async function addRant({ id, content, mood, anonymous_user_id }) {
     try {
         const { data, error } = await supabase
             .from('rants')
@@ -70,7 +71,7 @@ export async function addRant({ id, content, mood, author_id }) {
                     id: id || crypto.randomUUID(), // Use provided ID or generate a new one
                     content,
                     mood,
-                    author_id,
+                    anonymous_user_id,
                     likes: 0,
                     language: 'en',
                     sentiment: 'neutral'
@@ -82,7 +83,7 @@ export async function addRant({ id, content, mood, author_id }) {
 
         return data[0];
     } catch (error) {
-        console.error('Error adding rant:', error);
+        logError('Error adding rant', error);
         throw error;
     }
 }
@@ -90,12 +91,31 @@ export async function addRant({ id, content, mood, author_id }) {
 // Function to like a rant
 export async function likeRant(rantId, authorId) {
     try {
+        // Ensure the anonymous_user_id exists in the anonymous_users table
+        const { data: userExists, error: userCheckError } = await supabase
+            .from('anonymous_users')
+            .select('id')
+            .eq('id', authorId)
+            .single();
+
+        if (userCheckError && userCheckError.code !== 'PGRST116') {
+            throw userCheckError;
+        }
+
+        if (!userExists) {
+            const { error: userInsertError } = await supabase
+                .from('anonymous_users')
+                .insert([{ id: authorId }]);
+
+            if (userInsertError) throw userInsertError;
+        }
+
         // First check if the user has already liked this rant
         const { data: existingLike, error: checkError } = await supabase
-            .from('likes_log')  // Changed from rant_likes to likes_log
+            .from('likes')  // Changed from likes_log to likes
             .select('*')
             .eq('rant_id', rantId)
-            .eq('author_id', authorId)
+            .eq('anonymous_user_id', authorId)
             .single();
 
         if (checkError && checkError.code !== 'PGRST116') {
@@ -108,11 +128,11 @@ export async function likeRant(rantId, authorId) {
             throw new Error('You have already liked this rant');
         }
 
-        // Add the like to likes_log table
+        // Add the like to likes table
         const { error: insertError } = await supabase
-            .from('likes_log')  // Changed from rant_likes to likes_log
+            .from('likes')  // Changed from likes_log to likes
             .insert([
-                { rant_id: rantId, author_id: authorId }
+                { rant_id: rantId, anonymous_user_id: authorId }
             ]);
 
         if (insertError) throw insertError;
@@ -137,7 +157,7 @@ export async function likeRant(rantId, authorId) {
 
         return true;
     } catch (error) {
-        console.error('Error liking rant:', error);
+        logError('Error liking rant', error);
         throw error;
     }
 }
@@ -159,7 +179,7 @@ export async function getActiveUserCount() {
 
         return Math.floor(baseCount * randomFactor);
     } catch (error) {
-        console.error('Error getting active user count:', error);
+        logError('Error getting active user count', error);
         // Return a fallback count
         return Math.floor(50 + Math.random() * 100);
     }

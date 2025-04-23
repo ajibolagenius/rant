@@ -15,10 +15,10 @@ export function useLikeStatus(rantId: string) {
         if (liked) {
             // Add like to database
             await supabase
-                .from('likes_log')
+                .from('likes')
                 .insert({
                     rant_id: rantId,
-                    author_id: authorId
+                    anonymous_user_id: authorId
                 });
 
             // Update local state
@@ -52,10 +52,10 @@ export function useLikeStatus(rantId: string) {
         } else {
             // Remove like from database
             await supabase
-                .from('likes_log')
+                .from('likes')
                 .delete()
                 .eq('rant_id', rantId)
-                .eq('author_id', authorId);
+                .eq('anonymous_user_id', authorId);
 
             // Update local state
             setIsLiked(false);
@@ -114,10 +114,10 @@ export function useLikeStatus(rantId: string) {
             // Check if the current user has liked this rant from database
             try {
                 const { data: likeData, error: likeError } = await supabase
-                    .from('likes_log')
+                    .from('likes')
                     .select('*')
                     .eq('rant_id', rantId)
-                    .eq('author_id', authorId)
+                    .eq('anonymous_user_id', authorId)
                     .maybeSingle(); // Use maybeSingle to handle no rows gracefully
 
                 if (likeError) {
@@ -126,7 +126,7 @@ export function useLikeStatus(rantId: string) {
                 }
 
                 const { count, error: countError } = await supabase
-                    .from('likes_log')
+                    .from('likes')
                     .select('*', { count: 'exact', head: true })
                     .eq('rant_id', rantId); // Removed unnecessary headers
 

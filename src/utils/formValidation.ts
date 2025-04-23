@@ -11,7 +11,7 @@ export const rantSchema = z.object({
     mood: z.string()
         .min(1, "Mood is required")
         .default("neutral"),
-    author_id: z.string()
+    anonymous_user_id: z.string()
         .min(1, "Author ID is required")
         .default("anonymous"),
 });

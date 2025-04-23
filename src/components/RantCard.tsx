@@ -288,14 +288,17 @@ const RantCard: React.FC<RantCardProps> = ({
                                             ? `Already Liked ${likeCount} times`
                                             : `Like this rant ${likeCount} times`
                                         }
-                                        className="hover:scale-110 transition-transform flex items-center gap-1"
+                                        className={cn(
+                                            "hover:scale-110 transition-transform flex items-center gap-1",
+                                            isLiked ? "text-[#D84D72]" : "hover:text-[#D84D72] text-text-muted"
+                                        )}
                                     >
                                         {isLiked ? (
-                                            <HeartFilledIcon className="text-accent-danger w-4 h-4" aria-hidden="true" />
+                                            <HeartFilledIcon className="w-4 h-4" aria-hidden="true" />
                                         ) : (
-                                            <HeartIcon className="text-text-muted w-4 h-4" aria-hidden="true" />
+                                            <HeartIcon className="w-4 h-4" aria-hidden="true" />
                                         )}
-                                        <span className="text-xs font-ui text-text-muted">
+                                        <span className="text-xs font-ui">
                                             {likeCount}
                                         </span>
                                     </button>
@@ -321,10 +324,13 @@ const RantCard: React.FC<RantCardProps> = ({
                                     <button
                                         onClick={(e) => e.stopPropagation()}
                                         aria-label={`Comment on this rant`}
-                                        className="hover:scale-110 transition-transform flex items-center gap-1"
+                                        className={cn(
+                                            "hover:scale-110 transition-transform flex items-center gap-1",
+                                            rant.comments > 0 ? "text-[#4A90E2]" : "hover:text-[#4A90E2] text-text-muted"
+                                        )}
                                     >
-                                        <ChatBubbleIcon className="text-text-muted w-4 h-4" aria-hidden="true" />
-                                        <span className="text-xs font-ui text-text-muted">
+                                        <ChatBubbleIcon className="w-4 h-4" aria-hidden="true" />
+                                        <span className="text-xs font-ui">
                                             {rant.comments || 0}
                                         </span>
                                     </button>
@@ -353,13 +359,16 @@ const RantCard: React.FC<RantCardProps> = ({
                                             ? `Remove Bookmark`
                                             : `Bookmark this rant`
                                         }
-                                        className="hover:scale-110 transition-transform"
+                                        className={cn(
+                                            "hover:scale-110 transition-transform",
+                                            isBookmarked ? "text-[#F4C542]" : "hover:text-[#F4C542] text-text-muted"
+                                        )}
                                         aria-pressed={isBookmarked}
                                     >
                                         {isBookmarked ? (
-                                            <BookmarkFilledIcon className="text-accent-warning w-4 h-4" aria-hidden="true" />
+                                            <BookmarkFilledIcon className="w-4 h-4" aria-hidden="true" />
                                         ) : (
-                                            <BookmarkIcon className="text-text-muted w-4 h-4" aria-hidden="true" />
+                                            <BookmarkIcon className="w-4 h-4" aria-hidden="true" />
                                         )}
                                     </button>
                                 </Tooltip.Trigger>
@@ -392,9 +401,9 @@ const RantCard: React.FC<RantCardProps> = ({
                                             });
                                         }}
                                         aria-label={`Share this rant`}
-                                        className="hover:scale-110 transition-transform"
+                                        className="hover:scale-110 transition-transform text-text-muted hover:text-[#6DD19F]"
                                     >
-                                        <Share1Icon className="text-text-muted w-4 h-4" aria-hidden="true" />
+                                        <Share1Icon className="w-4 h-4" aria-hidden="true" />
                                     </button>
                                 </Tooltip.Trigger>
                                 <Tooltip.Content>

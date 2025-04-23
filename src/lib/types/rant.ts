@@ -1,4 +1,3 @@
-
 import { MoodType } from '../utils/mood';
 
 export interface Rant {
@@ -10,6 +9,6 @@ export interface Rant {
     comments: number;
     userAlias: string;
     isLiked?: boolean;
-    author_id: string;
+    anonymous_user_id: string;
     is_optimistic?: boolean;
 }

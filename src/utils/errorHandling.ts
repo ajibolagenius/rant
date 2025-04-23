@@ -1,20 +1,20 @@
 import { toast } from "@/hooks/use-toast";
 
 /**
- * Safely gets author ID with fallback
- * @param getAuthorIdFn Function to get author ID
- * @returns Author ID or fallback value
+ * Safely gets anonymous user ID with fallback
+ * @param getAnonymousUserIdFn Function to get anonymous user ID
+ * @returns Anonymous user ID or fallback value
  */
-export function getSafeAuthorId(getAuthorIdFn: () => string | null): string {
+export function getSafeAnonymousUserId(getAnonymousUserIdFn: () => string | null): string {
     try {
-        const authorId = getAuthorIdFn();
-        if (!authorId) {
-            console.warn("Author ID is missing, using anonymous");
+        const anonymousUserId = getAnonymousUserIdFn();
+        if (!anonymousUserId) {
+            console.warn("Anonymous user ID is missing, using anonymous");
             return "anonymous";
         }
-        return authorId;
+        return anonymousUserId;
     } catch (error) {
-        console.error("Failed to get author ID:", error);
+        console.error("Failed to get anonymous user ID:", error);
         return "anonymous";
     }
 }

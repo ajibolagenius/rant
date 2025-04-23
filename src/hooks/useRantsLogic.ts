@@ -78,7 +78,7 @@ export function useRantsLogic(options: UseRantsOptions = {}) {
                 created_at: item.created_at, // Correct property name
                 likes: item.likes,
                 comments: item.comments,
-                author_id: item.author_id,
+                anonymous_user_id: item.anonymous_user_id,
                 userAlias: item.userAlias || 'Anonymous'
             }));
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { handleSupabaseError } from "@/utils/supabaseErrorHandler";
 
 export function useRantCount() {
     const [count, setCount] = useState<number>(0);
@@ -25,7 +26,8 @@ export function useRantCount() {
 
                 setCount(displayCount);
             } catch (err) {
-                console.error('Error fetching rant count:', err);
+                const errorMessage = handleSupabaseError(err);
+                console.error('Error fetching rant count:', errorMessage);
                 setError(err instanceof Error ? err : new Error('Unknown error'));
                 // Fallback to a reasonable number if there's an error
                 setCount(Math.floor(50 + Math.random() * 100));

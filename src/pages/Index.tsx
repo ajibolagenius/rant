@@ -15,7 +15,7 @@ import Footer from "@/components/Footer";
 import { createFuzzySearcher, performFuzzySearch } from "@/lib/utils/fuzzySearch";
 import { parseSearchQuery } from "@/utils/searchParser";
 import { supabase, fetchRants, addRant, likeRant } from "@/lib/supabase";
-import { getAuthorId } from "@/utils/authorId";
+import { getAnonymousUserId } from "@/utils/authorId";
 import { useRants } from '@/components/RantContext';
 import RantCard from "@/components/RantCard";
 import { getMoodAnimation, getMoodLabel } from "@/lib/utils/mood";
@@ -523,12 +523,12 @@ const Index: React.FC = () => {
     // Function to safely get author ID with fallback
     const getSafeAuthorId = (): string => {
         try {
-            const authorId = getAuthorId();
-            if (!authorId) {
+            const anonymousUserId = getAnonymousUserId();
+            if (!anonymousUserId) {
                 console.warn("Author ID is missing, using anonymous");
                 return "anonymous";
             }
-            return authorId;
+            return anonymousUserId;
         } catch (error) {
             console.error("Failed to get author ID:", error);
             return "anonymous";
@@ -537,12 +537,11 @@ const Index: React.FC = () => {
 
     // Function to safely handle mood values
     const getSafeMood = (mood: MoodType | null): MoodType => {
-        if (!mood) {
+        if (mood === null) {
             return "neutral" as MoodType;
         }
 
-        const validMoods = ["happy", "sad", "angry", "surprised", "neutral"];
-        return validMoods.includes(mood) ? mood : "neutral" as MoodType;
+        return mood;
     };
 
     // Function to load rants from Supabase with error handling
@@ -560,7 +559,7 @@ const Index: React.FC = () => {
 
             let query = supabase
                 .from('rants')
-                .select('id, content, mood, author_id, likes, created_at')
+                .select('id, content, mood, anonymous_user_id, likes, created_at')
                 .range(from, to);
 
             // Apply filters based on sort option
@@ -817,7 +816,7 @@ const Index: React.FC = () => {
             // Optimistically add to the list to improve perceived performance
             setRantList(prev => [optimisticRant, ...prev]);
 
-            console.log("Submitting rant:", { content, mood: safeMood, authorId, rantId });
+            // console.log("Submitting rant:", { content, mood: safeMood, authorId, rantId });
 
             // Show confetti animation
             setShowConfetti(true);
@@ -828,10 +827,10 @@ const Index: React.FC = () => {
                 id: rantId,
                 content,
                 mood: safeMood,
-                author_id: authorId
+                anonymous_user_id: authorId // Corrected from author_id to anonymous_user_id
             });
 
-            console.log("Rant submitted successfully:", newRant);
+            // console.log("Rant submitted successfully:", newRant);
 
             // Add to user's own rants for "My Rants" feature
             if (newRant && newRant.id) {
@@ -1139,11 +1138,11 @@ const Index: React.FC = () => {
         handleScroll();
 
         // Add event listener
-        window.addEventListener('scroll', handleScroll, { passive: true });
+        window.addEventListener("scroll", handleScroll, { passive: true });
 
         // Clean up
         return () => {
-            window.removeEventListener('scroll', handleScroll);
+            window.removeEventListener("scroll", handleScroll);
         };
     }, []);
 

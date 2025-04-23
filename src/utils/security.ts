@@ -123,7 +123,7 @@ export const checkRateLimit = async (authorId: string): Promise<{ allowed: boole
         const { data, error, count } = await supabase
             .from('rants')
             .select('id', { count: 'exact' })
-            .eq('author_id', authorId)
+            .eq('anonymous_user_id', authorId)
             .gte('created_at', oneHourAgo.toISOString());
 
         if (error) throw error;

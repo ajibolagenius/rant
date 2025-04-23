@@ -4,7 +4,7 @@ import Settings from '@/components/Settings';
 import MyRants from '@/components/MyRants';
 import { AnimatePresence } from "framer-motion";
 import { supabase, likeRant } from "@/lib/supabase";
-import { getAuthorId } from "@/utils/authorId";
+import { getAnonymousUserId } from "@/utils/authorId";
 import { toast } from "@/hooks/use-toast";
 import { FileTextIcon, SettingsIcon } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -19,12 +19,12 @@ const Navbar: React.FC = () => {
     // Function to safely get author ID with fallback
     const getSafeAuthorId = (): string => {
         try {
-            const authorId = getAuthorId();
-            if (!authorId) {
+            const anonymousUserId = getAnonymousUserId();
+            if (!anonymousUserId) {
                 console.warn("Author ID is missing, using anonymous");
                 return "anonymous";
             }
-            return authorId;
+            return anonymousUserId;
         } catch (error) {
             console.error("Failed to get author ID:", error);
             return "anonymous";

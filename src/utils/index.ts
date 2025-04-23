@@ -6,7 +6,7 @@ export interface Rant {
     content: string;
     mood: string;
     likes: number;
-    author_id: string;
+    anonymous_user_id: string;
     language: string;
     sentiment: string;
     is_optimistic?: boolean;
@@ -16,13 +16,13 @@ export interface Comment {
     id: number;
     created_at: string;
     rant_id: string;
-    author_id: string;
+    anonymous_user_id: string;
     content: string;
 }
 
 export interface LikeLog {
     id: string;
     rant_id: string;
-    author_id: string;
+    anonymous_user_id: string;
     created_at: string;
 }

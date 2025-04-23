@@ -12,7 +12,7 @@ import { useTextareaAutosize } from '@/hooks/useTextareaAutosize';
 import { sanitizeInput, validateRantInput, checkRateLimit, getSecureAuthorId } from '@/utils/security';
 import { toast } from '@/hooks/use-toast';
 import { addMyRant } from '@/utils/userStorage';
-
+import { logError } from "@/utils/supabaseErrorHandler";
 
 // Constants for the typewriter effect
 const PLACEHOLDER_TEXTS = [
@@ -166,7 +166,7 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
                     textareaRef.current.focus();
                 }
             } catch (error) {
-                console.error("Error posting rant:", error);
+                logError("Error posting rant", error);
                 setIsSubmitting(false);
                 setShowConfirmation(false);
 

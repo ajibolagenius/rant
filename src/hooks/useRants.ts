@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Rant } from '@/lib/types/rant';
 import { MoodType } from '@/lib/utils/mood';
-import { getAuthorId } from '@/utils/authorId';
+import { getAnonymousUserId } from '@/utils/authorId';
 
 interface UseRantsOptions {
     limit?: number;
@@ -75,7 +75,7 @@ export function useRants(options: UseRantsOptions = {}) {
                 created_at: item.created_at, // Correct property name
                 likes: item.likes,
                 comments: item.comments,
-                author_id: item.author_id, // Add missing property
+                anonymous_user_id: item.anonymous_user_id, // Add missing property
                 userAlias: item.userAlias
             }));
 
@@ -129,7 +129,7 @@ export function useRants(options: UseRantsOptions = {}) {
 
     const likeRant = useCallback(async (id: string) => {
         try {
-            const authorId = getAuthorId();
+            const anonymousUserId = getAnonymousUserId();
 
             // Optimistically update UI
             setRants(prev =>
@@ -141,7 +141,7 @@ export function useRants(options: UseRantsOptions = {}) {
             // Update in database
             const { error } = await supabase
                 .from('rant_likes')
-                .insert([{ rant_id: id, author_id: authorId }]);
+                .insert([{ rant_id: id, author_id: anonymousUserId }]);
 
             if (error) throw error;
         } catch (err) {

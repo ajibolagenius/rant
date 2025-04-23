@@ -1,6 +1,6 @@
 import { Rant } from "@/lib/types/rant";
 import { MoodType } from "@/lib/utils/mood";
-import { getAuthorId } from "@/utils/authorId";
+import { getAnonymousUserId } from "@/utils/authorId";
 
 // Types for our storage
 interface RantDraft {
@@ -30,8 +30,8 @@ const getInitialStorage = (): UserStorage => ({
 
 // Helper to get storage key based on author ID
 const getStorageKey = (): string => {
-  const authorId = getAuthorId();
-  return `bentoRant_${authorId}_storage`;
+  const anonymousUserId = getAnonymousUserId();
+  return `bentoRant_${anonymousUserId}_storage`;
 };
 
 // Get user storage
