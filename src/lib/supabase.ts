@@ -80,7 +80,6 @@ export async function addRant({ id, content, mood, anonymous_user_id }) {
             .select();
 
         if (error) throw error;
-
         const newRant = data[0];
         return newRant;
     } catch (error) {
