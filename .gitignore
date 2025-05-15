@@ -40,3 +40,6 @@ CodebaseAnalysis.md
 .env.local
 .env.development
 .env.test
+
+# Other files/directories
+back_files
