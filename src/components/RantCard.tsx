@@ -37,10 +37,6 @@ const saveBookmarks = (bookmarks: string[]): void => {
     }
 };
 
-const getAlias = (rantId: string) => {
-    return localStorage.getItem(`alias_${rantId}`) || "Anonymous 👻";
-};
-
 interface RantCardProps {
     rant: Rant;
     index: number;
@@ -188,7 +184,7 @@ const RantCard: React.FC<RantCardProps> = ({
         <motion.div
             onClick={onClick}
             role="article"
-            aria-label={`Rant by Anonymous #${rant.author_id?.slice(-3).toUpperCase() || "???"}, ${moodText}, ${formattedTime}`}
+            aria-label={`Rant by Anonymous #${rant.anonymous_user_id?.slice(-3).toUpperCase() || "???"}, ${moodText}, ${formattedTime}`}
             id={`rant-${rant.id}`}
             className={cn(
                 "rounded-xl overflow-hidden shadow-medium hover:shadow-high transition-all duration-200",
@@ -258,8 +254,9 @@ const RantCard: React.FC<RantCardProps> = ({
 
                     {/* Author info */}
                     <div className="text-xs text-text-muted font-ui">
-                        {getAlias(rant.id)}
+                        {`Anonymous ${rant.anonymous_user_id?.slice(-3).toUpperCase() || "🫣"}`}
                     </div>
+
                 </div>
 
                 {/* Accessible label for mood (screen reader only) */}
