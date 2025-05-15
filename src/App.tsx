@@ -13,7 +13,7 @@ import '@/lib/i18n';
 import '@/styles/accessibility.css';
 import '@/styles/fonts.css';
 import '@/styles/theme.css';
-import { Analytics } from "@vercel/analytics/next"
+import { Analytics } from "@vercel/analytics/react"
 
 // Error boundary component for catching rendering errors
 class ErrorBoundary extends React.Component<
