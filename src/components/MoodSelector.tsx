@@ -19,12 +19,10 @@ const MoodSelector: React.FC<MoodSelectorProps> = ({ selectedMood, onMoodSelect 
                     type="button"
                     onClick={() => onMoodSelect(mood)}
                     className={`
-                        relative overflow-hidden transition-all duration-200 ease-in-out
-                        flex items-center gap-3 py-2 px-4 text-sm font-ui
+                        inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-ui whitespace-nowrap transition-all duration-200 ease-in-out
                         ${selectedMood === mood
                             ? 'scale-110 shadow-lg z-10'
                             : 'hover:scale-105 hover:shadow-md'}
-                        rounded-3xl
                     `}
                     style={{
                         background: selectedMood === mood

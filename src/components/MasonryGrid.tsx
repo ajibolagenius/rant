@@ -46,7 +46,7 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({
     const containerRef = useRef<HTMLDivElement>(null);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const newRantRef = useRef<HTMLDivElement>(null);
+    const newRantRef = useRef<HTMLDivElement | null>(null);
     const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // For keyboard navigation
@@ -242,6 +242,8 @@ const MasonryGrid: React.FC<MasonryGridProps> = ({
                                         }
                                     }}
                                     className={cn(isNewRant ? 'new-rant' : '')}
+                                    tabIndex={0}
+                                    aria-label={`Rant ${overallIndex + 1} of ${rants.length}`}
                                 >
                                     {renderItem ? renderItem(rant, overallIndex) : (
                                         <>

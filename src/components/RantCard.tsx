@@ -44,6 +44,7 @@ interface RantCardProps {
     onClick?: () => void;
     searchTerm?: string;
     onLike?: () => void;
+    isNew?: boolean; // Add this prop for highlighting new rants
 }
 
 const arePropsEqual = (prevProps: RantCardProps, nextProps: RantCardProps) => {
@@ -52,7 +53,8 @@ const arePropsEqual = (prevProps: RantCardProps, nextProps: RantCardProps) => {
         prevProps.rant.likes === nextProps.rant.likes &&
         prevProps.rant.content === nextProps.rant.content &&
         prevProps.searchTerm === nextProps.searchTerm &&
-        prevProps.index === nextProps.index
+        prevProps.index === nextProps.index &&
+        prevProps.isNew === nextProps.isNew // Add this to check for changes in isNew prop
     );
 };
 
@@ -61,18 +63,22 @@ const RantCard: React.FC<RantCardProps> = ({
     onClick,
     index = 0,
     searchTerm = '',
-    onLike
+    onLike,
+    onRemove,
+    isNew = false // Default to false
 }) => {
     const { reducedMotion, highContrast, fontSize } = useAccessibility();
     const moodColor = getMoodColor(rant.mood);
     const moodEmojiPath = getMoodEmoji(rant.mood);
     const moodUnicode = getMoodUnicodeEmoji(rant.mood);
     const moodText = `${rant.mood.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}`;
-    const [isNew, setIsNew] = useState(false);
+    const [isAutoNew, setIsAutoNew] = useState(false);
     const [isOptimistic, setIsOptimistic] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     // Add state for bookmarked status
     const [isBookmarked, setIsBookmarked] = useState(false);
+    // Add state for highlight animation
+    const [isHighlighted, setIsHighlighted] = useState(isNew);
 
     // Use the useLikeStatus hook to manage like status
     const { isLiked, likeCount, setLikeStatus, isLoading } = useLikeStatus(rant.id);
@@ -106,7 +112,7 @@ const RantCard: React.FC<RantCardProps> = ({
             const diffInSeconds = Math.floor((now.getTime() - createdAt.getTime()) / 1000);
 
             // If the rant was created less than 120 seconds ago, mark it as new
-            setIsNew(diffInSeconds < 120);
+            setIsAutoNew(diffInSeconds < 120);
 
             // Check if this is likely an optimistic update (created in the last 2 seconds or has the flag)
             setIsOptimistic(diffInSeconds < 2 || rant.is_optimistic === true);
@@ -118,6 +124,20 @@ const RantCard: React.FC<RantCardProps> = ({
         const bookmarks = getBookmarks();
         setIsBookmarked(bookmarks.includes(rant.id));
     }, [rant.id]);
+
+    // Handle highlight effect for new rants
+    useEffect(() => {
+        setIsHighlighted(isNew);
+
+        // If this is a new rant from notification, auto-remove highlight after 5 seconds
+        if (isNew) {
+            const timer = setTimeout(() => {
+                setIsHighlighted(false);
+            }, 5000);
+
+            return () => clearTimeout(timer);
+        }
+    }, [isNew]);
 
     // Format the relative time
     const formattedTime = rant.created_at
@@ -160,6 +180,14 @@ const RantCard: React.FC<RantCardProps> = ({
         }
     };
 
+    // Handle remove rant if provided
+    const handleRemoveClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (onRemove) {
+            onRemove(rant.id);
+        }
+    };
+
     // Calculate border width - make it thicker for optimistic updates
     const borderWidth = isOptimistic ? "2px 2px 5px 2px" : "1px 1px 4px 1px";
 
@@ -190,13 +218,19 @@ const RantCard: React.FC<RantCardProps> = ({
                 "rounded-xl overflow-hidden shadow-medium hover:shadow-high transition-all duration-200",
                 "cursor-pointer relative backdrop-blur-sm flex flex-col h-full",
                 isOptimistic ? "border-2 border-accent-teal" : "border border-border-subtle",
-                highContrast ? "high-contrast-card" : ""
+                highContrast ? "high-contrast-card" : "",
+                isHighlighted ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-background-dark" : ""
             )}
             style={{
                 backgroundColor: highContrast ? "var(--background-dark)" : "var(--background-secondary)",
             }}
             initial={reducedMotion ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: moodAnimation.y, scale: moodAnimation.scale }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
+            animate={{
+                opacity: 1,
+                y: 0,
+                scale: 1,
+                boxShadow: isHighlighted ? "0 0 0 2px rgba(59, 130, 246, 0.5)" : undefined
+            }}
             transition={{ duration: reducedMotion ? 0 : 0.35, ease: moodAnimation.ease, delay: reducedMotion ? 0 : (index ? index * 0.05 : 0) }}
             whileHover={reducedMotion ? undefined : {
                 y: -5,
@@ -211,12 +245,15 @@ const RantCard: React.FC<RantCardProps> = ({
 
             <div className="p-4 sm:p-6 flex flex-col h-full">
                 {/* New indicator with proper live region for screen readers */}
-                {isNew && (
+                {(isAutoNew || isHighlighted) && (
                     <div className="absolute top-2 right-2">
                         <motion.div
                             initial={reducedMotion ? { scale: 1 } : { scale: 0 }}
                             animate={reducedMotion ? undefined : { scale: 1 }}
-                            className="bg-accent-teal text-xs px-2 py-0.5 rounded-full text-background-dark font-medium font-ui"
+                            className={cn(
+                                "text-xs px-2 py-0.5 rounded-full font-medium font-ui",
+                                isHighlighted ? "bg-blue-500 text-white" : "bg-accent-teal text-background-dark"
+                            )}
                             aria-live="polite"
                         >
                             New
@@ -420,9 +457,56 @@ const RantCard: React.FC<RantCardProps> = ({
                                 </Tooltip.Content>
                             </Tooltip.Root>
                         </Tooltip.Provider>
+
+                        {/* Remove button - only show if onRemove is provided */}
+                        {onRemove && (
+                            <Tooltip.Provider delayDuration={100}>
+                                <Tooltip.Root>
+                                    <Tooltip.Trigger asChild>
+                                        <button
+                                            onClick={handleRemoveClick}
+                                            aria-label="Remove this rant"
+                                            className="hover:scale-110 transition-transform text-text-muted hover:text-red-500"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                            </svg>
+                                        </button>
+                                    </Tooltip.Trigger>
+                                    <Tooltip.Content>
+                                        <motion.div
+                                            className="bg-background-dark text-xs px-2 py-1 rounded-md text-text-primary font-ui"
+                                            initial={reducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: -4 }}
+                                            animate={reducedMotion ? undefined : { opacity: 1, y: 0 }}
+                                            transition={{ duration: reducedMotion ? 0 : 0.2 }}
+                                        >
+                                            Remove this rant
+                                            <Tooltip.Arrow className="fill-background-dark" />
+                                        </motion.div>
+                                    </Tooltip.Content>
+                                </Tooltip.Root>
+                            </Tooltip.Provider>
+                        )}
                     </div>
                 </div>
             </div>
+
+            {/* Highlight pulse animation for new rants */}
+            {isHighlighted && (
+                <motion.div
+                    className="absolute inset-0 rounded-xl pointer-events-none"
+                    initial={{ opacity: 0.5, boxShadow: "0 0 0 0 rgba(59, 130, 246, 0.7)" }}
+                    animate={{
+                        opacity: 0,
+                        boxShadow: "0 0 0 10px rgba(59, 130, 246, 0)",
+                    }}
+                    transition={{
+                        repeat: 2,
+                        duration: 1.5,
+                        ease: "easeOut"
+                    }}
+                />
+            )}
         </motion.div>
     );
 };

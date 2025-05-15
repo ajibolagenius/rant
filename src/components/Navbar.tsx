@@ -1,20 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import Settings from '@/components/Settings';
 import MyRants from '@/components/MyRants';
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { supabase, likeRant } from "@/lib/supabase";
 import { getAnonymousUserId } from "@/utils/authorId";
 import { toast } from "@/hooks/use-toast";
 import { FileTextIcon, SettingsIcon } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 
 const Navbar: React.FC = () => {
     const [showMyRants, setShowMyRants] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
+    const [isScrolled, setIsScrolled] = useState(false);
     const navigate = useNavigate();
+
+    // Track scroll position to determine when to make navbar sticky
+    useEffect(() => {
+        const handleScroll = () => {
+            const scrollPosition = window.scrollY;
+            setIsScrolled(scrollPosition > 50); // Show sticky nav after scrolling 50px
+        };
+
+        window.addEventListener('scroll', handleScroll);
+
+        // Initial check
+        handleScroll();
+
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+        };
+    }, []);
 
     // Function to safely get author ID with fallback
     const getSafeAuthorId = (): string => {
@@ -82,9 +99,29 @@ const Navbar: React.FC = () => {
         tap: { scale: 0.95 }
     };
 
+    // Navbar animation variants for sticky behavior
+    const navbarVariants = {
+        hidden: { y: -100, opacity: 0 },
+        visible: {
+            y: 0,
+            opacity: 1,
+            transition: {
+                type: "spring",
+                stiffness: 300,
+                damping: 30
+            }
+        }
+    };
+
     return (
         <>
-            <nav className="w-full py-4 px-6 flex justify-between items-center border-b border-border-subtle bg-background-dark shadow-low">
+            <motion.nav
+                className={`w-full py-4 px-6 flex justify-between items-center border-b border-border-subtle bg-background-dark shadow-low ${isScrolled ? 'fixed top-0 left-0 right-0 z-50' : ''
+                    }`}
+                initial={isScrolled ? "hidden" : "visible"}
+                animate="visible"
+                variants={isScrolled ? navbarVariants : undefined}
+            >
                 <motion.div
                     className="text-3xl font-bold font-heading bg-gradient-to-r from-primary to-accent-teal bg-clip-text text-transparent cursor-pointer"
                     initial="initial"
@@ -135,7 +172,10 @@ const Navbar: React.FC = () => {
                         </Button>
                     </div>
                 </div>
-            </nav>
+            </motion.nav>
+
+            {/* Add a spacer when navbar is fixed to prevent content jump */}
+            {isScrolled && <div className="h-[60px]" />}
 
             {/* My Rants Modal */}
             <AnimatePresence>

@@ -16,7 +16,6 @@ import { createFuzzySearcher, performFuzzySearch } from "@/lib/utils/fuzzySearch
 import { parseSearchQuery } from "@/utils/searchParser";
 import { supabase, fetchRants, addRant, likeRant } from "@/lib/supabase";
 import { getAnonymousUserId } from "@/utils/authorId";
-import { useRants } from '@/components/RantContext';
 import RantCard from "@/components/RantCard";
 import { getMoodAnimation, getMoodLabel } from "@/lib/utils/mood";
 import RantSkeleton from "@/components/RantSkeleton";
@@ -119,6 +118,13 @@ const Index: React.FC = () => {
     const [autoLoadFailed, setAutoLoadFailed] = useState(false);
     const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
     const observerRef = useRef<IntersectionObserver | null>(null);
+
+    // Add these new state variables for batch updates and notification count
+    const [showNewRantNotification, setShowNewRantNotification] = useState(false);
+    const [newRantId, setNewRantId] = useState<string | null>(null);
+    const [newRantsBuffer, setNewRantsBuffer] = useState<Rant[]>([]);
+    const [newRantsCount, setNewRantsCount] = useState(0);
+    const bufferTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // Increase the initial batch size for faster first load
     const INITIAL_LIMIT = 30; // More rants on first load
@@ -224,97 +230,81 @@ const Index: React.FC = () => {
             key: "Shift+s",
             action: () => toggleMoodSelection("sad"),
             description: "Sad Mood",
-            category: "Mood Filtering"
         },
         {
             key: "Shift+y",
             action: () => toggleMoodSelection("crying"),
             description: "Crying Mood",
-            category: "Mood Filtering"
         },
         {
             key: "Shift+a",
             action: () => toggleMoodSelection("angry"),
             description: "Angry Mood",
-            category: "Mood Filtering"
         },
         {
             key: "Shift+e",
             action: () => toggleMoodSelection("eyeRoll"),
             description: "Eye Roll Mood",
-            category: "Mood Filtering"
         },
         {
             key: "Shift+b",
             action: () => toggleMoodSelection("heartbroken"),
             description: "Heartbroken Mood",
-            category: "Mood Filtering"
         },
         {
             key: "Shift+m",
             action: () => toggleMoodSelection("mindBlown"),
             description: "Mind Blown Mood",
-            category: "Mood Filtering"
         },
         {
             key: "Shift+p",
             action: () => toggleMoodSelection("speechless"),
             description: "Speechless Mood",
-            category: "Mood Filtering"
         },
         {
             key: "Shift+c",
             action: () => toggleMoodSelection("confused"),
             description: "Confused Mood",
-            category: "Mood Filtering"
         },
         {
             key: "Shift+t",
             action: () => toggleMoodSelection("tired"),
             description: "Tired Mood",
-            category: "Mood Filtering"
         },
         {
             key: "Shift+n",
             action: () => toggleMoodSelection("nervous"),
             description: "Nervous Mood",
-            category: "Mood Filtering"
         },
         {
             key: "Shift+g",
             action: () => toggleMoodSelection("smiling"),
             description: "Smiling Mood",
-            category: "Mood Filtering"
         },
         {
             key: "Shift+f",
             action: () => toggleMoodSelection("laughing"),
             description: "Laughing Mood",
-            category: "Mood Filtering"
         },
         {
             key: "Shift+d",
             action: () => toggleMoodSelection("celebratory"),
             description: "Celebratory Mood",
-            category: "Mood Filtering"
         },
         {
             key: "Shift+o",
             action: () => toggleMoodSelection("confident"),
             description: "Confident Mood",
-            category: "Mood Filtering"
         },
         {
             key: "Shift+l",
             action: () => toggleMoodSelection("loved"),
             description: "Loved Mood",
-            category: "Mood Filtering"
         },
         {
             key: "Escape",
             action: () => clearAllFilters(),
             description: "Clear all filters",
-            category: "Mood Filtering"
         },
     ]);
 
@@ -392,38 +382,131 @@ const Index: React.FC = () => {
         });
     };
 
+    // Function to process the buffer and update the UI
+    const processNewRantsBuffer = useCallback(() => {
+        setNewRantsBuffer(prevBuffer => {
+            if (prevBuffer.length === 0) return prevBuffer;
+
+            // Filter out duplicates and apply current filters
+            const filteredNewRants = prevBuffer.filter(rant => {
+                // Skip if this is a rant we just submitted to prevent duplicates
+                if (submittedRantIds.current.has(rant.id)) {
+                    return false;
+                }
+
+                // Apply mood filters if in filter mode
+                if (sortOption === "filter" && selectedMoods.length > 0) {
+                    return selectedMoods.includes(rant.mood);
+                }
+
+                return true;
+            });
+
+            if (filteredNewRants.length > 0) {
+                // Add filtered rants to the main list
+                setRantList(prevRants => {
+                    // Check for duplicates in the current list
+                    const existingIds = new Set(prevRants.map(rant => rant.id));
+                    const uniqueNewRants = filteredNewRants.filter(rant => !existingIds.has(rant.id));
+
+                    if (uniqueNewRants.length === 0) return prevRants;
+
+                    // Show notification with count
+                    setNewRantsCount(uniqueNewRants.length);
+                    setShowNewRantNotification(true);
+
+                    // If there's only one new rant, set it as the highlighted one
+                    if (uniqueNewRants.length === 1) {
+                        setNewRantId(uniqueNewRants[0].id);
+                    } else {
+                        setNewRantId(null); // Multiple rants, don't highlight just one
+                    }
+
+                    // Return the updated list with new rants at the top
+                    return [...uniqueNewRants, ...prevRants];
+                });
+            }
+
+            // Clear the buffer
+            return [];
+        });
+    }, [sortOption, selectedMoods]);
+
+    // Replace the existing real-time subscription with this enhanced version
     useEffect(() => {
         // Set up real-time subscription for new rants
-        const subscription = supabase
-            .channel('public:rants')
-            .on('postgres_changes',
-                { event: 'INSERT', schema: 'public', table: 'rants' },
-                (payload) => {
-                    // When a new rant is inserted, add it to our state
-                    const newRant = payload.new as Rant;
+        let subscription;
 
-                    // Only add if we don't already have this rant
-                    if (!submittedRantIds.current.has(newRant.id)) {
-                        setRantList(prevRants => [newRant, ...prevRants]);
+        try {
+            subscription = supabase
+                .channel('public:rants')
+                .on(
+                    'postgres_changes',
+                    { event: 'INSERT', schema: 'public', table: 'rants' },
+                    payload => {
+                        // Add the new rant to the buffer
+                        const newRant = payload.new as Rant;
+                        console.log("New rant received:", newRant);
 
-                        // Show visual feedback
-                        setShowNewRantNotification(true);
+                        // Skip if this is a rant we just submitted to prevent duplicates
+                        if (submittedRantIds.current.has(newRant.id)) {
+                            // Remove from the set after a short delay to allow for potential
+                            // network race conditions
+                            setTimeout(() => {
+                                submittedRantIds.current.delete(newRant.id);
+                            }, 5000);
+                            return;
+                        }
 
-                        // Trigger animation for the new rant
-                        setNewRantId(newRant.id);
+                        // Add to buffer
+                        setNewRantsBuffer(prev => [...prev, newRant]);
+
+                        // Clear any existing timeout
+                        if (bufferTimeoutRef.current) {
+                            clearTimeout(bufferTimeoutRef.current);
+                        }
+
+                        // Set a new timeout to process the buffer after 5 seconds
+                        bufferTimeoutRef.current = setTimeout(() => {
+                            processNewRantsBuffer();
+                            bufferTimeoutRef.current = null;
+                        }, 5000);
                     }
-                })
-            .subscribe();
+                )
+                .on(
+                    'postgres_changes',
+                    { event: 'UPDATE', schema: 'public', table: 'rants' },
+                    payload => {
+                        // Update existing rant (e.g., when likes change)
+                        const updatedRant = payload.new as Rant;
+                        console.log("Rant updated:", updatedRant);
+                        setRantList(prev =>
+                            prev.map(rant =>
+                                rant.id === updatedRant.id ? updatedRant : rant
+                            )
+                        );
+                    }
+                )
+                .subscribe();
+        } catch (err) {
+            console.error("Error setting up real-time subscription:", err);
+            // Don't show error to user as this is non-critical
+        }
 
-        // Cleanup subscription on unmount
         return () => {
-            subscription.unsubscribe();
-        };
-    }, []);
+            try {
+                if (bufferTimeoutRef.current) {
+                    clearTimeout(bufferTimeoutRef.current);
+                }
 
-    // Add these new state variables
-    const [showNewRantNotification, setShowNewRantNotification] = useState(false);
-    const [newRantId, setNewRantId] = useState<string | null>(null);
+                if (subscription) {
+                    subscription.unsubscribe();
+                }
+            } catch (err) {
+                console.error("Error unsubscribing from real-time updates:", err);
+            }
+        };
+    }, [sortOption, selectedMoods, processNewRantsBuffer]);
 
     // Fetch rants when the component mounts
     useEffect(() => {
@@ -545,7 +628,7 @@ const Index: React.FC = () => {
     };
 
     // Function to load rants from Supabase with error handling
-    const loadRants = async (reset = false) => {
+    const loadRants = useCallback(async (reset = false) => {
         if (loading && !reset) return;
 
         setLoading(true);
@@ -632,7 +715,7 @@ const Index: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [page, sortOption, selectedMoods, searchQuery, searchMood, retryCount]);
 
     // Load more rants when user scrolls to bottom with debounce
     const loadMoreRantsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -674,7 +757,7 @@ const Index: React.FC = () => {
 
             // Add search params if in search mode
             if (sortOption === "search") {
-                params.sort = option;
+                params.sort = sortOption;
 
                 if (searchQuery) {
                     params.q = searchQuery;
@@ -702,7 +785,7 @@ const Index: React.FC = () => {
                 params.q = null;
                 params.mood = null;
             }
-            // For other sort optionsxa
+            // For other sort options
             else {
                 // Only include sort option if it's not the default
                 params.sort = sortOption !== "latest" ? sortOption : null;
@@ -719,75 +802,7 @@ const Index: React.FC = () => {
             console.error("Error updating URL params:", err);
             // Don't set error state here to avoid UI disruption
         }
-    }, [sortOption, selectedMoods, searchQuery, searchMood]);
-
-    // Set up real-time subscription for new rants
-    useEffect(() => {
-        // console.log("Setting up real-time subscription");
-        let subscription;
-
-        try {
-            subscription = supabase
-                .channel('public:rants')
-                .on('INSERT', payload => {
-                    // Add the new rant to the list if it matches current filters
-                    const newRant = payload.new as Rant;
-                    console.log("New rant received:", newRant);
-
-                    // Skip if this is a rant we just submitted to prevent duplicates
-                    if (submittedRantIds.current.has(newRant.id)) {
-                        // Remove from the set after a short delay to allow for potential
-                        // network race conditions
-                        setTimeout(() => {
-                            submittedRantIds.current.delete(newRant.id);
-                        }, 5000);
-                        return;
-                    }
-
-                    // Only add if it matches current filters
-                    let shouldAdd = true;
-
-                    if (sortOption === "filter" && selectedMoods.length > 0) {
-                        shouldAdd = selectedMoods.includes(newRant.mood);
-                    }
-
-                    if (shouldAdd) {
-                        setRantList(prev => {
-                            // Check if the rant is already in the list to prevent duplicates
-                            if (prev.some(rant => rant.id === newRant.id)) {
-                                return prev;
-                            }
-                            return [newRant, ...prev];
-                        });
-                    }
-                })
-                .on('UPDATE', payload => {
-                    // Update existing rant (e.g., when likes change)
-                    const updatedRant = payload.new as Rant;
-                    console.log("Rant updated:", updatedRant);
-                    setRantList(prev =>
-                        prev.map(rant =>
-                            rant.id === updatedRant.id ? updatedRant : rant
-                        )
-                    );
-                })
-                .subscribe();
-        } catch (err) {
-            // console.error("Error setting up real-time subscription:", err);
-            // Don't show error to user as this is non-critical
-        }
-
-        return () => {
-            try {
-                // console.log("Unsubscribing from real-time updates");
-                if (subscription) {
-                    subscription.unsubscribe();
-                }
-            } catch (err) {
-                console.error("Error unsubscribing from real-time updates:", err);
-            }
-        };
-    }, [sortOption, selectedMoods]);
+    }, [sortOption, selectedMoods, searchQuery, searchMood, setSearchParams]);
 
     const handleRantSubmit = async (content: string, mood: MoodType) => {
         let rantId: string; // Declare rantId at the top of the function for proper scoping
@@ -806,7 +821,7 @@ const Index: React.FC = () => {
                 id: rantId,
                 content,
                 mood: safeMood,
-                author_id: authorId,
+                anonymous_user_id: authorId,
                 likes: 0,
                 created_at: new Date().toISOString(),
                 comments: 0,
@@ -827,7 +842,7 @@ const Index: React.FC = () => {
                 id: rantId,
                 content,
                 mood: safeMood,
-                anonymous_user_id: authorId // Corrected from author_id to anonymous_user_id
+                anonymous_user_id: authorId
             });
 
             // console.log("Rant submitted successfully:", newRant);
@@ -1034,6 +1049,7 @@ const Index: React.FC = () => {
         }
 
         const moodAnim = getMoodAnimation(rant.mood);
+        const isNewRant = rant.id === newRantId;
 
         return (
             <RantErrorBoundary
@@ -1053,7 +1069,7 @@ const Index: React.FC = () => {
                         duration: 1.2,
                         ease: moodAnim.ease,
                     }}
-                    className="w-full h-full overflow-hidden"
+                    className={`w-full h-full overflow-hidden ${isNewRant ? 'new-rant rant-' + rant.id : 'rant-' + rant.id}`}
                 >
                     <div className="w-full h-full flex flex-col">
                         <RantCard
@@ -1062,6 +1078,7 @@ const Index: React.FC = () => {
                             searchTerm={sortOption === "search" ? searchQuery : ""}
                             onLike={() => handleLikeRant(rant.id)}
                             onRemove={() => handleRemoveRant(rant.id)}
+                            isNew={isNewRant}
                         />
                     </div>
                 </motion.div>
@@ -1210,8 +1227,7 @@ const Index: React.FC = () => {
     return (
         <RantErrorBoundary>
             <div className="min-h-screen bg-background-dark">
-                {/* Updated Navbar with My Rants button */}
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center w-full">
                     <Navbar />
                 </div>
 
@@ -1224,6 +1240,54 @@ const Index: React.FC = () => {
                     onOpenChange={setShortcutsDialogOpen}
                     shortcuts={shortcuts}
                 />
+
+                {/* Twitter-style notification for new rants */}
+                <AnimatePresence>
+                    {showNewRantNotification && (
+                        <motion.div
+                            initial={{ y: -100, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: -100, opacity: 0 }}
+                            transition={{ duration: 0.3, ease: "easeOut" }}
+                            className="fixed top-0 left-0 right-0 flex justify-center z-50"
+                        >
+                            <div
+                                className="mt-16 bg-blue-600 text-white px-6 py-3 rounded-md shadow-lg cursor-pointer flex items-center gap-2 max-w-md mx-auto"
+                                onClick={() => {
+                                    setShowNewRantNotification(false);
+
+                                    // If we have a specific newRantId, scroll to it
+                                    if (newRantId && document.querySelector(`.rant-${newRantId}`)) {
+                                        document.querySelector(`.rant-${newRantId}`)?.scrollIntoView({
+                                            behavior: 'smooth',
+                                            block: 'start'
+                                        });
+                                    } else if (newRantsCount > 0) {
+                                        // Otherwise scroll to the top of the rants list
+                                        rantsListRef.current?.scrollIntoView({
+                                            behavior: 'smooth',
+                                            block: 'start'
+                                        });
+                                    }
+
+                                    // Reset count after viewing
+                                    setNewRantsCount(0);
+                                }}
+                                role="alert"
+                                aria-live="assertive"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+                                </svg>
+                                {newRantsCount === 1 ? (
+                                    <span>1 new rant posted!</span>
+                                ) : (
+                                    <span>{newRantsCount} new rants posted!</span>
+                                )}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 <div className="container mx-auto px-4 py-8">
                     {/* Hero section with RantForm side by side */}
@@ -1338,26 +1402,6 @@ const Index: React.FC = () => {
                                                 newRantId={newRantId}
                                                 onNewRantAppear={() => setNewRantId(null)}
                                             />
-                                            {/* Toast notification for new rants */}
-                                            {showNewRantNotification && (
-                                                <div
-                                                    className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-md shadow-lg cursor-pointer"
-                                                    onClick={() => {
-                                                        setShowNewRantNotification(false);
-                                                        // If we have a newRantId, scroll to it
-                                                        if (newRantId && document.querySelector(`.new-rant`)) {
-                                                            document.querySelector(`.new-rant`)?.scrollIntoView({
-                                                                behavior: 'smooth',
-                                                                block: 'start'
-                                                            });
-                                                        }
-                                                    }}
-                                                    role="alert"
-                                                    aria-live="assertive"
-                                                >
-                                                    New rant just posted!
-                                                </div>
-                                            )}
                                         </RantErrorBoundary>
                                     </section>
                                 </motion.div>
