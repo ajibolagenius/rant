@@ -6,12 +6,12 @@ Rant is a modern, open-source web application that provides a safe, anonymous pl
 
 ## Table of Contents
 - [Features](#features)
-- [Live Demo](#live-demo)
 - [Screenshots](#screenshots)
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Getting Started](#getting-started)
 - [Usage](#usage)
+- [Privacy & Security](#privacy--security)
 - [Accessibility](#accessibility)
 - [Performance & Technical](#performance--technical)
 - [Contributing](#contributing)
@@ -33,51 +33,49 @@ Rant is a modern, open-source web application that provides a safe, anonymous pl
 
 ---
 
-## Live Demo
-> _Coming soon_
-
----
-
 ## Screenshots
+
 ![Rant Landing Page](public/assets/rant_landing.png)
 
 ---
 
 ## Tech Stack
-**Frontend**
-* React: UI library for building the interface
-* TypeScript: Type-safe JavaScript for better development experience
-* Tailwind CSS: Utility-first CSS framework for styling
-* Framer Motion: Animation library for smooth transitions
-* React Router: Handling navigation and routing
-* React-Toastify: Toast notifications for user feedback
 
-**Backend & Data**
-* Supabase: Backend-as-a-Service for database and authentication
-* Row Level Security (RLS): Data protection policies
-* Local Storage: Client-side data persistence with optional encryption
+**Frontend:**
+- React
+- TypeScript
+- Tailwind CSS
+- Framer Motion
+- React Router
+- React-Toastify
 
-**Development Tools**
-* Vite: Fast, modern frontend build tool
-* ESLint: Code linting for consistent style
-* Prettier: Code formatting
+**Backend & Data:**
+- Supabase (PostgreSQL, Auth, Realtime)
+- Row Level Security (RLS)
+- Local Storage (with optional encryption)
+
+**Development Tools:**
+- Vite
+- ESLint
+- Prettier
 
 **State Management:**
-* React Context: Global state management for user preferences and settings
-* Zustand: Lightweight state management library
+- React Context
+- Zustand
 
 **Other Libraries:**
-* Radix UI (accessibility primitives)
-* Lucide React (icons)
-* date-fns (date formatting)
-* uuid (unique IDs)
-* Fuse.js (fuzzy search)
-* Sonner (toasts)
+- Radix UI (accessibility primitives)
+- Lucide React (icons)
+- date-fns (date formatting)
+- uuid (unique IDs)
+- Fuse.js (fuzzy search)
+- Sonner (toasts)
 
 ---
 
 ## Project Structure
-```
+
+```text
 ├── public/                # Static assets, emojis, translations
 ├── src/
 │   ├── components/        # UI components (Navbar, RantCard, MoodSelector, etc.)
@@ -104,25 +102,30 @@ Rant is a modern, open-source web application that provides a safe, anonymous pl
 - Supabase account (for backend)
 
 ### Installation
+
 1. **Clone the repository:**
-   ```zsh
+
+   ```bash
    git clone https://github.com/ajibolagenius/rant.git
    cd rant
    ```
 2. **Install dependencies:**
-   ```zsh
+
+   ```bash
    npm install
    # or
    yarn install
    ```
 3. **Configure environment variables:**
-   - Copy `.env.example` to `.env` and fill in your Supabase credentials:
+- Copy `.env.example` to `.env` and fill in your Supabase credentials:
+
      ```env
      VITE_SUPABASE_URL=your-supabase-url
      VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
      ```
 4. **Start the development server:**
-   ```zsh
+
+   ```bash
    npm run dev
    # or
    yarn dev
@@ -132,34 +135,51 @@ Rant is a modern, open-source web application that provides a safe, anonymous pl
 ---
 
 ## Usage
+
 - **Post a Rant:** Use the input form to write and submit your rant. Select a mood to tag your post.
 - **Browse & Filter:** Explore rants by mood, popularity, or recency. Use the search bar and mood filters.
 - **Like & Bookmark:** Interact with rants by liking or bookmarking them. Bookmarks and your own rants are stored locally.
-- **Keyboard Shortcuts:** Press `Shift + ?` to view all available shortcuts.
+- **Keyboard Shortcuts:** Press <kbd>Shift</kbd> + <kbd>?</kbd> to view all available shortcuts.
 - **Settings:** Access theme, language, and accessibility options from the settings menu.
 
 ---
 
+## Privacy & Security
+
+- **Anonymous Posting:** No user accounts or personal data required. Rants are stored anonymously.
+- **Row Level Security (RLS):** Supabase policies ensure that users can only access their own data.
+- **Local Storage:** Bookmarks and rant history are stored in the browser's local storage, encrypted for security.
+- **Data Encryption:** Sensitive data is encrypted before being stored in local storage.
+- **No Tracking:** No third-party tracking or analytics. User interactions are not monitored.
+- **User Control:** Users can delete their local data at any time through the settings menu.
+- **Data Retention:** Rants are retained indefinitely unless deleted by the user. Supabase policies ensure data is not shared or sold.
+
+---
+
 ## Accessibility
-- **Accessibility:**
-  - High contrast mode: Better visibility for users with visual impairments
-  - Reduced motion: Less animation for users with motion sensitivity
-  - Adjustable font sizes: Allow users to change font sizes for better readability
-  - Full keyboard navigation: Enable users to navigate the app using only keyboard shortcuts
-  - ARIA Attributes: Screen reader support for all interactive elements
+
+- **High contrast mode:** Better visibility for users with visual impairments
+- **Reduced motion:** Less animation for users with motion sensitivity
+- **Adjustable font sizes:** Allow users to change font sizes for better readability
+- **Full keyboard navigation:** Enable users to navigate the app using only keyboard shortcuts
+- **ARIA Attributes:** Screen reader support for all interactive elements
+
 ---
 
 ## Performance & Technical
-- Optimized Rendering: React.memo implementation to prevent unnecessary re-renders
-- Efficient Data Fetching: Optimized Supabase queries selecting only required fields
-- Error Handling: Graceful error states and fallback UI components
-- URL Synchronization: State reflected in URL for shareable filters and searches
-- Rate Limiting: Prevents spam submissions and abuse
+
+- **Optimized Rendering:** React.memo implementation to prevent unnecessary re-renders
+- **Efficient Data Fetching:** Optimized Supabase queries selecting only required fields
+- **Error Handling:** Graceful error states and fallback UI components
+- **URL Synchronization:** State reflected in URL for shareable filters and searches
+- **Rate Limiting:** Prevents spam submissions and abuse
 
 ---
 
 ## Contributing
+
 Contributions are welcome! To contribute:
+
 1. Fork the repository
 2. Create a new branch (`git checkout -b feature/your-feature`)
 3. Make your changes
@@ -171,18 +191,33 @@ Please follow the code style and add tests where appropriate.
 ---
 
 ## License
-> _No license file detected. Please add a LICENSE file to clarify usage rights._
+
+> _No license file._
 
 ---
 
 ## Acknowledgements
+
 - [Supabase](https://supabase.com/)
 - [Shadcn UI](https://ui.shadcn.com/)
 - [Radix UI](https://www.radix-ui.com/)
 - [Framer Motion](https://www.framer.com/motion/)
 - [Lucide Icons](https://lucide.dev/)
+- [date-fns](https://date-fns.org/)
+- [uuid](https://github.com/uuidjs/uuid)
+- [Fuse.js](https://fusejs.io/)
+- [Sonner](https://sonner.dev/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [Vite](https://vitejs.dev/)
+- [React](https://reactjs.org/)
+- [TypeScript](https://www.typescriptlang.org/)
+- [Prettier](https://prettier.io/)
+- [ESLint](https://eslint.org/)
+- [React Router](https://reactrouter.com/)
+- [React-Toastify](https://fkhadra.github.io/react-toastify/)
 
 ---
 
 ## Contact
+
 For questions or support, open an issue or contact the maintainer.
