@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ interface SettingsProps {
 const Settings = ({ onClose }: SettingsProps = {}) => {
     const { t } = useTranslation('common');
     const [open, setOpen] = useState(false);
+    const closeButtonRef = useRef<HTMLButtonElement>(null);
 
     // Handle the onClose prop when the modal is closed
     const handleOpenChange = (isOpen: boolean) => {
@@ -33,6 +34,12 @@ const Settings = ({ onClose }: SettingsProps = {}) => {
             setOpen(true);
         }
     }, [onClose]);
+
+    useEffect(() => {
+        if (open && closeButtonRef.current) {
+            closeButtonRef.current.focus();
+        }
+    }, [open]);
 
     // Animation variants for the modal
     const overlayVariants = {
@@ -91,6 +98,10 @@ const Settings = ({ onClose }: SettingsProps = {}) => {
             exit="hidden"
             variants={overlayVariants}
             onClick={() => handleOpenChange(false)}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="settings-title"
+            aria-describedby="settings-desc"
         >
             <motion.div
                 className="bg-background-dark border border-border-subtle rounded-lg shadow-high w-full max-w-[450px] max-h-[90vh] flex flex-col overflow-hidden"
@@ -99,7 +110,7 @@ const Settings = ({ onClose }: SettingsProps = {}) => {
             >
                 <div className="border-b border-border-subtle p-4">
                     <div className="flex items-center justify-between">
-                        <div className="text-text-strong text-xl font-heading font-bold flex items-center">
+                        <div id="settings-title" className="text-text-strong text-xl font-heading font-bold flex items-center">
                             <GearIcon className="h-5 w-5 mr-2 text-primary" />
                             Settings
                         </div>
@@ -108,11 +119,14 @@ const Settings = ({ onClose }: SettingsProps = {}) => {
                             size="icon"
                             onClick={() => handleOpenChange(false)}
                             className="text-text-muted hover:text-text-strong hover:bg-background-secondary rounded-full"
+                            aria-label="Close settings dialog"
+                            ref={closeButtonRef}
                         >
                             <XIcon size={18} />
+                            <span className="sr-only">Close</span>
                         </Button>
                     </div>
-                    <p className="text-text-muted text-sm mt-1 font-body">
+                    <p id="settings-desc" className="text-text-muted text-sm mt-1 font-body">
                         Customize your experience with these settings
                     </p>
                 </div>

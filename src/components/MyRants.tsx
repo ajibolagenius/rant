@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { getMyRants, getBookmarks } from '@/utils/userStorage';
 import { Rant } from '@/lib/types/rant';
 import { supabase } from '@/lib/supabase';
@@ -27,6 +27,7 @@ const MyRants: React.FC<MyRantsProps> = ({ onClose, onLike }) => {
     const [bookmarkedRants, setBookmarkedRants] = useState<Rant[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('my-rants');
+    const closeButtonRef = useRef<HTMLButtonElement>(null);
 
     useEffect(() => {
         const fetchRants = async () => {
@@ -69,6 +70,11 @@ const MyRants: React.FC<MyRantsProps> = ({ onClose, onLike }) => {
         };
 
         fetchRants();
+    }, []);
+
+    useEffect(() => {
+        // Focus the close button when modal opens
+        closeButtonRef.current?.focus();
     }, []);
 
     // Handle keyboard escape
@@ -169,6 +175,10 @@ const MyRants: React.FC<MyRantsProps> = ({ onClose, onLike }) => {
                     onClose();
                 }
             }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="myrants-title"
+            aria-describedby="myrants-desc"
         >
             <motion.div
                 className="bg-background-dark border border-border-subtle rounded-xl overflow-hidden shadow-high w-full max-w-5xl max-h-[90vh] flex flex-col"
@@ -185,23 +195,27 @@ const MyRants: React.FC<MyRantsProps> = ({ onClose, onLike }) => {
                             size="sm"
                             onClick={onClose}
                             className="text-text-muted hover:text-text-strong hover:bg-background-secondary font-ui"
+                            aria-label="Back"
                         >
                             <ArrowLeftIcon className="mr-2" size={16} />
                             Back
                         </Button>
-                        <h2 className="text-xl font-heading font-bold text-text-strong">My Rants</h2>
+                        <h2 id="myrants-title" className="text-xl font-heading font-bold text-text-strong">My Rants</h2>
                         <Button
                             variant="ghost"
                             size="icon"
                             onClick={onClose}
                             className="text-text-muted hover:text-text-strong hover:bg-background-secondary rounded-full"
+                            aria-label="Close My Rants dialog"
+                            ref={closeButtonRef}
                         >
                             <XIcon size={18} />
+                            <span className="sr-only">Close</span>
                         </Button>
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-hidden p-4">
+                <div className="flex-1 overflow-hidden p-4" id="myrants-desc">
                     <Tabs
                         defaultValue="my-rants"
                         value={activeTab}
