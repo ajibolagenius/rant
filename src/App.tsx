@@ -11,8 +11,9 @@ import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import '@/lib/i18n';
 import '@/styles/accessibility.css';
-import '@/styles/fonts.css'; // Import our new fonts
-import '@/styles/theme.css'; // Import our theme styles
+import '@/styles/fonts.css';
+import '@/styles/theme.css';
+import { Analytics } from "@vercel/analytics/next"
 
 // Error boundary component for catching rendering errors
 class ErrorBoundary extends React.Component<
@@ -251,6 +252,7 @@ const App = () => {
             </AccessibilityProvider>
         </ErrorBoundary>
     );
+    <Analytics />
 };
 
 export default App;

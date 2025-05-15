@@ -11,6 +11,6 @@ DOMPurify.setConfig({
 });
 
 // Log successful initialization
-console.debug('DOMPurify initialized for XSS protection');
+// console.debug('DOMPurify initialized for XSS protection');
 
 createRoot(document.getElementById("root")!).render(<App />);
