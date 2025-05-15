@@ -81,7 +81,13 @@ export async function addRant({ id, content, mood, anonymous_user_id }) {
 
         if (error) throw error;
 
-        return data[0];
+        const newRant = data[0];
+
+        if (typeof window !== 'undefined') {
+            localStorage.setItem(`alias_${newRant.id}`, `Anonymous ${anonymous_user_id.slice(-3).toUpperCase()}`);
+        }
+
+        return newRant;
     } catch (error) {
         logError('Error adding rant', error);
         throw error;

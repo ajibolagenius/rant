@@ -18,7 +18,7 @@ import { useAccessibility } from "@/components/AccessibilityContext";
 import { cn } from "@/lib/utils";
 import { highlightText } from "@/lib/utils/highlight";
 
-// We'll add a function to manage bookmarks in localStorage
+// function to manage bookmarks in localStorage
 const getBookmarks = (): string[] => {
     try {
         const bookmarks = localStorage.getItem('bentoRant_bookmarks');
@@ -35,6 +35,10 @@ const saveBookmarks = (bookmarks: string[]): void => {
     } catch (error) {
         console.error("Failed to save bookmarks:", error);
     }
+};
+
+const getAlias = (rantId: string) => {
+    return localStorage.getItem(`alias_${rantId}`) || "Anonymous 👻";
 };
 
 interface RantCardProps {
