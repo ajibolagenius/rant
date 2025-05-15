@@ -42,8 +42,10 @@ import {
 } from '@/utils/urlUtils';
 import { colors } from "@/utils/colors";
 import { v4 as uuidv4 } from 'uuid';
-
-type SortOption = "latest" | "popular" | "filter" | "search";
+import { useRantStore } from '@/store/useRantStore';
+// Use the shared SortOption type from the store
+import type { SortOption } from '@/store/RantStore';
+import { Helmet } from 'react-helmet-async';
 
 // Error boundary component for catching rendering errors
 class RantErrorBoundary extends React.Component<
@@ -93,13 +95,22 @@ const Index: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
     const location = useLocation();
-    const [rantList, setRantList] = useState<Rant[]>([]);
-    const [sortOption, setSortOption] = useState<SortOption>("latest");
-    const [selectedMoods, setSelectedMoods] = useState<string[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [searchQuery, setSearchQuery] = useState("");
-    const [searchMood, setSearchMood] = useState<MoodType | null>(null);
-    const [error, setError] = useState<string | null>(null);
+    const {
+        rants,
+        setRants,
+        sortOption,
+        setSortOption,
+        selectedMoods,
+        setSelectedMoods,
+        searchQuery,
+        setSearchQuery,
+        searchMood,
+        setSearchMood,
+        loading,
+        setLoading,
+        error,
+        setError
+    } = useRantStore();
     const [hasMore, setHasMore] = useState(true);
     const [page, setPage] = useState(0);
     const [showConfetti, setShowConfetti] = useState(false);
@@ -135,7 +146,7 @@ const Index: React.FC = () => {
     const submittedRantIds = useRef<Set<string>>(new Set());
 
     // Create fuzzy searcher with memoization
-    const fuzzySearcher = useMemo(() => createFuzzySearcher(rantList), [rantList]);
+    const fuzzySearcher = useMemo(() => createFuzzySearcher(rants), [rants]);
 
     // Function to safely parse URL parameters
     const safeParseUrlParams = () => {
@@ -404,7 +415,7 @@ const Index: React.FC = () => {
 
             if (filteredNewRants.length > 0) {
                 // Add filtered rants to the main list
-                setRantList(prevRants => {
+                setRants(prevRants => {
                     // Check for duplicates in the current list
                     const existingIds = new Set(prevRants.map(rant => rant.id));
                     const uniqueNewRants = filteredNewRants.filter(rant => !existingIds.has(rant.id));
@@ -480,7 +491,7 @@ const Index: React.FC = () => {
                         // Update existing rant (e.g., when likes change)
                         const updatedRant = payload.new as Rant;
                         console.log("Rant updated:", updatedRant);
-                        setRantList(prev =>
+                        setRants(prev =>
                             prev.map(rant =>
                                 rant.id === updatedRant.id ? updatedRant : rant
                             )
@@ -686,11 +697,11 @@ const Index: React.FC = () => {
 
             // If resetting, replace the list; otherwise append
             if (reset) {
-                setRantList(data);
+                setRants(data);
                 setPage(0);
             } else {
                 // Prevent duplicates when loading more
-                setRantList(prev => {
+                setRants(prev => {
                     const existingIds = new Set(prev.map(rant => rant.id));
                     const newRants = data.filter(rant => !existingIds.has(rant.id));
                     return [...prev, ...newRants];
@@ -829,7 +840,7 @@ const Index: React.FC = () => {
             };
 
             // Optimistically add to the list to improve perceived performance
-            setRantList(prev => [optimisticRant, ...prev]);
+            setRants(prev => [optimisticRant, ...prev]);
 
             // console.log("Submitting rant:", { content, mood: safeMood, authorId, rantId });
 
@@ -863,7 +874,7 @@ const Index: React.FC = () => {
             console.error("Error posting rant:", error);
 
             // Remove the optimistic rant on error
-            setRantList(prev => prev.filter(rant => !submittedRantIds.current.has(rant.id)));
+            setRants(prev => prev.filter(rant => !submittedRantIds.current.has(rant.id)));
             submittedRantIds.current.delete(rantId);
 
             toast({
@@ -882,7 +893,7 @@ const Index: React.FC = () => {
             console.log("Liking rant:", rantId, "by author:", authorId);
 
             // Optimistically update the UI first for better user experience
-            setRantList(prev =>
+            setRants(prev =>
                 prev.map(rant =>
                     rant.id === rantId
                         ? { ...rant, likes: rant.likes + 1 }
@@ -897,7 +908,7 @@ const Index: React.FC = () => {
             console.error("Error liking rant:", error);
 
             // Revert the optimistic update if there was an error
-            setRantList(prev =>
+            setRants(prev =>
                 prev.map(rant =>
                     rant.id === rantId
                         ? { ...rant, likes: Math.max(0, rant.likes - 1) }
@@ -917,7 +928,7 @@ const Index: React.FC = () => {
     const handleRemoveRant = (id: string) => {
         try {
             // Find the rant first
-            const rantToDelete = rantList.find(rant => rant.id === id);
+            const rantToDelete = rants.find(rant => rant.id === id);
             if (!rantToDelete) return;
 
             // Store the deleted rant for potential undo
@@ -928,7 +939,7 @@ const Index: React.FC = () => {
             addDeletedRant(rantToDelete);
 
             // Remove from local state
-            setRantList(prevRants => prevRants.filter(rant => rant.id !== id));
+            setRants(prevRants => prevRants.filter(rant => rant.id !== id));
 
             toast({
                 title: "Rant Removed",
@@ -949,7 +960,7 @@ const Index: React.FC = () => {
     // Add function to handle rant restoration
     const handleUndoDelete = (rant: Rant) => {
         // Add the rant back to the list
-        setRantList(prev => [rant, ...prev.filter(r => r.id !== rant.id)]);
+        setRants(prev => [rant, ...prev.filter(r => r.id !== rant.id)]);
 
         toast({
             title: "Rant Restored",
@@ -1164,7 +1175,6 @@ const Index: React.FC = () => {
     }, []);
 
 
-    {/* Script to handle auto-collapse with genie effect */ }
     const [autoCollapseTriggered, setAutoCollapseTriggered] = useState(false);
     const hintBoxRef = useRef<HTMLDivElement>(null);
     const autoCollapseTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -1194,15 +1204,13 @@ const Index: React.FC = () => {
                             hintBoxRef.current.style.transform = 'scaleX(0.3) scaleY(0.1)';
 
                             // Finally set the state to collapsed after animation completes
-                            setTimeout(() => {
-                                setShortcutsCollapsed(true);
+                            setShortcutsCollapsed(true);
 
-                                // Reset styles to let the component's classes take over
-                                if (hintBoxRef.current) {
-                                    hintBoxRef.current.style.transition = '';
-                                    hintBoxRef.current.style.transform = '';
-                                }
-                            }, 300);
+                            // Reset styles to let the component's classes take over
+                            if (hintBoxRef.current) {
+                                hintBoxRef.current.style.transition = '';
+                                hintBoxRef.current.style.transform = '';
+                            }
                         }
                     }, 700);
                 } else {
@@ -1225,338 +1233,394 @@ const Index: React.FC = () => {
     }, [showMoodShortcutsHint, shortcutsCollapsed, autoCollapseTriggered]);
 
     return (
-        <RantErrorBoundary>
-            <div className="min-h-screen bg-background-dark">
-                <div className="flex justify-between items-center w-full">
-                    <Navbar />
-                </div>
+        <>
+            <Helmet>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-                {/* Confetti animation when posting a rant */}
-                {showConfetti && <Confetti active={showConfetti} duration={3000} />}
+                {/* Primary Meta Tags */}
+                <title>Rant: Anonymous Space for Unfiltered Thoughts</title>
+                <meta name="title" content="Rant: Anonymous Space for Unfiltered Thoughts" />
+                <meta name="description" content="Rant is your anonymous space to share unfiltered thoughts. Join the conversation, express yourself with different moods, and connect with others." />
+                <meta name="keywords" content="anonymous rants, mood expression, anonymous platform, vent frustrations, share thoughts, anonymous social, emotional expression, anonymous community, mood sharing" />
+                <meta name="author" content="Rant App" />
+                <meta name="theme-color" content="#904FFF" />
 
-                {/* Keyboard shortcuts dialog */}
-                <KeyboardShortcutsDialog
-                    open={shortcutsDialogOpen}
-                    onOpenChange={setShortcutsDialogOpen}
-                    shortcuts={shortcuts}
-                />
+                {/* Open Graph / Facebook */}
+                <meta property="og:type" content="website" />
+                <meta property="og:url" content="https://rantapp.com" />
+                <meta property="og:title" content="Rant: Anonymous Space for Unfiltered Thoughts" />
+                <meta property="og:description" content="Rant is your anonymous space to share unfiltered thoughts. Join the conversation, express yourself with different moods, and connect with others." />
+                <meta property="og:image" content={newRantId ? `/api/og-image?rantId=${newRantId}` : "https://rantapp.com/og-image.jpg"} />
 
-                {/* Twitter-style notification for new rants */}
-                <AnimatePresence>
-                    {showNewRantNotification && (
-                        <motion.div
-                            initial={{ y: -100, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            exit={{ y: -100, opacity: 0 }}
-                            transition={{ duration: 0.3, ease: "easeOut" }}
-                            className="fixed top-0 left-0 right-0 flex justify-center z-50"
-                        >
-                            <div
-                                className="mt-16 bg-blue-600 text-white px-6 py-3 rounded-md shadow-lg cursor-pointer flex items-center gap-2 max-w-md mx-auto"
-                                onClick={() => {
-                                    setShowNewRantNotification(false);
+                {/* Twitter */}
+                <meta property="twitter:card" content="summary_large_image" />
+                <meta property="twitter:url" content="https://rantapp.com" />
+                <meta property="twitter:title" content="Rant: Anonymous Space for Unfiltered Thoughts" />
+                <meta property="twitter:description" content="Rant is your anonymous space to share unfiltered thoughts. Join the conversation, express yourself with different moods, and connect with others." />
+                <meta property="twitter:image" content={newRantId ? `/api/og-image?rantId=${newRantId}` : "https://rantapp.com/twitter-image.jpg"} />
 
-                                    // If we have a specific newRantId, scroll to it
-                                    if (newRantId && document.querySelector(`.rant-${newRantId}`)) {
-                                        document.querySelector(`.rant-${newRantId}`)?.scrollIntoView({
-                                            behavior: 'smooth',
-                                            block: 'start'
-                                        });
-                                    } else if (newRantsCount > 0) {
-                                        // Otherwise scroll to the top of the rants list
-                                        rantsListRef.current?.scrollIntoView({
-                                            behavior: 'smooth',
-                                            block: 'start'
-                                        });
-                                    }
+                {/* Canonical URL */}
+                <link rel="canonical" href="https://rantapp.com" />
 
-                                    // Reset count after viewing
-                                    setNewRantsCount(0);
-                                }}
-                                role="alert"
-                                aria-live="assertive"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
-                                </svg>
-                                {newRantsCount === 1 ? (
-                                    <span>1 new rant posted!</span>
-                                ) : (
-                                    <span>{newRantsCount} new rants posted!</span>
-                                )}
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+                {/* Favicon and App Icons */}
+                <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+                <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+                <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+                <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
 
-                <div className="container mx-auto px-4 py-8">
-                    {/* Hero section with RantForm side by side */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-                        <div>
-                            <IntroSection
-                                onStartRanting={scrollToRantForm}
-                                onExploreRants={scrollToRantsList}
-                            />
-                        </div>
+                {/* PWA Support */}
+                <link rel="manifest" href="/manifest.json" />
+                <meta name="apple-mobile-web-app-capable" content="yes" />
+                <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-                        <div ref={rantFormRef}>
-                            <RantErrorBoundary>
-                                <RantForm onSubmit={handleRantSubmit} />
-                            </RantErrorBoundary>
-                        </div>
+                {/* Accessibility */}
+                <meta name="color-scheme" content="light dark" />
+
+                {/* Preconnect to Supabase */}
+                <link rel="preconnect" href="https://supabase.co" />
+
+                {/* Fonts */}
+                <link rel="preconnect" href="https://fonts.googleapis.com" />
+
+                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+                {/* Structured Data */}
+                <script type="application/ld+json">
+                    {`
+                        {
+                        "@context": "https://schema.org",
+                        "@type": "WebApplication",
+                        "name": "Rant",
+                        "description": "An anonymous platform for sharing your thoughts, frustrations, and celebrations with the world.",
+                        "applicationCategory": "SocialApplication",
+                        "operatingSystem": "Any",
+                        "offers": {
+                            "@type": "Offer",
+                            "price": "0",
+                            "priceCurrency": "USD"
+                        },
+                        "featureList": "Anonymous Posting, Mood Expression, Real-time Updates, Interactive UI, Advanced Filtering, Keyboard Shortcuts, Responsive Design, Accessibility Options, Theme Options, Internationalization"
+                        }
+                    `}
+                </script>
+
+            </Helmet>
+            <RantErrorBoundary>
+                <div className="min-h-screen bg-background-dark">
+                    <div className="flex justify-between items-center w-full">
+                        <Navbar />
                     </div>
 
-                    <div ref={rantsListRef} className="mt-16">
-                        <div className="flex items-center justify-between mb-4">
-                            <RantErrorBoundary>
-                                <SortingBar
-                                    activeOption={sortOption}
-                                    onOptionChange={handleSortChange}
-                                    onFilterChange={handleFilterChange}
-                                    onSearch={handleSearch}
-                                    selectedFilters={selectedMoods}
-                                    searchQuery={searchQuery}
-                                    searchMood={searchMood}
-                                    rants={rantList} // Pass rants for suggestions
+                    {showConfetti && <Confetti active={showConfetti} duration={3000} />}
+
+                    <KeyboardShortcutsDialog
+                        open={shortcutsDialogOpen}
+                        onOpenChange={setShortcutsDialogOpen}
+                        shortcuts={shortcuts}
+                    />
+
+                    <AnimatePresence>
+                        {showNewRantNotification && (
+                            <motion.div
+                                initial={{ y: -100, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                exit={{ y: -100, opacity: 0 }}
+                                transition={{ duration: 0.3, ease: "easeOut" }}
+                                className="fixed top-0 left-0 right-0 flex justify-center z-50"
+                            >
+                                <div
+                                    className="mt-16 bg-blue-600 text-white px-6 py-3 rounded-md shadow-lg cursor-pointer flex items-center gap-2 max-w-md mx-auto"
+                                    onClick={() => {
+                                        setShowNewRantNotification(false);
+
+                                        if (newRantId && document.querySelector(`.rant-${newRantId}`)) {
+                                            document.querySelector(`.rant-${newRantId}`)?.scrollIntoView({
+                                                behavior: 'smooth',
+                                                block: 'start'
+                                            });
+                                        } else if (newRantsCount > 0) {
+                                            rantsListRef.current?.scrollIntoView({
+                                                behavior: 'smooth',
+                                                block: 'start'
+                                            });
+                                        }
+
+                                        setNewRantsCount(0);
+                                    }}
+                                    role="alert"
+                                    aria-live="assertive"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+                                    </svg>
+                                    {newRantsCount === 1 ? (
+                                        <span>1 new rant posted!</span>
+                                    ) : (
+                                        <span>{newRantsCount} new rants posted!</span>
+                                    )}
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    <div className="container mx-auto px-4 py-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                            <div>
+                                <IntroSection
+                                    onStartRanting={scrollToRantForm}
+                                    onExploreRants={scrollToRantsList}
                                 />
-                            </RantErrorBoundary>
+                            </div>
 
-                            {/* Keyboard shortcuts help button */}
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => setShortcutsDialogOpen(true)}
-                                    className="p-2 text-gray-400 hover:text-white transition-colors rounded-full hover:bg-gray-800"
-                                    aria-label="Keyboard Shortcuts"
-                                    title="Keyboard Shortcuts"
-                                >
-                                    <QuestionMarkCircledIcon className="w-5 h-5" />
-                                </button>
+                            <div ref={rantFormRef}>
+                                <RantErrorBoundary>
+                                    <RantForm onSubmit={handleRantSubmit} />
+                                </RantErrorBoundary>
                             </div>
                         </div>
 
-                        {/* URL Routing Mode Indicator - only show in development */}
-                        {process.env.NODE_ENV === 'development' && (
-                            <div className="flex justify-end">
-                                <button
-                                    onClick={toggleHashRouting}
-                                    className="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-white text-xs"
-                                    aria-label="Toggle Routing Mode"
-                                >
-                                    Switch to {usingHashRouter ? 'Regular' : 'Hash-Based'} Routing
-                                </button>
-                            </div>
-                        )}
-
-                        {error && (
-                            <Alert className="my-4 border-red-200 bg-red-50">
-                                <AlertTitle className="text-red-800">Error loading rants</AlertTitle>
-                                <AlertDescription className="text-red-600">
-                                    {error}
-                                </AlertDescription>
-                                <Button
-                                    variant="outline"
-                                    className="mt-2"
-                                    onClick={handleRetry}
-                                    aria-label="Try Again"
-                                >
-                                    <RefreshCw className="mr-2 h-4 w-4" /> Try Again
-                                </Button>
-                            </Alert>
-                        )}
-
-                        <AnimatePresence mode="wait">
-                            {loading && page === 0 ? (
-                                <motion.div
-                                    key="loading"
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    className="w-full"
-                                >
-                                    <section className="w-full px-4 sm:px-8 py-10" aria-label="Loading Rants">
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                            {renderSkeletons()}
-                                        </div>
-                                    </section>
-                                </motion.div>
-                            ) : rantList.length > 0 ? (
-                                <motion.div
-                                    key="content"
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    className="w-full"
-                                >
-                                    <section className="w-full px-4 sm:px-8 py-10" aria-label="Rant List">
-                                        <RantErrorBoundary>
-                                            <MasonryGrid
-                                                rants={rantList}
-                                                gap={24}
-                                                searchTerm={sortOption === "search" ? searchQuery : ""}
-                                                onLike={handleLikeRant}
-                                                onLoadMore={loadMoreRants}
-                                                renderItem={renderRantItem}
-                                                isLoading={loading}
-                                                hasMore={hasMore}
-                                                onRemove={handleRemoveRant}
-                                                newRantId={newRantId}
-                                                onNewRantAppear={() => setNewRantId(null)}
-                                            />
-                                        </RantErrorBoundary>
-                                    </section>
-                                </motion.div>
-                            ) : (
-                                <motion.div
-                                    key="empty"
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    className="w-full"
-                                >
-                                    <EmptyState
-                                        title={
-                                            error ? 'Failed to load rants' :
-                                                sortOption === "search"
-                                                    ? 'No results found'
-                                                    : sortOption === "filter"
-                                                        ? 'No rants match your filters'
-                                                        : 'No rants yet. Be the first to post one!'
-                                        }
-                                        description={
-                                            error ? 'Please try again later' :
-                                                sortOption === "search" || sortOption === "filter"
-                                                    ? 'Adjust your filters or search terms'
-                                                    : 'Join the community by posting the first rant'
-                                        }
-                                        action={error ? handleRetry : scrollToRantForm}
-                                        actionLabel={error ? 'Try Again' : 'Post the First Rant'}
+                        <div ref={rantsListRef} className="mt-16">
+                            <div className="flex items-center justify-between mb-4">
+                                <RantErrorBoundary>
+                                    <SortingBar
+                                        activeOption={sortOption}
+                                        onOptionChange={handleSortChange}
+                                        onFilterChange={handleFilterChange}
+                                        onSearch={handleSearch}
+                                        selectedFilters={selectedMoods}
+                                        searchQuery={searchQuery}
+                                        searchMood={searchMood}
+                                        rants={rants}
                                     />
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                                </RantErrorBoundary>
 
-                        {/* This div serves as the intersection target for infinite scrolling */}
-                        {!loading && hasMore && rantList.length > 0 && (
-                            <div
-                                ref={loadMoreTriggerRef}
-                                className="h-20 w-full flex items-center justify-center mt-4"
-                                aria-live="polite"
-                            >
-                                {/* Only show button if auto-loading failed */}
-                                {autoLoadFailed && (
+                                <div className="flex items-center gap-2">
                                     <button
-                                        onClick={() => loadMoreRants()}
-                                        className="px-6 py-2 bg-cyan-700 hover:bg-cyan-600 text-white rounded-md transition-colors"
-                                        aria-label="Load More Rants"
+                                        onClick={() => setShortcutsDialogOpen(true)}
+                                        className="p-2 text-gray-400 hover:text-white transition-colors rounded-full hover:bg-gray-800"
+                                        aria-label="Keyboard Shortcuts"
+                                        title="Keyboard Shortcuts"
                                     >
-                                        Load More Rants
+                                        <QuestionMarkCircledIcon className="w-5 h-5" />
                                     </button>
-                                )}
+                                </div>
                             </div>
-                        )}
-                    </div>
-                </div>
 
-                {/* Mood Shortcuts Hint Box */}
-                {showMoodShortcutsHint && (
-                    <div
-                        ref={hintBoxRef}
-                        className={`fixed bottom-20 right-4 bg-background-dark rounded-lg shadow-medium text-xs transition-all duration-300 font-ui border border-border-subtle
-                            ${shortcutsCollapsed
-                                ? "w-10 h-10 overflow-hidden opacity-50 hover:opacity-90 scale-y-100 origin-bottom-right"
-                                : "max-w-xs p-3 opacity-80 hover:opacity-100 scale-y-100 origin-bottom-right"
-                            }`}
-                        aria-label="Mood Shortcuts"
-                    >
-                        {shortcutsCollapsed ? (
-                            // Collapsed state - just show an icon button
-                            <button
-                                onClick={() => setShortcutsCollapsed(false)}
-                                className="w-full h-full flex items-center justify-center text-accent-teal hover:text-primary transition-colors"
-                                aria-label="Expand Mood Shortcuts"
-                                title="Expand Mood Shortcuts"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
-                                </svg>
-                            </button>
-                        ) : (
-                            // Expanded state - show full content with collapse button
-                            <>
-                                <div className="flex justify-between items-center mb-1">
-                                    <p className="font-semibold font-heading text-text-strong">Mood Filters:</p>
+                            {process.env.NODE_ENV === 'development' && (
+                                <div className="flex justify-end">
                                     <button
-                                        onClick={() => setShortcutsCollapsed(true)}
-                                        className="text-text-muted hover:text-text-strong transition-colors"
-                                        aria-label="Collapse Mood Shortcuts"
-                                        title="Collapse Mood Shortcuts"
+                                        onClick={toggleHashRouting}
+                                        className="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-white text-xs"
+                                        aria-label="Toggle Routing Mode"
                                     >
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                                        </svg>
+                                        Switch to {usingHashRouter ? 'Regular' : 'Hash-Based'} Routing
                                     </button>
                                 </div>
-                                <div className="grid grid-cols-2 gap-x-2 gap-y-1">
-                                    <p className="text-text-strong">
-                                        <kbd className="px-1 py-0.5 bg-background-secondary rounded border border-border-subtle">Shift+S</kbd> <span className="text-text-muted">Sad</span>
-                                    </p>
-                                    <p className="text-text-strong">
-                                        <kbd className="px-1 py-0.5 bg-background-secondary rounded border border-border-subtle">Shift+A</kbd> <span className="text-text-muted">Angry</span>
-                                    </p>
-                                    <p className="text-text-strong">
-                                        <kbd className="px-1 py-0.5 bg-background-secondary rounded border border-border-subtle">Shift+C</kbd> <span className="text-text-muted">Confused</span>
-                                    </p>
-                                    <p className="text-text-strong">
-                                        <kbd className="px-1 py-0.5 bg-background-secondary rounded border border-border-subtle">Shift+G</kbd> <span className="text-text-muted">Smiling</span>
-                                    </p>
-                                    <p className="text-text-strong">
-                                        <kbd className="px-1 py-0.5 bg-background-secondary rounded border border-border-subtle">Shift+L</kbd> <span className="text-text-muted">Loved</span>
-                                    </p>
-                                    <p className="text-text-strong">
-                                        <kbd className="px-1 py-0.5 bg-background-secondary rounded border border-border-subtle">Shift+M</kbd> <span className="text-text-muted">Mind Blown</span>
-                                    </p>
-                                </div>
-                                <p className="mt-1 text-center text-text-strong">
-                                    <kbd className="px-1 py-0.5 bg-background-secondary rounded border border-border-subtle">Esc</kbd> <span className="text-text-muted">Clear Filters</span>
-                                </p>
-                                <button
-                                    className="mt-2 text-accent-teal hover:text-accent-teal/80 text-xs w-full text-center font-ui"
-                                    onClick={() => setShortcutsDialogOpen(true)}
+                            )}
+
+                            {error && (
+                                <Alert className="my-4 border-red-200 bg-red-50">
+                                    <AlertTitle className="text-red-800">Error loading rants</AlertTitle>
+                                    <AlertDescription className="text-red-600">
+                                        {error}
+                                    </AlertDescription>
+                                    <Button
+                                        variant="outline"
+                                        className="mt-2"
+                                        onClick={handleRetry}
+                                        aria-label="Try Again"
+                                    >
+                                        <RefreshCw className="mr-2 h-4 w-4" /> Try Again
+                                    </Button>
+                                </Alert>
+                            )}
+
+                            <AnimatePresence mode="wait">
+                                {loading && page === 0 ? (
+                                    <motion.div
+                                        key="loading"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        className="w-full"
+                                    >
+                                        <section className="w-full px-4 sm:px-8 py-10" aria-label="Loading Rants">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                                {renderSkeletons()}
+                                            </div>
+                                        </section>
+                                    </motion.div>
+                                ) : rants.length > 0 ? (
+                                    <motion.div
+                                        key="content"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        className="w-full"
+                                    >
+                                        <section className="w-full px-4 sm:px-8 py-10" aria-label="Rant List">
+                                            <RantErrorBoundary>
+                                                <MasonryGrid
+                                                    rants={rants}
+                                                    gap={24}
+                                                    searchTerm={sortOption === "search" ? searchQuery : ""}
+                                                    onLike={handleLikeRant}
+                                                    onLoadMore={loadMoreRants}
+                                                    renderItem={renderRantItem}
+                                                    isLoading={loading}
+                                                    hasMore={hasMore}
+                                                    onRemove={handleRemoveRant}
+                                                    newRantId={newRantId}
+                                                    onNewRantAppear={() => setNewRantId(null)}
+                                                />
+                                            </RantErrorBoundary>
+                                        </section>
+                                    </motion.div>
+                                ) : (
+                                    <motion.div
+                                        key="empty"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        className="w-full"
+                                    >
+                                        <EmptyState
+                                            title={
+                                                error ? 'Failed to load rants' :
+                                                    sortOption === "search"
+                                                        ? 'No results found'
+                                                        : sortOption === "filter"
+                                                            ? 'No rants match your filters'
+                                                            : 'No rants yet. Be the first to post one!'
+                                            }
+                                            description={
+                                                error ? 'Please try again later' :
+                                                    sortOption === "search" || sortOption === "filter"
+                                                        ? 'Adjust your filters or search terms'
+                                                        : 'Join the community by posting the first rant'
+                                            }
+                                            action={error ? handleRetry : scrollToRantForm}
+                                            actionLabel={error ? 'Try Again' : 'Post the First Rant'}
+                                        />
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+
+                            {!loading && hasMore && rants.length > 0 && (
+                                <div
+                                    ref={loadMoreTriggerRef}
+                                    className="h-20 w-full flex items-center justify-center mt-4"
+                                    aria-live="polite"
                                 >
-                                    View All Shortcuts
-                                </button>
-                            </>
-                        )}
+                                    {autoLoadFailed && (
+                                        <button
+                                            onClick={() => loadMoreRants()}
+                                            className="px-6 py-2 bg-cyan-700 hover:bg-cyan-600 text-white rounded-md transition-colors"
+                                            aria-label="Load More Rants"
+                                        >
+                                            Load More Rants
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
-                )}
 
-                {/* Scroll to top button */}
-                <ScrollToTopButton />
-
-                {/* My Rants Modal */}
-                <AnimatePresence>
-                    {showMyRants && (
-                        <MyRants
-                            onClose={() => setShowMyRants(false)}
-                            onLike={handleLikeRant}
-                        />
+                    {showMoodShortcutsHint && (
+                        <div
+                            ref={hintBoxRef}
+                            className={`fixed bottom-20 right-4 bg-background-dark rounded-lg shadow-medium text-xs transition-all duration-300 font-ui border border-border-subtle
+                                ${shortcutsCollapsed
+                                    ? "w-10 h-10 overflow-hidden opacity-50 hover:opacity-90 scale-y-100 origin-bottom-right"
+                                    : "max-w-xs p-3 opacity-80 hover:opacity-100 scale-y-100 origin-bottom-right"
+                                }`}
+                            aria-label="Mood Shortcuts"
+                        >
+                            {shortcutsCollapsed ? (
+                                <button
+                                    onClick={() => setShortcutsCollapsed(false)}
+                                    className="w-full h-full flex items-center justify-center text-accent-teal hover:text-primary transition-colors"
+                                    aria-label="Expand Mood Shortcuts"
+                                    title="Expand Mood Shortcuts"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+                                    </svg>
+                                </button>
+                            ) : (
+                                <>
+                                    <div className="flex justify-between items-center mb-1">
+                                        <p className="font-semibold font-heading text-text-strong">Mood Filters:</p>
+                                        <button
+                                            onClick={() => setShortcutsCollapsed(true)}
+                                            className="text-text-muted hover:text-text-strong transition-colors"
+                                            aria-label="Collapse Mood Shortcuts"
+                                            title="Collapse Mood Shortcuts"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-x-2 gap-y-1">
+                                        <p className="text-text-strong">
+                                            <kbd className="px-1 py-0.5 bg-background-secondary rounded border border-border-subtle">Shift+S</kbd> <span className="text-text-muted">Sad</span>
+                                        </p>
+                                        <p className="text-text-strong">
+                                            <kbd className="px-1 py-0.5 bg-background-secondary rounded border border-border-subtle">Shift+A</kbd> <span className="text-text-muted">Angry</span>
+                                        </p>
+                                        <p className="text-text-strong">
+                                            <kbd className="px-1 py-0.5 bg-background-secondary rounded border border-border-subtle">Shift+C</kbd> <span className="text-text-muted">Confused</span>
+                                        </p>
+                                        <p className="text-text-strong">
+                                            <kbd className="px-1 py-0.5 bg-background-secondary rounded border border-border-subtle">Shift+G</kbd> <span className="text-text-muted">Smiling</span>
+                                        </p>
+                                        <p className="text-text-strong">
+                                            <kbd className="px-1 py-0.5 bg-background-secondary rounded border border-border-subtle">Shift+L</kbd> <span className="text-text-muted">Loved</span>
+                                        </p>
+                                        <p className="text-text-strong">
+                                            <kbd className="px-1 py-0.5 bg-background-secondary rounded border border-border-subtle">Shift+M</kbd> <span className="text-text-muted">Mind Blown</span>
+                                        </p>
+                                    </div>
+                                    <p className="mt-1 text-center text-text-strong">
+                                        <kbd className="px-1 py-0.5 bg-background-secondary rounded border border-border-subtle">Esc</kbd> <span className="text-text-muted">Clear Filters</span>
+                                    </p>
+                                    <button
+                                        className="mt-2 text-accent-teal hover:text-accent-teal/80 text-xs w-full text-center font-ui"
+                                        onClick={() => setShortcutsDialogOpen(true)}
+                                    >
+                                        View All Shortcuts
+                                    </button>
+                                </>
+                            )}
+                        </div>
                     )}
-                </AnimatePresence>
 
-                {/* Undo Delete Notification */}
-                <AnimatePresence>
-                    {deletedRantId && deletedRant && (
-                        <UndoDeleteNotification
-                            rantId={deletedRantId}
-                            onClose={handleCloseUndoNotification}
-                            onUndo={handleUndoDelete}
-                        />
-                    )}
-                </AnimatePresence>
+                    <ScrollToTopButton />
 
-                <Footer />
-            </div>
-        </RantErrorBoundary>
+                    <AnimatePresence>
+                        {showMyRants && (
+                            <MyRants
+                                onClose={() => setShowMyRants(false)}
+                                onLike={handleLikeRant}
+                            />
+                        )}
+                    </AnimatePresence>
+
+                    <AnimatePresence>
+                        {deletedRantId && deletedRant && (
+                            <UndoDeleteNotification
+                                rantId={deletedRantId}
+                                onClose={handleCloseUndoNotification}
+                                onUndo={handleUndoDelete}
+                            />
+                        )}
+                    </AnimatePresence>
+
+                    <Footer />
+                </div>
+            </RantErrorBoundary>
+        </>
     );
 };
 

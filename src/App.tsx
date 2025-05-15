@@ -3,17 +3,18 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, HashRouter, Navigate } from "react-router-dom";
-import { RantProvider } from "@/components/RantContext";
+import { BrowserRouter, Routes, Route, HashRouter } from "react-router-dom";
 import { AccessibilityProvider } from "@/components/AccessibilityContext";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
+import { RantStoreProvider } from "@/store/RantStore";
 import '@/lib/i18n';
 import '@/styles/accessibility.css';
 import '@/styles/fonts.css';
 import '@/styles/theme.css';
-import { Analytics } from "@vercel/analytics/react"
+import { Analytics } from "@vercel/analytics/react";
+import { HelmetProvider } from 'react-helmet-async';
 
 // Error boundary component for catching rendering errors
 class ErrorBoundary extends React.Component<
@@ -213,44 +214,46 @@ const App = () => {
     }, []);
 
     return (
-        <ErrorBoundary>
-            <AccessibilityProvider>
-                <QueryClientProvider client={queryClient}>
-                    <TooltipProvider>
-                        <RantProvider>
-                            <div className="theme-dark">
-                                <Toaster />
-                                <Sonner />
-                                <ErrorBoundary>
-                                    <AppRouter>
-                                        <Suspense fallback={<LoadingFallback />}>
-                                            <Routes>
-                                                <Route path="/" element={
-                                                    <ErrorBoundary>
-                                                        <Index />
-                                                    </ErrorBoundary>
-                                                } />
-                                                <Route path="/my-rants" element={
-                                                    <ErrorBoundary>
-                                                        <MyRantsPage />
-                                                    </ErrorBoundary>
-                                                } />
-                                                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                                                <Route path="*" element={
-                                                    <ErrorBoundary>
-                                                        <NotFound />
-                                                    </ErrorBoundary>
-                                                } />
-                                            </Routes>
-                                        </Suspense>
-                                    </AppRouter>
-                                </ErrorBoundary>
-                            </div>
-                        </RantProvider>
-                    </TooltipProvider>
-                </QueryClientProvider>
-            </AccessibilityProvider>
-        </ErrorBoundary>
+        <HelmetProvider>
+            <ErrorBoundary>
+                <AccessibilityProvider>
+                    <QueryClientProvider client={queryClient}>
+                        <TooltipProvider>
+                            <RantStoreProvider>
+                                <div className="theme-dark">
+                                    <Toaster />
+                                    <Sonner />
+                                    <ErrorBoundary>
+                                        <AppRouter>
+                                            <Suspense fallback={<LoadingFallback />}>
+                                                <Routes>
+                                                    <Route path="/" element={
+                                                        <ErrorBoundary>
+                                                            <Index />
+                                                        </ErrorBoundary>
+                                                    } />
+                                                    <Route path="/my-rants" element={
+                                                        <ErrorBoundary>
+                                                            <MyRantsPage />
+                                                        </ErrorBoundary>
+                                                    } />
+                                                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                                                    <Route path="*" element={
+                                                        <ErrorBoundary>
+                                                            <NotFound />
+                                                        </ErrorBoundary>
+                                                    } />
+                                                </Routes>
+                                            </Suspense>
+                                        </AppRouter>
+                                    </ErrorBoundary>
+                                </div>
+                            </RantStoreProvider>
+                        </TooltipProvider>
+                    </QueryClientProvider>
+                </AccessibilityProvider>
+            </ErrorBoundary>
+        </HelmetProvider>
     );
     <Analytics />
 };
