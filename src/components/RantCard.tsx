@@ -21,7 +21,7 @@ import { highlightText } from "@/lib/utils/highlight";
 // function to manage bookmarks in localStorage
 const getBookmarks = (): string[] => {
     try {
-        const bookmarks = localStorage.getItem('bentoRant_bookmarks');
+        const bookmarks = localStorage.getItem('rant_bookmarks');
         return bookmarks ? JSON.parse(bookmarks) : [];
     } catch (error) {
         console.error("Failed to get bookmarks:", error);
@@ -31,7 +31,7 @@ const getBookmarks = (): string[] => {
 
 const saveBookmarks = (bookmarks: string[]): void => {
     try {
-        localStorage.setItem('bentoRant_bookmarks', JSON.stringify(bookmarks));
+        localStorage.setItem('rant_bookmarks', JSON.stringify(bookmarks));
     } catch (error) {
         console.error("Failed to save bookmarks:", error);
     }

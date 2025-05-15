@@ -31,7 +31,7 @@ const getInitialStorage = (): UserStorage => ({
 // Helper to get storage key based on author ID
 const getStorageKey = (): string => {
   const anonymousUserId = getAnonymousUserId();
-  return `bentoRant_${anonymousUserId}_storage`;
+  return `rant_${anonymousUserId}_storage`;
 };
 
 // Get user storage

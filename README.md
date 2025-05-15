@@ -1,10 +1,10 @@
-# bentoRant
+# Rant
 
 An anonymous platform for sharing your thoughts, frustrations, and celebrations with the world.
 
-## About bentoRant
+## About Rant
 
-bentoRant is a modern, anonymous ranting platform that allows users to express themselves freely without revealing their identity. Share your thoughts, vent your frustrations, or celebrate your wins - all in a safe, anonymous environment.
+Rant is a modern, anonymous ranting platform that allows users to express themselves freely without revealing their identity. Share your thoughts, vent your frustrations, or celebrate your wins - all in a safe, anonymous environment.
 
 ## Features
 
@@ -51,7 +51,7 @@ bentoRant is a modern, anonymous ranting platform that allows users to express t
 ```sh
 # Clone the repository
 git clone <repository-url>
-cd bentoRant
+cd Rant
 
 # Install dependencies
 npm install
@@ -81,7 +81,7 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 ### Keyboard Shortcuts
 
-bentoRant comes with a variety of keyboard shortcuts to enhance your experience:
+Rant comes with a variety of keyboard shortcuts to enhance your experience:
 
 - `n` - Create a new rant
 - `e` - Explore rants
