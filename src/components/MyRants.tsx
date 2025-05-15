@@ -8,6 +8,7 @@ import RantCard from '@/components/RantCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeftIcon, BookmarkIcon, PenLineIcon, InfoIcon, XIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { getAnonymousUserId } from '@/utils/authorId';
 // Import but don't use translation hook for now
 // import { useTranslation } from 'react-i18next';
 import { useAccessibility } from '@/components/AccessibilityContext';
@@ -28,6 +29,7 @@ const MyRants: React.FC<MyRantsProps> = ({ onClose, onLike }) => {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('my-rants');
     const closeButtonRef = useRef<HTMLButtonElement>(null);
+    const currentUserId = getAnonymousUserId();
 
     useEffect(() => {
         const fetchRants = async () => {
@@ -177,8 +179,8 @@ const MyRants: React.FC<MyRantsProps> = ({ onClose, onLike }) => {
             }}
             role="dialog"
             aria-modal="true"
-            aria-labelledby="myrants-title"
-            aria-describedby="myrants-desc"
+            aria-labelledby="My Rants"
+            aria-describedby="My Rants description"
         >
             <motion.div
                 className="bg-background-dark border border-border-subtle rounded-xl overflow-hidden shadow-high w-full max-w-5xl max-h-[90vh] flex flex-col"
@@ -200,7 +202,7 @@ const MyRants: React.FC<MyRantsProps> = ({ onClose, onLike }) => {
                             <ArrowLeftIcon className="mr-2" size={16} />
                             Back
                         </Button>
-                        <h2 id="myrants-title" className="text-xl font-heading font-bold text-text-strong">My Rants</h2>
+                        <h2 id="my-rants-title" className="text-xl font-heading font-bold text-text-strong">My Rants</h2>
                         <Button
                             variant="ghost"
                             size="icon"
@@ -215,7 +217,7 @@ const MyRants: React.FC<MyRantsProps> = ({ onClose, onLike }) => {
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-hidden p-4" id="myrants-desc">
+                <div className="flex-1 overflow-hidden p-4" id="my-rants-desc">
                     <Tabs
                         defaultValue="my-rants"
                         value={activeTab}
@@ -264,6 +266,11 @@ const MyRants: React.FC<MyRantsProps> = ({ onClose, onLike }) => {
                                                             rant={rant}
                                                             index={index}
                                                             onLike={() => onLike(rant.id)}
+                                                            currentUserId={currentUserId}
+                                                            showRemove={true}
+                                                            onRemove={(id) => {
+                                                                setMyRants((prev) => prev.filter(r => r.id !== id));
+                                                            }}
                                                         />
                                                     </motion.div>
                                                 ))}
@@ -301,6 +308,7 @@ const MyRants: React.FC<MyRantsProps> = ({ onClose, onLike }) => {
                                                             rant={rant}
                                                             index={index}
                                                             onLike={() => onLike(rant.id)}
+                                                            currentUserId={currentUserId}
                                                         />
                                                     </motion.div>
                                                 ))}
@@ -338,7 +346,7 @@ const MyRants: React.FC<MyRantsProps> = ({ onClose, onLike }) => {
                             className="text-xs text-accent-teal hover:text-accent-teal/90 p-0"
                             onClick={() => {
                                 onClose();
-                                navigate('/my-rants');
+                                // navigate('/my-rants');
                             }}
                         >
                             Open full page

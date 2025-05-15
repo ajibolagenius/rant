@@ -10,6 +10,7 @@ import {
     Share1Icon,
     BookmarkIcon,
     BookmarkFilledIcon,
+    TrashIcon,
 } from "@radix-ui/react-icons";
 import { formatDistanceToNow } from "date-fns";
 import { useLikeStatus } from "@/hooks/useLikeStatus";
@@ -17,6 +18,8 @@ import { toast } from "@/hooks/use-toast";
 import { useAccessibility } from "@/components/AccessibilityContext";
 import { cn } from "@/lib/utils";
 import { highlightText } from "@/lib/utils/highlight";
+import { supabase } from '@/lib/supabase';
+import { addDeletedRant } from '@/utils/userStorage';
 
 // function to manage bookmarks in localStorage
 const getBookmarks = (): string[] => {
@@ -44,7 +47,9 @@ interface RantCardProps {
     onClick?: () => void;
     searchTerm?: string;
     onLike?: () => void;
-    isNew?: boolean; // Add this prop for highlighting new rants
+    isNew?: boolean;
+    currentUserId?: string;  // Add this to check if current user is the creator
+    showRemove?: boolean; // Add this prop
 }
 
 const arePropsEqual = (prevProps: RantCardProps, nextProps: RantCardProps) => {
@@ -54,7 +59,8 @@ const arePropsEqual = (prevProps: RantCardProps, nextProps: RantCardProps) => {
         prevProps.rant.content === nextProps.rant.content &&
         prevProps.searchTerm === nextProps.searchTerm &&
         prevProps.index === nextProps.index &&
-        prevProps.isNew === nextProps.isNew // Add this to check for changes in isNew prop
+        prevProps.isNew === nextProps.isNew &&
+        prevProps.currentUserId === nextProps.currentUserId // Add this to check for changes in currentUserId
     );
 };
 
@@ -65,7 +71,9 @@ const RantCard: React.FC<RantCardProps> = ({
     searchTerm = '',
     onLike,
     onRemove,
-    isNew = false // Default to false
+    isNew = false,
+    currentUserId,
+    showRemove = false // Default to false
 }) => {
     const { reducedMotion, highContrast, fontSize } = useAccessibility();
     const moodColor = getMoodColor(rant.mood);
@@ -79,6 +87,13 @@ const RantCard: React.FC<RantCardProps> = ({
     const [isBookmarked, setIsBookmarked] = useState(false);
     // Add state for highlight animation
     const [isHighlighted, setIsHighlighted] = useState(isNew);
+
+    // Check if current user is the owner of this rant
+    const isOwner = currentUserId && rant.anonymous_user_id === currentUserId;
+    // For anonymous rants, check if the anonymous ID matches the user's anonymous ID
+    const isAnonymousOwner = currentUserId && rant.anonymous_user_id && currentUserId === rant.anonymous_user_id;
+    // Determine if user can remove this rant
+    const canRemove = isOwner || isAnonymousOwner;
 
     // Use the useLikeStatus hook to manage like status
     const { isLiked, likeCount, setLikeStatus, isLoading } = useLikeStatus(rant.id);
@@ -180,11 +195,29 @@ const RantCard: React.FC<RantCardProps> = ({
         }
     };
 
-    // Handle remove rant if provided
-    const handleRemoveClick = (e: React.MouseEvent) => {
+    // Remove handler with Supabase delete and undo support
+    const handleRemoveClick = async (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (onRemove) {
+        if (!onRemove) return;
+        try {
+            // Optimistically remove from UI
             onRemove(rant.id);
+            // Store in recentlyDeleted for undo
+            addDeletedRant(rant);
+            // Delete from Supabase
+            const { error } = await supabase.from('rants').delete().eq('id', rant.id);
+            if (error) throw error;
+            toast({
+                title: 'Rant Deleted',
+                description: 'You can undo this action for a short time.',
+                variant: 'default',
+            });
+        } catch (err) {
+            toast({
+                title: 'Error',
+                description: 'Failed to delete rant. Please try again.',
+                variant: 'error',
+            });
         }
     };
 
@@ -348,7 +381,7 @@ const RantCard: React.FC<RantCardProps> = ({
                                         transition={{ ease: moodAnimation.ease, duration: 0.5 }}
                                         className="bg-background-dark text-xs px-2 py-1 rounded-md text-text-primary font-ui"
                                     >
-                                        {`Like this rant`}
+                                        {`Like`}
                                         <Tooltip.Arrow className="fill-background-dark" />
                                     </motion.div>
                                 </Tooltip.Content>
@@ -361,7 +394,7 @@ const RantCard: React.FC<RantCardProps> = ({
                                 <Tooltip.Trigger asChild>
                                     <button
                                         onClick={(e) => e.stopPropagation()}
-                                        aria-label={`Comment on this rant`}
+                                        aria-label={`Comment on rant`}
                                         className={cn(
                                             "hover:scale-110 transition-transform flex items-center gap-1",
                                             rant.comments > 0 ? "text-[#4A90E2]" : "hover:text-[#4A90E2] text-text-muted"
@@ -380,7 +413,7 @@ const RantCard: React.FC<RantCardProps> = ({
                                         animate={reducedMotion ? undefined : { opacity: 1, y: 0 }}
                                         transition={{ duration: reducedMotion ? 0 : 0.2 }}
                                     >
-                                        {`Comment on this rant`}
+                                        {`Comment`}
                                         <Tooltip.Arrow className="fill-background-dark" />
                                     </motion.div>
                                 </Tooltip.Content>
@@ -395,7 +428,7 @@ const RantCard: React.FC<RantCardProps> = ({
                                         onClick={handleBookmarkClick}
                                         aria-label={isBookmarked
                                             ? `Remove Bookmark`
-                                            : `Bookmark this rant`
+                                            : `Bookmark`
                                         }
                                         className={cn(
                                             "hover:scale-110 transition-transform",
@@ -417,7 +450,7 @@ const RantCard: React.FC<RantCardProps> = ({
                                         animate={reducedMotion ? undefined : { opacity: 1, y: 0 }}
                                         transition={{ duration: reducedMotion ? 0 : 0.2 }}
                                     >
-                                        {isBookmarked ? `Remove Bookmark` : `Bookmark this rant`}
+                                        {isBookmarked ? `Remove Bookmark` : `Bookmark`}
                                         <Tooltip.Arrow className="fill-background-dark" />
                                     </motion.div>
                                 </Tooltip.Content>
@@ -451,42 +484,40 @@ const RantCard: React.FC<RantCardProps> = ({
                                         animate={reducedMotion ? undefined : { opacity: 1, y: 0 }}
                                         transition={{ duration: reducedMotion ? 0 : 0.2 }}
                                     >
-                                        {`Share this rant`}
+                                        {`Share`}
                                         <Tooltip.Arrow className="fill-background-dark" />
                                     </motion.div>
                                 </Tooltip.Content>
                             </Tooltip.Root>
                         </Tooltip.Provider>
 
-                        {/* Remove button - only show if onRemove is provided */}
-                        {onRemove && (
-                            <Tooltip.Provider delayDuration={100}>
-                                <Tooltip.Root>
-                                    <Tooltip.Trigger asChild>
-                                        <button
-                                            onClick={handleRemoveClick}
-                                            aria-label="Remove this rant"
-                                            className="hover:scale-110 transition-transform text-text-muted hover:text-red-500"
-                                        >
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-                                                <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                                            </svg>
-                                        </button>
-                                    </Tooltip.Trigger>
-                                    <Tooltip.Content>
-                                        <motion.div
-                                            className="bg-background-dark text-xs px-2 py-1 rounded-md text-text-primary font-ui"
-                                            initial={reducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: -4 }}
-                                            animate={reducedMotion ? undefined : { opacity: 1, y: 0 }}
-                                            transition={{ duration: reducedMotion ? 0 : 0.2 }}
-                                        >
-                                            Remove this rant
-                                            <Tooltip.Arrow className="fill-background-dark" />
-                                        </motion.div>
-                                    </Tooltip.Content>
-                                </Tooltip.Root>
-                            </Tooltip.Provider>
-                        )}
+                        {/* Remove button */}
+
+                        <Tooltip.Provider delayDuration={100}>
+                            <Tooltip.Root>
+                                <Tooltip.Trigger asChild>
+                                    <button
+                                        onClick={handleRemoveClick}
+                                        aria-label="Remove this rant"
+                                        className="hover:scale-110 transition-transform text-text-muted hover:text-red-500"
+                                        data-owner-status={`isOwner:${isOwner}, isAnonymousOwner:${isAnonymousOwner}`}
+                                    >
+                                        <TrashIcon className="w-4 h-4" aria-hidden="true" />
+                                    </button>
+                                </Tooltip.Trigger>
+                                <Tooltip.Content>
+                                    <motion.div
+                                        className="bg-background-dark text-xs px-2 py-1 rounded-md text-text-primary font-ui"
+                                        initial={reducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: -4 }}
+                                        animate={reducedMotion ? undefined : { opacity: 1, y: 0 }}
+                                        transition={{ duration: reducedMotion ? 0 : 0.2 }}
+                                    >
+                                        Remove
+                                        <Tooltip.Arrow className="fill-background-dark" />
+                                    </motion.div>
+                                </Tooltip.Content>
+                            </Tooltip.Root>
+                        </Tooltip.Provider>
                     </div>
                 </div>
             </div>

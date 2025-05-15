@@ -941,11 +941,6 @@ const Index: React.FC = () => {
             // Remove from local state
             setRants(prevRants => prevRants.filter(rant => rant.id !== id));
 
-            toast({
-                title: "Rant Removed",
-                description: "The rant has been removed. Click Undo to restore it.",
-                variant: "default",
-            });
         } catch (error) {
             console.error("Error removing rant:", error);
 
