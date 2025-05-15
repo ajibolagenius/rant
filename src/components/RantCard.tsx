@@ -258,7 +258,7 @@ const RantCard: React.FC<RantCardProps> = ({
 
                     {/* Author info */}
                     <div className="text-xs text-text-muted font-ui">
-                        {`Anonymous ${rant.author_id?.slice(-3).toUpperCase() || "👻"}`}
+                        {getAlias(rant.id)}
                     </div>
                 </div>
 
