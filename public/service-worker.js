@@ -46,3 +46,28 @@ setCatchHandler(async ({ event }) => {
     }
     return Response.error();
 });
+
+// Push notification event
+self.addEventListener('push', function (event) {
+    let data = {};
+    try {
+        data = event.data.json();
+    } catch (e) {
+        data = { title: 'Trending Rant!', body: 'A new rant is trending now.' };
+    }
+    const title = data.title || 'Trending Rant!';
+    const options = {
+        body: data.body || 'A new rant is trending now.',
+        icon: '/assets/rant_logo.svg',
+        badge: '/favicon-32x32.png',
+        data: data.url ? { url: data.url } : {}
+    };
+    event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// Notification click event
+self.addEventListener('notificationclick', function (event) {
+    event.notification.close();
+    const url = event.notification.data && event.notification.data.url ? event.notification.data.url : '/';
+    event.waitUntil(clients.openWindow(url));
+});

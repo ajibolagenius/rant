@@ -15,8 +15,8 @@ DOMPurify.setConfig({
 
 createRoot(document.getElementById("root")!).render(<App />);
 
-// Register service worker for offline support (only in production)
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
+// Register service worker for offline support (allow in dev for push notification testing)
+if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/service-worker.js').then(
             registration => {

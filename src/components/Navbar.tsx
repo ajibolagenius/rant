@@ -14,6 +14,8 @@ const Navbar: React.FC = () => {
     const [showMyRants, setShowMyRants] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
+    const [pushSupported, setPushSupported] = useState(false);
+    const [pushEnabled, setPushEnabled] = useState(false);
     const navigate = useNavigate();
 
     // Track scroll position to determine when to make navbar sticky
@@ -31,6 +33,13 @@ const Navbar: React.FC = () => {
         return () => {
             window.removeEventListener('scroll', handleScroll);
         };
+    }, []);
+
+    // Check for push notification support
+    useEffect(() => {
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+            setPushSupported(true);
+        }
     }, []);
 
     // Function to safely get author ID with fallback
@@ -59,9 +68,53 @@ const Navbar: React.FC = () => {
         } catch (error) {
             console.error("Error liking rant:", error);
 
-            toast.error("Failed to like this rant. You may have already liked it.");
+            toast({
+                title: 'Error',
+                description: 'Failed to like this rant. You may have already liked it.',
+                variant: 'error'
+            });
         }
     };
+
+    // Push Notification Subscription
+    const subscribeToPush = async () => {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            toast({ title: 'Push not supported', description: 'Your browser does not support push notifications.' });
+            return;
+        }
+        try {
+            const reg = await navigator.serviceWorker.ready;
+
+            const vapidPublicKey = 'BOEt_7zXjc8BfH4RyU8NnijB2eo2W_rhx70UgAEY7i5l8hkBPCDlF7nPEk07K2ciky7vaasCdDiTuq7Wg5NPKs8';
+            const subscription = await reg.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+            });
+
+            // Send subscription to backend
+            await fetch('/api/subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(subscription)
+            });
+
+            setPushEnabled(true);
+            toast({ title: 'Notifications enabled', description: 'You will get notified about trending rants.' });
+        } catch (err) {
+            toast({ title: 'Permission denied', description: 'Push notifications were not enabled.' });
+        }
+    };
+
+    function urlBase64ToUint8Array(base64String: string) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+    }
 
     // Common button style class for all icon buttons
     const iconButtonClass = "h-8 w-8 rounded-full text-primary hover:bg-primary/10 hover:text-primary focus:ring-2 focus:ring-accent-teal focus:ring-offset-1 focus:ring-offset-background-dark transition-colors";
@@ -171,6 +224,19 @@ const Navbar: React.FC = () => {
                             <SettingsIcon size={16} />
                         </Button>
                     </div>
+
+                    {/* Push Notification Button */}
+                    {pushSupported && (
+                        <Button
+                            variant={pushEnabled ? 'secondary' : 'default'}
+                            size="sm"
+                            className="ml-2"
+                            onClick={subscribeToPush}
+                            aria-pressed={pushEnabled}
+                        >
+                            {pushEnabled ? 'Notifications Enabled' : 'Enable Notifications'}
+                        </Button>
+                    )}
                 </div>
             </motion.nav>
 
