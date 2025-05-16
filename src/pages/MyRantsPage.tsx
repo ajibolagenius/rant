@@ -17,6 +17,7 @@ import { getAnonymousUserId } from '@/utils/authorId';
 import { toast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import { useAccessibility } from '@/components/AccessibilityContext';
+import { Helmet } from 'react-helmet-async';
 
 const MyRantsPage: React.FC = () => {
     // Commented out until translation issue is fixed
@@ -156,146 +157,194 @@ const MyRantsPage: React.FC = () => {
     );
 
     return (
-        <div className="min-h-screen bg-background-primary">
-            <Navbar />
+        <>
+            <Helmet>
+                <title>My Rants & Bookmarks | Rant</title>
+                <meta name="description" content="View and manage your anonymous rants and bookmarks on Rant. Your rants are private and stored only in your browser." />
+                <script type="application/ld+json">
+                    {`
+                    {
+                        "@context": "https://schema.org",
+                        "@type": "CollectionPage",
+                        "name": "My Rants & Bookmarks",
+                        "description": "A private collection of your anonymous rants and bookmarked posts on Rant.",
+                        "mainEntity": [
+                            {
+                                "@type": "ItemList",
+                                "name": "My Rants",
+                                "itemListElement": [
+                                    ${myRants.map((rant, i) => `{
+                                        "@type": "CreativeWork",
+                                        "position": ${i + 1},
+                                        "name": "Rant #${i + 1}",
+                                        "text": "${rant.content.replace(/"/g, '\"').slice(0, 120)}...",
+                                        "dateCreated": "${rant.created_at}",
+                                        "inLanguage": "en",
+                                        "keywords": "${rant.mood}"
+                                    }`).join(',')}
+                                ]
+                            },
+                            {
+                                "@type": "ItemList",
+                                "name": "Bookmarks",
+                                "itemListElement": [
+                                    ${bookmarkedRants.map((rant, i) => `{
+                                        "@type": "CreativeWork",
+                                        "position": ${i + 1},
+                                        "name": "Bookmarked Rant #${i + 1}",
+                                        "text": "${rant.content.replace(/"/g, '\"').slice(0, 120)}...",
+                                        "dateCreated": "${rant.created_at}",
+                                        "inLanguage": "en",
+                                        "keywords": "${rant.mood}"
+                                    }`).join(',')}
+                                ]
+                            }
+                        ]
+                    }
+                    `}
+                </script>
+            </Helmet>
+            <div className="min-h-screen bg-background-primary">
+                <Navbar />
 
-            <div className="container mx-auto px-4 py-8 max-w-6xl">
-                <motion.div
-                    className="bg-background-dark border border-border-subtle rounded-xl overflow-hidden shadow-high"
-                    initial={reducedMotion ? undefined : { opacity: 0, y: 20 }}
-                    animate={reducedMotion ? undefined : { opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                >
-                    <div className="border-b border-border-subtle bg-gradient-to-r from-background-dark to-background-secondary p-4 sm:p-6">
-                        <div className="flex items-center justify-between">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => navigate('/')}
-                                className="text-text-muted hover:text-text-strong hover:bg-background-secondary font-ui"
-                            >
-                                <ArrowLeftIcon className="mr-2" size={16} />
-                                Back
-                            </Button>
-                            <h1 className="text-xl sm:text-2xl font-heading font-bold text-text-strong">My Rants</h1>
-                            <div className="w-[70px]"></div> {/* Spacer for centering */}
-                        </div>
-                    </div>
-
-                    <div className="p-4 sm:p-6">
-                        <Tabs
-                            defaultValue="my-rants"
-                            value={activeTab}
-                            onValueChange={setActiveTab}
-                            className="w-full"
-                        >
-                            <TabsList className="w-full grid grid-cols-2 bg-background-secondary p-1 rounded-xl mb-6 border border-border-subtle">
-                                <TabsTrigger
-                                    value="my-rants"
-                                    className="data-[state=active]:bg-primary data-[state=active]:text-white py-2 font-ui font-medium"
-                                >
-                                    <PenLineIcon className="mr-2" size={16} />
-                                    My Rants
-                                </TabsTrigger>
-                                <TabsTrigger
-                                    value="bookmarks"
-                                    className="data-[state=active]:bg-primary data-[state=active]:text-white py-2 font-ui font-medium"
-                                >
-                                    <BookmarkIcon className="mr-2" size={16} />
-                                    Bookmarks
-                                </TabsTrigger>
-                            </TabsList>
-
-                            <div className="relative min-h-[60vh]">
-                                <TabsContent value="my-rants" className="p-0 m-0 outline-none">
-                                    {loading ? (
-                                        <div className="flex justify-center items-center py-16">
-                                            <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-                                        </div>
-                                    ) : myRants.length > 0 ? (
-                                        <ScrollArea className="h-[60vh] pr-4">
-                                            <motion.div
-                                                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-                                                variants={containerVariants}
-                                                initial={reducedMotion ? undefined : "hidden"}
-                                                animate={reducedMotion ? undefined : "visible"}
-                                            >
-                                                {myRants.map((rant, index) => (
-                                                    <motion.div
-                                                        key={rant.id}
-                                                        variants={itemVariants}
-                                                    >
-                                                        <RantCard
-                                                            rant={rant}
-                                                            index={index}
-                                                            onLike={() => handleLikeRant(rant.id)}
-                                                        />
-                                                    </motion.div>
-                                                ))}
-                                            </motion.div>
-                                        </ScrollArea>
-                                    ) : (
-                                        renderEmptyState(true)
-                                    )}
-                                </TabsContent>
-
-                                <TabsContent value="bookmarks" className="p-0 m-0 outline-none">
-                                    {loading ? (
-                                        <div className="flex justify-center items-center py-16">
-                                            <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-                                        </div>
-                                    ) : bookmarkedRants.length > 0 ? (
-                                        <ScrollArea className="h-[60vh] pr-4">
-                                            <motion.div
-                                                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-                                                variants={containerVariants}
-                                                initial={reducedMotion ? undefined : "hidden"}
-                                                animate={reducedMotion ? undefined : "visible"}
-                                            >
-                                                {bookmarkedRants.map((rant, index) => (
-                                                    <motion.div
-                                                        key={rant.id}
-                                                        variants={itemVariants}
-                                                    >
-                                                        <RantCard
-                                                            rant={rant}
-                                                            index={index}
-                                                            onLike={() => handleLikeRant(rant.id)}
-                                                        />
-                                                    </motion.div>
-                                                ))}
-                                            </motion.div>
-                                        </ScrollArea>
-                                    ) : (
-                                        renderEmptyState(false)
-                                    )}
-                                </TabsContent>
-                            </div>
-                        </Tabs>
-
-                        {/* Info footer */}
-                        <div className="mt-6 pt-4 border-t border-border-subtle flex items-center justify-between text-xs text-text-muted">
-                            <div className="flex items-center gap-1 font-body">
-                                <InfoIcon size={12} />
-                                <span>Your rants remain anonymous - data is stored only in your browser</span>
-                            </div>
-                            <div className="font-ui">
+                <div className="container mx-auto px-4 py-8 max-w-6xl">
+                    <motion.div
+                        className="bg-background-dark border border-border-subtle rounded-xl overflow-hidden shadow-high"
+                        initial={reducedMotion ? undefined : { opacity: 0, y: 20 }}
+                        animate={reducedMotion ? undefined : { opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        <div className="border-b border-border-subtle bg-gradient-to-r from-background-dark to-background-secondary p-4 sm:p-6">
+                            <div className="flex items-center justify-between">
                                 <Button
-                                    variant="link"
+                                    variant="ghost"
                                     size="sm"
-                                    className="text-xs text-primary hover:text-primary/90 p-0"
                                     onClick={() => navigate('/')}
+                                    className="text-text-muted hover:text-text-strong hover:bg-background-secondary font-ui"
                                 >
-                                    Browse all rants
+                                    <ArrowLeftIcon className="mr-2" size={16} />
+                                    Back
                                 </Button>
+                                <h1 className="text-xl sm:text-2xl font-heading font-bold text-text-strong">My Rants</h1>
+                                <div className="w-[70px]"></div> {/* Spacer for centering */}
                             </div>
                         </div>
-                    </div>
-                </motion.div>
+
+                        <div className="p-4 sm:p-6">
+                            <Tabs
+                                defaultValue="my-rants"
+                                value={activeTab}
+                                onValueChange={setActiveTab}
+                                className="w-full"
+                            >
+                                <TabsList className="w-full grid grid-cols-2 bg-background-secondary p-1 rounded-xl mb-6 border border-border-subtle">
+                                    <TabsTrigger
+                                        value="my-rants"
+                                        className="data-[state=active]:bg-primary data-[state=active]:text-white py-2 font-ui font-medium"
+                                    >
+                                        <PenLineIcon className="mr-2" size={16} />
+                                        My Rants
+                                    </TabsTrigger>
+                                    <TabsTrigger
+                                        value="bookmarks"
+                                        className="data-[state=active]:bg-primary data-[state=active]:text-white py-2 font-ui font-medium"
+                                    >
+                                        <BookmarkIcon className="mr-2" size={16} />
+                                        Bookmarks
+                                    </TabsTrigger>
+                                </TabsList>
+
+                                <div className="relative min-h-[60vh]">
+                                    <TabsContent value="my-rants" className="p-0 m-0 outline-none">
+                                        {loading ? (
+                                            <div className="flex justify-center items-center py-16">
+                                                <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                                            </div>
+                                        ) : myRants.length > 0 ? (
+                                            <ScrollArea className="h-[60vh] pr-4">
+                                                <motion.div
+                                                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                                                    variants={containerVariants}
+                                                    initial={reducedMotion ? undefined : "hidden"}
+                                                    animate={reducedMotion ? undefined : "visible"}
+                                                >
+                                                    {myRants.map((rant, index) => (
+                                                        <motion.div
+                                                            key={rant.id}
+                                                            variants={itemVariants}
+                                                        >
+                                                            <RantCard
+                                                                rant={rant}
+                                                                index={index}
+                                                                onLike={() => handleLikeRant(rant.id)}
+                                                            />
+                                                        </motion.div>
+                                                    ))}
+                                                </motion.div>
+                                            </ScrollArea>
+                                        ) : (
+                                            renderEmptyState(true)
+                                        )}
+                                    </TabsContent>
+
+                                    <TabsContent value="bookmarks" className="p-0 m-0 outline-none">
+                                        {loading ? (
+                                            <div className="flex justify-center items-center py-16">
+                                                <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                                            </div>
+                                        ) : bookmarkedRants.length > 0 ? (
+                                            <ScrollArea className="h-[60vh] pr-4">
+                                                <motion.div
+                                                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                                                    variants={containerVariants}
+                                                    initial={reducedMotion ? undefined : "hidden"}
+                                                    animate={reducedMotion ? undefined : "visible"}
+                                                >
+                                                    {bookmarkedRants.map((rant, index) => (
+                                                        <motion.div
+                                                            key={rant.id}
+                                                            variants={itemVariants}
+                                                        >
+                                                            <RantCard
+                                                                rant={rant}
+                                                                index={index}
+                                                                onLike={() => handleLikeRant(rant.id)}
+                                                            />
+                                                        </motion.div>
+                                                    ))}
+                                                </motion.div>
+                                            </ScrollArea>
+                                        ) : (
+                                            renderEmptyState(false)
+                                        )}
+                                    </TabsContent>
+                                </div>
+                            </Tabs>
+
+                            {/* Info footer */}
+                            <div className="mt-6 pt-4 border-t border-border-subtle flex items-center justify-between text-xs text-text-muted">
+                                <div className="flex items-center gap-1 font-body">
+                                    <InfoIcon size={12} />
+                                    <span>Your rants remain anonymous - data is stored only in your browser</span>
+                                </div>
+                                <div className="font-ui">
+                                    <Button
+                                        variant="link"
+                                        size="sm"
+                                        className="text-xs text-primary hover:text-primary/90 p-0"
+                                        onClick={() => navigate('/')}
+                                    >
+                                        Browse all rants
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                </div>
             </div>
 
             <Footer />
-        </div>
+        </>
     );
 };
 

@@ -1,0 +1,26 @@
+{
+  "name": "Rant: Anonymous Space for Unfiltered Thoughts",
+  "short_name": "Rant",
+  "description": "Rant is your anonymous space to share unfiltered thoughts. Join the conversation, express yourself with different moods, and connect with others.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#09090B",
+  "theme_color": "#904FFF",
+  "icons": [
+    {
+      "src": "/assets/rant_logo.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    }
+  ]
+}

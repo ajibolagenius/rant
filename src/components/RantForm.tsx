@@ -239,7 +239,11 @@ const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
             </div>
             <CardContent className="p-4 sm:p-5 md:p-6">
                 <form onKeyDown={handleKeyDown} >
+                    <label htmlFor="rant-content" className="sr-only">
+                        Your rant (required)
+                    </label>
                     <textarea
+                        id="rant-content"
                         ref={textareaRef}
                         value={content}
                         onChange={(e) => setContent(e.target.value.substring(0, maxLength))}

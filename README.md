@@ -35,7 +35,7 @@ Rant is a modern, open-source web application that provides a safe, anonymous pl
 
 ## Screenshots
 
-![Rant Landing Page](public/assets/rant_landing.png)
+![Rant Landing Page](public/assets/rant_landing.webp)
 
 ---
 
