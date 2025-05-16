@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { QuestionMarkCircledIcon } from "@radix-ui/react-icons";
@@ -12,8 +12,6 @@ import IntroSection from "@/components/IntroSection";
 import { toast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { createFuzzySearcher, performFuzzySearch } from "@/lib/utils/fuzzySearch";
-import { parseSearchQuery } from "@/utils/searchParser";
 import { supabase, fetchRants, addRant, likeRant } from "@/lib/supabase";
 import { getAnonymousUserId } from "@/utils/authorId";
 import RantCard from "@/components/RantCard";
@@ -144,9 +142,6 @@ const Index: React.FC = () => {
     const rantFormRef = useRef<HTMLDivElement>(null);
     const rantsListRef = useRef<HTMLDivElement>(null);
     const submittedRantIds = useRef<Set<string>>(new Set());
-
-    // Create fuzzy searcher with memoization
-    const fuzzySearcher = useMemo(() => createFuzzySearcher(rants), [rants]);
 
     // Function to safely parse URL parameters
     const safeParseUrlParams = () => {
@@ -697,13 +692,34 @@ const Index: React.FC = () => {
 
             // If resetting, replace the list; otherwise append
             if (reset) {
-                setRants(data);
+                setRants(
+                    (data as Partial<Rant>[]).map((item) => ({
+                        id: item.id!,
+                        content: item.content!,
+                        mood: item.mood!,
+                        anonymous_user_id: item.anonymous_user_id!,
+                        likes: item.likes ?? 0,
+                        created_at: item.created_at!,
+                        comments: item.comments ?? 0,
+                        userAlias: item.userAlias ?? 'Anonymous',
+                    }))
+                );
                 setPage(0);
             } else {
-                // Prevent duplicates when loading more
                 setRants(prev => {
                     const existingIds = new Set(prev.map(rant => rant.id));
-                    const newRants = data.filter(rant => !existingIds.has(rant.id));
+                    const newRants = (data as Partial<Rant>[])
+                        .filter(item => !existingIds.has(item.id!))
+                        .map(item => ({
+                            id: item.id!,
+                            content: item.content!,
+                            mood: item.mood!,
+                            anonymous_user_id: item.anonymous_user_id!,
+                            likes: item.likes ?? 0,
+                            created_at: item.created_at!,
+                            comments: item.comments ?? 0,
+                            userAlias: item.userAlias ?? 'Anonymous',
+                        }));
                     return [...prev, ...newRants];
                 });
                 setPage(prev => prev + 1);
@@ -726,7 +742,7 @@ const Index: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    }, [page, sortOption, selectedMoods, searchQuery, searchMood, retryCount]);
+    }, [page, sortOption, selectedMoods, searchQuery, searchMood, retryCount, setRants, setError, setLoading, loading]);
 
     // Load more rants when user scrolls to bottom with debounce
     const loadMoreRantsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -1044,7 +1060,7 @@ const Index: React.FC = () => {
         setRetryCount(prev => prev + 1);
         setError(null);
         loadRants(true);
-    }, [loadRants]); // Added useCallback to stabilize the function
+    }, [loadRants]); // Added setError to dependencies
 
     // Custom render function for MasonryGrid with error handling
     const renderRantItem = (rant: Rant, index: number) => {

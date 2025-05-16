@@ -39,7 +39,8 @@ export async function fetchRants({
 
         // Apply search query
         if (searchQuery) {
-            query = query.ilike('content', `%${searchQuery}%`);
+            // Use full-text search instead of ilike for fuzzy search
+            query = query.textSearch('content', searchQuery, { type: 'plain' });
         }
 
         // Apply mood search
