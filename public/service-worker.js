@@ -31,7 +31,7 @@ registerRoute(
 );
 
 // Cache HTML navigation requests (for SPA routes)
-npx serve distnpx serve distnpx serve distregisterRoute(
+registerRoute(
     ({ request }) => request.mode === 'navigate',
     new NetworkFirst({
         cacheName: 'pages',

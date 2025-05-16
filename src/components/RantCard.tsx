@@ -90,6 +90,9 @@ const RantCard: React.FC<RantCardProps> = ({
     // 2. Modal state for opening the rant in a modal
     const [isModalOpen, setIsModalOpen] = useState(false);
 
+    // Related rants for modal
+    const [relatedRants, setRelatedRants] = useState<Rant[]>([]);
+
     // Check if current user is the owner of this rant
     const isOwner = currentUserId && rant.anonymous_user_id === currentUserId;
     // For anonymous rants, check if the anonymous ID matches the user's anonymous ID
@@ -251,6 +254,23 @@ const RantCard: React.FC<RantCardProps> = ({
 
     const handleModalClose = () => setIsModalOpen(false);
 
+    // Fetch related rants by mood when modal opens
+    useEffect(() => {
+        if (!isModalOpen) return;
+        // Fetch related rants by mood (exclude current, show up to 4)
+        supabase
+            .from("rants")
+            .select("*")
+            .eq("mood", rant.mood)
+            .neq("id", rant.id)
+            .order('created_at', { ascending: false })
+            .limit(4)
+            .then(({ data }) => {
+                if (Array.isArray(data) && data.length > 0) setRelatedRants(data as Rant[]);
+                else setRelatedRants([]);
+            });
+    }, [isModalOpen, rant.mood, rant.id]);
+
     return (
         <>
             <motion.div
@@ -358,18 +378,33 @@ const RantCard: React.FC<RantCardProps> = ({
                             <div className="text-xs text-text-muted">
                                 {formattedTime}
                             </div>
-                            <button
-                                className="hover:scale-110 transition-transform text-text-muted hover:text-[#6DD19F] ml-2"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    const url = `${window.location.origin}/rant/${rant.id}`;
-                                    navigator.clipboard.writeText(url);
-                                    toast({ title: 'Copied to Clipboard', description: 'Rant link has been copied to clipboard.' });
-                                }}
-                                aria-label="Copy rant link"
-                            >
-                                <Share1Icon className="w-4 h-4" />
-                            </button>
+                            <div className="flex items-center gap-2">
+                                {/* Share: Copy link */}
+                                <button
+                                    className="hover:scale-110 transition-transform text-text-muted hover:text-[#6DD19F] ml-2"
+                                    onClick={e => {
+                                        e.stopPropagation();
+                                        const url = `${window.location.origin}/rant/${rant.id}`;
+                                        navigator.clipboard.writeText(url);
+                                        toast({ title: 'Copied to Clipboard', description: 'Rant link has been copied to clipboard.' });
+                                    }}
+                                    aria-label="Copy rant link"
+                                >
+                                    <Share1Icon className="w-4 h-4" />
+                                </button>
+                                {/* Share: Twitter */}
+                                <button
+                                    className="hover:scale-110 transition-transform text-text-muted hover:text-[#1DA1F2]"
+                                    onClick={e => {
+                                        e.stopPropagation();
+                                        const url = `${window.location.origin}/rant/${rant.id}`;
+                                        window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(rant.content.slice(0, 120))}`, '_blank');
+                                    }}
+                                    aria-label="Share on Twitter"
+                                >
+                                    <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M22.46 5.924c-.793.352-1.646.59-2.54.698a4.48 4.48 0 0 0 1.965-2.475 8.94 8.94 0 0 1-2.828 1.082 4.48 4.48 0 0 0-7.635 4.085A12.72 12.72 0 0 1 3.11 4.86a4.48 4.48 0 0 0 1.388 5.976 4.47 4.47 0 0 1-2.03-.56v.057a4.48 4.48 0 0 0 3.594 4.393 4.48 4.48 0 0 1-2.025.077 4.48 4.48 0 0 0 4.184 3.11A8.98 8.98 0 0 1 2 19.54a12.7 12.7 0 0 0 6.88 2.017c8.26 0 12.78-6.84 12.78-12.77 0-.195-.004-.39-.013-.583A9.22 9.22 0 0 0 24 4.59a8.93 8.93 0 0 1-2.54.698z" /></svg>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -495,18 +530,59 @@ const RantCard: React.FC<RantCardProps> = ({
                                     <div className="text-xs text-text-muted">
                                         {rant.created_at ? new Date(rant.created_at).toLocaleString(undefined, { dateStyle: 'full', timeStyle: 'short' }) : ''} ({formattedTime})
                                     </div>
-                                    <button
-                                        className="hover:scale-110 transition-transform text-text-muted hover:text-[#6DD19F] ml-2"
-                                        onClick={() => {
-                                            const url = `${window.location.origin}/rant/${rant.id}`;
-                                            navigator.clipboard.writeText(url);
-                                            toast({ title: 'Copied to Clipboard', description: 'Rant link has been copied to clipboard.' });
-                                        }}
-                                        aria-label="Copy rant link"
-                                    >
-                                        <Share1Icon className="w-4 h-4" />
-                                    </button>
+                                    <div className="flex items-center gap-2">
+                                        {/* Share: Copy link */}
+                                        <button
+                                            className="hover:scale-110 transition-transform text-text-muted hover:text-[#6DD19F] ml-2"
+                                            onClick={e => {
+                                                e.stopPropagation();
+                                                const url = `${window.location.origin}/rant/${rant.id}`;
+                                                navigator.clipboard.writeText(url);
+                                                toast({ title: 'Copied to Clipboard', description: 'Rant link has been copied to clipboard.' });
+                                            }}
+                                            aria-label="Copy rant link"
+                                        >
+                                            <Share1Icon className="w-4 h-4" />
+                                        </button>
+                                        {/* Share: Twitter */}
+                                        <button
+                                            className="hover:scale-110 transition-transform text-text-muted hover:text-[#1DA1F2]"
+                                            onClick={e => {
+                                                e.stopPropagation();
+                                                const url = `${window.location.origin}/rant/${rant.id}`;
+                                                window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(rant.content.slice(0, 120))}`, '_blank');
+                                            }}
+                                            aria-label="Share on Twitter"
+                                        >
+                                            <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M22.46 5.924c-.793.352-1.646.59-2.54.698a4.48 4.48 0 0 0 1.965-2.475 8.94 8.94 0 0 1-2.828 1.082 4.48 4.48 0 0 0-7.635 4.085A12.72 12.72 0 0 1 3.11 4.86a4.48 4.48 0 0 0 1.388 5.976 4.47 4.47 0 0 1-2.03-.56v.057a4.48 4.48 0 0 0 3.594 4.393 4.48 4.48 0 0 1-2.025.077 4.48 4.48 0 0 0 4.184 3.11A8.98 8.98 0 0 1 2 19.54a12.7 12.7 0 0 0 6.88 2.017c8.26 0 12.78-6.84 12.78-12.77 0-.195-.004-.39-.013-.583A9.22 9.22 0 0 0 24 4.59a8.93 8.93 0 0 1-2.54.698z" /></svg>
+                                        </button>
+                                    </div>
                                 </div>
+                                {/* Related rants section */}
+                                {relatedRants && relatedRants.length > 0 && (
+                                    <div className="mt-6">
+                                        <div className="text-xs text-text-muted font-ui mb-2">
+                                            Related rants with mood{' '}
+                                            <button
+                                                className="underline text-primary font-semibold hover:text-primary/80 transition-colors"
+                                                style={{ color: moodColor, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                                                onClick={() => window.location.href = `/?mood=${encodeURIComponent(rant.mood)}`}
+                                                aria-label={`Filter rants by mood: ${moodText}`}
+                                            >
+                                                {moodText}
+                                            </button>:
+                                        </div>
+                                        <div className="flex flex-col gap-2">
+                                            {relatedRants.map(r => (
+                                                <div key={r.id} className="rounded-lg border border-border-subtle bg-background-secondary px-3 py-2 text-xs text-text-primary cursor-pointer hover:bg-background-dark/80 transition"
+                                                    onClick={() => window.location.href = `/rant/${r.id}`}
+                                                >
+                                                    <span className="font-bold" style={{ color: getMoodColor(r.mood) }}>{getMoodUnicodeEmoji(r.mood)} {r.mood}</span> · {r.content.slice(0, 60)}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </motion.div>

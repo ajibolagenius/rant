@@ -68,6 +68,7 @@ class ErrorBoundary extends React.Component<
 const Index = lazy(() => import("./pages/Index"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const MyRantsPage = lazy(() => import("./pages/MyRantsPage"));
+const RantPage = lazy(() => import("./pages/RantPage"));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -235,6 +236,11 @@ const App = () => {
                                                     <Route path="/my-rants" element={
                                                         <ErrorBoundary>
                                                             <MyRantsPage />
+                                                        </ErrorBoundary>
+                                                    } />
+                                                    <Route path="/rant/:id" element={
+                                                        <ErrorBoundary>
+                                                            <RantPage />
                                                         </ErrorBoundary>
                                                     } />
                                                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
