@@ -19,4 +19,20 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      // Ensure service worker is copied to the root of the build output
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        sw: path.resolve(__dirname, 'public/service-worker.js'),
+      },
+      output: {
+        // Keep service worker at root
+        entryFileNames: (chunkInfo) => {
+          if (chunkInfo.name === 'sw') return 'service-worker.js';
+          return '[name].js';
+        },
+      },
+    },
+  },
 }));
