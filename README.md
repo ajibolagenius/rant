@@ -1,4 +1,4 @@
-# Rant: Anonymous Space for Unfiltered Thoughts
+# Rant: Anonymous Space for Unfiltered Thoughts 😶‍🌫️
 
 Rant is a modern, open-source web application that provides a safe, anonymous platform for users to share their thoughts, frustrations, and celebrations with the world. Express your mood, connect with others, and explore a vibrant community—without revealing your identity.
 
@@ -16,14 +16,16 @@ Rant is a modern, open-source web application that provides a safe, anonymous pl
 - [Performance & Technical](#performance--technical)
 - [Contributing](#contributing)
 - [License](#license)
+- [Acknowledgements](#acknowledgements)
+- [Contact](#contact)
 
 ---
 
-## Features
+## Features ✨
 - **Anonymous Posting:** Share rants without creating an account. Your identity is never revealed.
-- **Mood Expression:** Tag your rants with a mood (e.g., sad, happy, angry, loved, etc.) and filter by mood.
+- **Mood Expression:** Tag your rants with a mood (e.g., 😢, 😃, 😡, ❤️, etc.) and filter by mood.
 - **Real-time Updates:** New rants and likes appear instantly via Supabase real-time subscriptions.
-- **Interactive UI:** Like, bookmark, and comment on rants. Confetti and toast notifications enhance feedback.
+- **Interactive UI:** Like, bookmark, and comment on rants. Confetti 🎉 and toast notifications enhance feedback.
 - **Advanced Filtering:** Search and filter rants by mood, popularity, or recency.
 - **Personal Rant History:** View your own rants and bookmarks (stored locally in your browser).
 - **Keyboard Shortcuts:** Quickly filter, navigate, and interact using keyboard shortcuts.
@@ -39,7 +41,7 @@ Rant is a modern, open-source web application that provides a safe, anonymous pl
 
 ---
 
-## Tech Stack
+## Tech Stack 🛠️
 
 **Frontend:**
 - React
@@ -94,7 +96,7 @@ Rant is a modern, open-source web application that provides a safe, anonymous pl
 
 ---
 
-## Getting Started
+## Getting Started 🚀
 
 ### Prerequisites
 - Node.js (v18+ recommended)
@@ -105,31 +107,31 @@ Rant is a modern, open-source web application that provides a safe, anonymous pl
 
 1. **Clone the repository:**
 
-   ```bash
-   git clone https://github.com/ajibolagenius/rant.git
-   cd rant
-   ```
+    ```bash
+    git clone https://github.com/ajibolagenius/rant.git
+    cd rant
+    ```
 2. **Install dependencies:**
 
-   ```bash
-   npm install
-   # or
-   yarn install
-   ```
+    ```bash
+    npm install
+    # or
+    yarn install
+    ```
 3. **Configure environment variables:**
 - Copy `.env.example` to `.env` and fill in your Supabase credentials:
 
-     ```env
-     VITE_SUPABASE_URL=your-supabase-url
-     VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
-     ```
+      ```env
+      VITE_SUPABASE_URL=your-supabase-url
+      VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+      ```
 4. **Start the development server:**
 
-   ```bash
-   npm run dev
-   # or
-   yarn dev
-   ```
+    ```bash
+    npm run dev
+    # or
+    yarn dev
+    ```
 5. **Open [http://localhost:8080](http://localhost:8080) in your browser.**
 
 ---
@@ -138,13 +140,13 @@ Rant is a modern, open-source web application that provides a safe, anonymous pl
 
 - **Post a Rant:** Use the input form to write and submit your rant. Select a mood to tag your post.
 - **Browse & Filter:** Explore rants by mood, popularity, or recency. Use the search bar and mood filters.
-- **Like & Bookmark:** Interact with rants by liking or bookmarking them. Bookmarks and your own rants are stored locally.
+- **Like & Bookmark:** Interact with rants by liking 👍 or bookmarking ⭐ them. Bookmarks and your own rants are stored locally.
 - **Keyboard Shortcuts:** Press <kbd>Shift</kbd> + <kbd>?</kbd> to view all available shortcuts.
 - **Settings:** Access theme, language, and accessibility options from the settings menu.
 
 ---
 
-## Privacy & Security
+## Privacy & Security 🔒
 
 - **Anonymous Posting:** No user accounts or personal data required. Rants are stored anonymously.
 - **Row Level Security (RLS):** Supabase policies ensure that users can only access their own data.
@@ -156,7 +158,7 @@ Rant is a modern, open-source web application that provides a safe, anonymous pl
 
 ---
 
-## Accessibility
+## Accessibility ♿
 
 - **High contrast mode:** Better visibility for users with visual impairments
 - **Reduced motion:** Less animation for users with motion sensitivity
@@ -166,7 +168,7 @@ Rant is a modern, open-source web application that provides a safe, anonymous pl
 
 ---
 
-## Performance & Technical
+## Performance & Technical ⚡
 
 - **Optimized Rendering:** React.memo implementation to prevent unnecessary re-renders
 - **Efficient Data Fetching:** Optimized Supabase queries selecting only required fields
@@ -176,7 +178,7 @@ Rant is a modern, open-source web application that provides a safe, anonymous pl
 
 ---
 
-## Contributing
+## Contributing 🤝
 
 Contributions are welcome! To contribute:
 
@@ -192,11 +194,11 @@ Please follow the code style and add tests where appropriate.
 
 ## License
 
-> _No license file._
+This project is licensed under the [MIT License](LICENSE).
 
 ---
 
-## Acknowledgements
+## Acknowledgements 🙏
 
 - [Supabase](https://supabase.com/)
 - [Shadcn UI](https://ui.shadcn.com/)
