@@ -1,11 +1,11 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { colors } from '@/utils/colors';
-import { getMoodColor, getMoodGradient } from '@/lib/utils/mood';
+import { getMoodColor, getMoodGradient, MoodType } from '@/lib/utils/mood';
 
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
     variant?: 'default' | 'elevated' | 'outlined';
-    mood?: string;
+    mood?: MoodType;
     useMoodGradient?: boolean;
 }
 
@@ -29,11 +29,11 @@ const Card: React.FC<CardProps> = ({
 
     if (mood && useMoodGradient) {
         style = {
-            background: getMoodGradient(mood as any),
+            background: getMoodGradient(mood),
         };
     } else if (mood) {
         style = {
-            borderColor: `${getMoodColor(mood as any)}88`,
+            borderColor: `${getMoodColor(mood)}88`,
         };
     }
 

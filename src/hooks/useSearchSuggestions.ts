@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Rant } from '../lib/utils/fuzzySearch'; // Using the interface from fuzzySearch
+import { Rant } from '../lib/types/rant'; // Use canonical type
 
 export function useSearchSuggestions(rants: Rant[] = [], maxSuggestions = 5) {
     const [suggestions, setSuggestions] = useState<string[]>([]);
