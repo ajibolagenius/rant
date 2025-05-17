@@ -1,4 +1,4 @@
-# Rant: Anonymous Space for Unfiltered Thoughts 😶‍🌫️
+# Rant: Anonymous Space for Unfiltered Thoughts 
 
 Rant is a modern, open-source web application that provides a safe, anonymous platform for users to share their thoughts, frustrations, and celebrations with the world. Express your mood, connect with others, and explore a vibrant community—without revealing your identity.
 
