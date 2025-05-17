@@ -13,6 +13,24 @@ const GRADIENT = 'linear-gradient(90deg, #00C2FF 0%, #904FFF 100%)';
 const MOOD_DISPLAY_TIME = 900; // ms per mood
 const LOADING_DURATION = 5000; // 5 seconds
 
+const LOADING_QUOTES = [
+    "Loading the space for unfiltered thought...",
+    "Warming up the anonymous confessions...",
+    "Setting up your safe space...",
+    "Letting thoughts run wild...",
+    "Preparing a judgment-free zone...",
+    "Opening the vault of secrets...",
+    "Tuning in to your inner voice...",
+    "Making room for your rants...",
+    "Brewing a fresh batch of honesty...",
+    "Giving your mind a megaphone...",
+    "Inviting your unfiltered self...",
+    "Spinning up the venting chamber...",
+    "Unleashing the real you...",
+    "Loading a world without filters...",
+    "Getting ready for raw expression..."
+];
+
 interface PreloaderProps {
     show?: boolean;
     onDone?: () => void;
@@ -22,6 +40,7 @@ const Preloader: React.FC<PreloaderProps> = ({ show = true, onDone }) => {
     const [progress, setProgress] = useState(0);
     const [currentMood, setCurrentMood] = useState(allMoods[0]);
     const [moodIndex, setMoodIndex] = useState(0);
+    const [quote, setQuote] = useState(LOADING_QUOTES[0]);
     const progressRef = useRef<NodeJS.Timeout | null>(null);
     const moodRef = useRef<NodeJS.Timeout | null>(null);
     const darkBg = 'linear-gradient(135deg, #09090B 0%, #181824 100%)';
@@ -56,6 +75,11 @@ const Preloader: React.FC<PreloaderProps> = ({ show = true, onDone }) => {
         };
     }, [show]);
 
+    // Pick a random quote on mount
+    useEffect(() => {
+        setQuote(LOADING_QUOTES[Math.floor(Math.random() * LOADING_QUOTES.length)]);
+    }, []);
+
     // Call onDone after 5 seconds
     useEffect(() => {
         if (progress >= 100 && onDone) {
@@ -78,6 +102,12 @@ const Preloader: React.FC<PreloaderProps> = ({ show = true, onDone }) => {
                 aria-live="polite"
             >
                 <motion.div className="flex flex-col items-center justify-center w-full h-full gap-8 px-4">
+                    {/* Loading quote */}
+                    <div className="mb-2 text-center w-full max-w-lg">
+                        <span className="block text-xs sm:text-sm md:text-base font-light text-cyan-100/50 tracking-wide select-none">
+                            {quote}
+                        </span>
+                    </div>
                     {/* Indicator bar */}
                     <div className="w-full max-w-xs sm:max-w-sm md:max-w-md flex items-center gap-2">
                         <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
