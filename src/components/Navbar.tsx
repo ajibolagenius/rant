@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { supabase, likeRant } from "@/lib/supabase";
 import { getAnonymousUserId } from "@/utils/authorId";
 import { toast } from "@/hooks/use-toast";
-import { FileTextIcon, SettingsIcon } from 'lucide-react';
+import { FileTextIcon, SettingsIcon, BellIcon } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
 import { useNavigate } from 'react-router-dom';
 
@@ -225,17 +225,26 @@ const Navbar: React.FC = () => {
                         </Button>
                     </div>
 
-                    {/* Push Notification Button */}
-                    {pushSupported && !pushEnabled && (
-                        <Button
-                            variant="default"
-                            size="sm"
-                            className="ml-2"
-                            onClick={subscribeToPush}
-                            aria-pressed={pushEnabled}
-                        >
-                            Enable Notifications
-                        </Button>
+                    {/* Push Notification Icon with Red Dot if Enabled */}
+                    {pushSupported && (
+                        <div className="relative">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={!pushEnabled ? subscribeToPush : undefined}
+                                className={iconButtonClass}
+                                aria-label={pushEnabled ? "Notifications Enabled" : "Enable Notifications"}
+                                title={pushEnabled ? "Notifications Enabled" : "Enable Notifications"}
+                            >
+                                <BellIcon size={16} />
+                            </Button>
+                            {pushEnabled && (
+                                <span
+                                    className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-500 border-2 border-background-dark shadow"
+                                    aria-label="Notifications enabled"
+                                />
+                            )}
+                        </div>
                     )}
                 </div>
             </motion.nav>
