@@ -15,7 +15,6 @@ import '@/styles/fonts.css';
 import '@/styles/theme.css';
 import { Analytics } from "@vercel/analytics/react";
 import { HelmetProvider } from 'react-helmet-async';
-import Preloader from "@/components/Preloader";
 
 // Error boundary component for catching rendering errors
 class ErrorBoundary extends React.Component<
@@ -71,9 +70,6 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const MyRantsPage = lazy(() => import("./pages/MyRantsPage"));
 const RantPage = lazy(() => import("./pages/RantPage"));
 
-// Loading fallback component
-const LoadingFallback = () => <Preloader />;
-
 // Create a query client with error handling
 const createQueryClient = () => {
     return new QueryClient({
@@ -81,14 +77,8 @@ const createQueryClient = () => {
             queries: {
                 retry: 2,
                 refetchOnWindowFocus: false,
-                onError: (error) => {
-                    console.error("Query error:", error);
-                },
             },
             mutations: {
-                onError: (error) => {
-                    console.error("Mutation error:", error);
-                },
             },
         },
     });
@@ -222,7 +212,7 @@ const App = () => {
                                     <Sonner />
                                     <ErrorBoundary>
                                         <AppRouter>
-                                            <Suspense fallback={<LoadingFallback />}>
+                                            <Suspense fallback={null}>
                                                 <Routes>
                                                     <Route path="/" element={
                                                         <ErrorBoundary>
