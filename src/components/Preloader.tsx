@@ -92,7 +92,7 @@ const Preloader: React.FC<PreloaderProps> = ({ show = true, onDone }) => {
     return (
         <AnimatePresence>
             <motion.div
-                className="fixed inset-0 z-[9999] flex items-center justify-center min-h-[100dvh] sm:min-h-screen w-full"
+                className="fixed inset-0 z-[9999] flex items-center justify-center min-h-screen w-full"
                 style={{ background: darkBg }}
                 variants={preloaderVariants}
                 initial="initial"
@@ -101,7 +101,7 @@ const Preloader: React.FC<PreloaderProps> = ({ show = true, onDone }) => {
                 role="status"
                 aria-live="polite"
             >
-                <motion.div className="flex flex-col items-center justify-center w-full h-full gap-8 px-4">
+                <motion.div className="flex flex-col items-center justify-center w-full h-full gap-8 px-4 max-w-full">
                     {/* Loading quote */}
                     <div className="mb-2 text-center w-full max-w-lg">
                         <span className="block text-xs sm:text-sm md:text-base font-light text-cyan-100/50 tracking-wide select-none">
@@ -109,7 +109,7 @@ const Preloader: React.FC<PreloaderProps> = ({ show = true, onDone }) => {
                         </span>
                     </div>
                     {/* Indicator bar */}
-                    <div className="w-full max-w-xs sm:max-w-sm md:max-w-md flex items-center gap-2">
+                    <div className="w-full max-w-[90vw] sm:max-w-sm md:max-w-md flex items-center gap-2">
                         <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
                             <div
                                 className="h-full rounded-full"
