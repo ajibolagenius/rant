@@ -92,55 +92,70 @@ const Preloader: React.FC<PreloaderProps> = ({ show = true, onDone }) => {
     return (
         <AnimatePresence>
             <motion.div
-                className="fixed inset-0 z-[9999] flex items-center justify-center min-h-screen w-full"
-                style={{ background: darkBg }}
-                variants={preloaderVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                role="status"
-                aria-live="polite"
+            className="fixed inset-0 z-[9999] flex items-center justify-center min-h-screen w-full"
+            style={{
+                background: darkBg,
+                touchAction: 'none',
+                WebkitTapHighlightColor: 'transparent',
+                maxWidth: '100vw',
+                maxHeight: '100vh',
+                overflow: 'hidden',
+            }}
+            variants={preloaderVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            role="status"
+            aria-live="polite"
             >
-                <motion.div className="flex flex-col items-center justify-center w-full h-full gap-8 px-4 max-w-full">
-                    {/* Loading quote */}
-                    <div className="mb-2 text-center w-full max-w-lg">
-                        <span className="block text-xs sm:text-sm md:text-base font-light text-cyan-100/50 tracking-wide select-none">
-                            {quote}
-                        </span>
-                    </div>
-                    {/* Indicator bar */}
-                    <div className="w-full max-w-[90vw] sm:max-w-sm md:max-w-md flex items-center gap-2">
-                        <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
-                            <div
-                                className="h-full rounded-full"
-                                style={{
-                                    width: `${progress}%`,
-                                    background: GRADIENT,
-                                    transition: 'width 0.2s linear',
-                                }}
-                            />
-                        </div>
-                        <span className="text-xs text-cyan-100 font-mono w-10 text-right">
-                            {progress}%
-                        </span>
-                    </div>
-                    {/* Mood emoji and text */}
-                    <motion.div
-                        key={currentMood}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.3 }}
-                        className="flex flex-col items-center mt-4 min-h-[56px]"
-                    >
-                        <span className="text-3xl md:text-4xl mb-1">
-                            <img src={getMoodEmoji(currentMood)} alt={getMoodLabel(currentMood)} className="w-10 h-10 md:w-12 md:h-12 object-contain" />
-                        </span>
-                        <span className="text-base md:text-lg text-cyan-100 font-semibold font-ui">
-                            {getMoodLabel(currentMood)}
-                        </span>
-                    </motion.div>
+            <motion.div className="flex flex-col items-center justify-center w-full h-full gap-8 px-2 sm:px-4 max-w-full">
+                {/* Loading quote */}
+                <div className="mb-2 text-center w-full max-w-xs sm:max-w-lg">
+                <span className="block text-xs sm:text-sm md:text-base font-light text-cyan-100/50 tracking-wide select-none">
+                    {quote}
+                </span>
+                </div>
+                {/* Indicator bar */}
+                <div className="w-full max-w-[98vw] sm:max-w-sm md:max-w-md flex items-center gap-2">
+                <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
+                    <div
+                    className="h-full rounded-full"
+                    style={{
+                        width: `${progress}%`,
+                        background: GRADIENT,
+                        transition: 'width 0.2s linear',
+                    }}
+                    />
+                </div>
+                <span className="text-xs text-cyan-100 font-mono w-10 text-right">
+                    {progress}%
+                </span>
+                </div>
+                {/* Mood emoji and text */}
+                <motion.div
+                key={currentMood}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+                className="flex flex-col items-center mt-4 min-h-[56px]"
+                >
+                <span className="text-3xl md:text-4xl mb-1">
+                    <img
+                    src={getMoodEmoji(currentMood)}
+                    alt={getMoodLabel(currentMood)}
+                    className="w-10 h-10 md:w-12 md:h-12 object-contain"
+                    style={{
+                        maxWidth: '100%',
+                        height: 'auto',
+                    }}
+                    />
+                </span>
+                <span className="text-base md:text-lg text-cyan-100 font-semibold font-ui">
+                    {getMoodLabel(currentMood)}
+                </span>
                 </motion.div>
+            </motion.div>
             </motion.div>
         </AnimatePresence>
     );
