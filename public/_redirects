@@ -1,0 +1,21 @@
+# Prerender for bots
+# List of common bots (Google, Facebook, Twitter, etc.)
+# This will proxy bot requests to Prerender.io
+
+# Googlebot
+/*  https://service.prerender.io/https://gorant.netlify.app/:splat  200!  User-Agent=~*Googlebot  X-Prerender-Token=bPQGbmItQ9x2rkzpaZqM
+
+# Facebook
+/*  https://service.prerender.io/https://gorant.netlify.app/:splat  200!  User-Agent=~*facebookexternalhit  X-Prerender-Token=bPQGbmItQ9x2rkzpaZqM
+
+# Twitter
+/*  https://service.prerender.io/https://gorant.netlify.app/:splat  200!  User-Agent=~*Twitterbot  X-Prerender-Token=bPQGbmItQ9x2rkzpaZqM
+
+# LinkedIn
+/*  https://service.prerender.io/https://gorant.netlify.app/:splat  200!  User-Agent=~*LinkedInBot  X-Prerender-Token=bPQGbmItQ9x2rkzpaZqM
+
+# Bingbot
+/*  https://service.prerender.io/https://gorant.netlify.app/:splat  200!  User-Agent=~*bingbot  X-Prerender-Token=bPQGbmItQ9x2rkzpaZqM
+
+# Default: serve SPA for all other requests
+/*    /index.html   200
