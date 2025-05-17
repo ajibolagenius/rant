@@ -15,6 +15,7 @@ import '@/styles/fonts.css';
 import '@/styles/theme.css';
 import { Analytics } from "@vercel/analytics/react";
 import { HelmetProvider } from 'react-helmet-async';
+import Preloader from "@/components/Preloader";
 
 // Error boundary component for catching rendering errors
 class ErrorBoundary extends React.Component<
@@ -71,12 +72,7 @@ const MyRantsPage = lazy(() => import("./pages/MyRantsPage"));
 const RantPage = lazy(() => import("./pages/RantPage"));
 
 // Loading fallback component
-const LoadingFallback = () => (
-    <div className="min-h-screen flex items-center justify-center bg-background-dark" role="status" aria-live="polite">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" aria-hidden="true"></div>
-        <span className="sr-only">Loading...</span>
-    </div>
-);
+const LoadingFallback = () => <Preloader />;
 
 // Create a query client with error handling
 const createQueryClient = () => {
