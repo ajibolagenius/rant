@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
-interface TypewriterTextProps {
+interface TypewriterTextProps extends React.HTMLAttributes<HTMLSpanElement> {
     text: string;
     className?: string;
     delay?: number;
@@ -16,7 +16,8 @@ const TypewriterText: React.FC<TypewriterTextProps> = ({
     delay = 0,
     speed = 40,
     showCaret = false,
-    onComplete
+    onComplete,
+    ...rest
 }) => {
     const [displayText, setDisplayText] = useState('');
     const [isTyping, setIsTyping] = useState(true);
@@ -26,12 +27,11 @@ const TypewriterText: React.FC<TypewriterTextProps> = ({
         setDisplayText('');
         setIsTyping(true);
 
-        let timeout: NodeJS.Timeout;
         let interval: NodeJS.Timeout;
         let currentIndex = 0;
 
         // Delay before starting to type
-        timeout = setTimeout(() => {
+        const timeout = setTimeout(() => {
             interval = setInterval(() => {
                 if (currentIndex < text.length) {
                     setDisplayText(text.substring(0, currentIndex + 1));
@@ -54,7 +54,7 @@ const TypewriterText: React.FC<TypewriterTextProps> = ({
     }, [text, delay, speed, onComplete]);
 
     return (
-        <span className={className}>
+        <span className={className} {...rest}>
             {displayText}
             {showCaret && isTyping && (
                 <motion.span

@@ -5,7 +5,7 @@ import { Rant } from "@/lib/types/rant";
 import { highlightText } from "@/lib/utils/highlight";
 import { getMoodColor, getMoodEmoji, getMoodUnicodeEmoji, getMoodGradient } from "@/lib/utils/mood";
 import { formatDistanceToNow } from "date-fns";
-import { Helmet } from "react-helmet-async";
+import AppHead from "@/components/AppHead";
 import { Share1Icon } from "@radix-ui/react-icons";
 import { cn } from "@/lib/utils";
 import * as Tooltip from "@radix-ui/react-tooltip";
@@ -70,19 +70,13 @@ const RantPage: React.FC = () => {
 
     return (
         <div className="flex justify-center items-center min-h-screen bg-background-primary bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-[#23272f] via-[#18181b] to-[#18181b] px-2 sm:px-0">
-            <Helmet>
-                <title>Rant | {moodText}</title>
-                <meta property="og:title" content={`Rant | ${moodText}`} />
-                <meta property="og:description" content={rant.content.slice(0, 120)} />
-                <meta property="og:image" content={`${window.location.origin}/api/og-image.ts?rantId=${rant.id}`} />
-                <meta property="og:url" content={`${window.location.origin}/rant/${rant.id}`} />
-                {/* Twitter card and canonical for #14 */}
-                <meta name="twitter:card" content="summary_large_image" />
-                <meta name="twitter:title" content={`Rant | ${moodText}`} />
-                <meta name="twitter:description" content={rant.content.slice(0, 120)} />
-                <meta name="twitter:image" content={`${window.location.origin}/api/og-image.ts?rantId=${rant.id}`} />
-                <link rel="canonical" href={`${window.location.origin}/rant/${rant.id}`} />
-            </Helmet>
+            <AppHead
+                title={`Rant | ${moodText}`}
+                description={rant.content.slice(0, 120)}
+                image={`${window.location.origin}/api/og-image.ts?rantId=${rant.id}`}
+                url={`${window.location.origin}/rant/${rant.id}`}
+                type="article"
+            />
             <div
                 className={cn(
                     "rounded-xl overflow-hidden shadow-medium hover:shadow-high transition-all duration-200",

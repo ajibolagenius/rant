@@ -8,8 +8,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import RantCard from '@/components/RantCard';
 import { ArrowLeftIcon, BookmarkIcon, PenLineIcon, InfoIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-// Import but don't use translation hook for now
-// import { useTranslation } from 'react-i18next';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { likeRant } from '@/lib/supabase';
@@ -17,11 +15,9 @@ import { getAnonymousUserId } from '@/utils/authorId';
 import { toast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import { useAccessibility } from '@/components/AccessibilityContext';
-import { Helmet } from 'react-helmet-async';
+import AppHead from "@/components/AppHead";
 
 const MyRantsPage: React.FC = () => {
-    // Commented out until translation issue is fixed
-    // const { t } = useTranslation();
     const navigate = useNavigate();
     const { reducedMotion } = useAccessibility();
     const [myRants, setMyRants] = useState<Rant[]>([]);
@@ -67,7 +63,7 @@ const MyRantsPage: React.FC = () => {
                 toast({
                     title: 'Error',
                     description: 'Failed to load your rants. Please try again.',
-                    variant: 'destructive'
+                    variant: 'error'
                 });
             } finally {
                 setLoading(false);
@@ -158,52 +154,10 @@ const MyRantsPage: React.FC = () => {
 
     return (
         <>
-            <Helmet>
-                <title>My Rants & Bookmarks | Rant</title>
-                <meta name="description" content="View and manage your anonymous rants and bookmarks on Rant. Your rants are private and stored only in your browser." />
-                <script type="application/ld+json">
-                    {`
-                    {
-                        "@context": "https://schema.org",
-                        "@type": "CollectionPage",
-                        "name": "My Rants & Bookmarks",
-                        "description": "A private collection of your anonymous rants and bookmarked posts on Rant.",
-                        "mainEntity": [
-                            {
-                                "@type": "ItemList",
-                                "name": "My Rants",
-                                "itemListElement": [
-                                    ${myRants.map((rant, i) => `{
-                                        "@type": "CreativeWork",
-                                        "position": ${i + 1},
-                                        "name": "Rant #${i + 1}",
-                                        "text": "${rant.content.replace(/"/g, '\"').slice(0, 120)}...",
-                                        "dateCreated": "${rant.created_at}",
-                                        "inLanguage": "en",
-                                        "keywords": "${rant.mood}"
-                                    }`).join(',')}
-                                ]
-                            },
-                            {
-                                "@type": "ItemList",
-                                "name": "Bookmarks",
-                                "itemListElement": [
-                                    ${bookmarkedRants.map((rant, i) => `{
-                                        "@type": "CreativeWork",
-                                        "position": ${i + 1},
-                                        "name": "Bookmarked Rant #${i + 1}",
-                                        "text": "${rant.content.replace(/"/g, '\"').slice(0, 120)}...",
-                                        "dateCreated": "${rant.created_at}",
-                                        "inLanguage": "en",
-                                        "keywords": "${rant.mood}"
-                                    }`).join(',')}
-                                ]
-                            }
-                        ]
-                    }
-                    `}
-                </script>
-            </Helmet>
+            <AppHead
+                title="My Rants & Bookmarks | Rant"
+                description="View and manage your anonymous rants and bookmarks on Rant. Your rants are private and stored only in your browser."
+            />
             <div className="min-h-screen bg-background-primary">
                 <Navbar />
 

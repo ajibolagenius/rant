@@ -346,7 +346,7 @@ const MyRants: React.FC<MyRantsProps> = ({ onClose, onLike }) => {
                             className="text-xs text-accent-teal hover:text-accent-teal/90 p-0"
                             onClick={() => {
                                 onClose();
-                                // navigate('/my-rants');
+                                navigate('/my-rants');
                             }}
                         >
                             Open full page

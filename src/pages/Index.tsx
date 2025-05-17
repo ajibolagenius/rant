@@ -43,7 +43,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useRantStore } from '@/store/useRantStore';
 // Use the shared SortOption type from the store
 import type { SortOption } from '@/store/RantStore';
-import { Helmet } from 'react-helmet-async';
+import AppHead from "@/components/AppHead";
 
 // Error boundary component for catching rendering errors
 class RantErrorBoundary extends React.Component<
@@ -1245,77 +1245,7 @@ const Index: React.FC = () => {
 
     return (
         <>
-            <Helmet>
-                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-                {/* Primary Meta Tags */}
-                <title>Rant: Anonymous Space for Unfiltered Thoughts</title>
-                <meta name="title" content="Rant: Anonymous Space for Unfiltered Thoughts" />
-                <meta name="description" content="Rant is your anonymous space to share unfiltered thoughts. Join the conversation, express yourself with different moods, and connect with others." />
-                <meta name="keywords" content="anonymous rants, mood expression, anonymous platform, vent frustrations, share thoughts, anonymous social, emotional expression, anonymous community, mood sharing" />
-                <meta name="author" content="Rant App" />
-                <meta name="theme-color" content="#904FFF" />
-
-                {/* Open Graph / Facebook */}
-                <meta property="og:type" content="website" />
-                <meta property="og:url" content="https://rantapp.com" />
-                <meta property="og:title" content="Rant: Anonymous Space for Unfiltered Thoughts" />
-                <meta property="og:description" content="Rant is your anonymous space to share unfiltered thoughts. Join the conversation, express yourself with different moods, and connect with others." />
-                <meta property="og:image" content={newRantId ? `/api/og-image?rantId=${newRantId}` : "https://rantapp.com/og-image.jpg"} />
-
-                {/* Twitter */}
-                <meta property="twitter:card" content="summary_large_image" />
-                <meta property="twitter:url" content="https://rantapp.com" />
-                <meta property="twitter:title" content="Rant: Anonymous Space for Unfiltered Thoughts" />
-                <meta property="twitter:description" content="Rant is your anonymous space to share unfiltered thoughts. Join the conversation, express yourself with different moods, and connect with others." />
-                <meta property="twitter:image" content={newRantId ? `/api/og-image?rantId=${newRantId}` : "https://rantapp.com/twitter-image.jpg"} />
-
-                {/* Canonical URL */}
-                <link rel="canonical" href="https://rantapp.com" />
-
-                {/* Favicon and App Icons */}
-                <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-                <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-                <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-                <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-
-                {/* PWA Support */}
-                <link rel="manifest" href="/manifest.json" />
-                <meta name="apple-mobile-web-app-capable" content="yes" />
-                <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-
-                {/* Accessibility */}
-                <meta name="color-scheme" content="light dark" />
-
-                {/* Preconnect to Supabase */}
-                <link rel="preconnect" href="https://supabase.co" />
-
-                {/* Fonts */}
-                <link rel="preconnect" href="https://fonts.googleapis.com" />
-
-                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-
-                {/* Structured Data */}
-                <script type="application/ld+json">
-                    {`
-                        {
-                        "@context": "https://schema.org",
-                        "@type": "WebApplication",
-                        "name": "Rant",
-                        "description": "An anonymous platform for sharing your thoughts, frustrations, and celebrations with the world.",
-                        "applicationCategory": "SocialApplication",
-                        "operatingSystem": "Any",
-                        "offers": {
-                            "@type": "Offer",
-                            "price": "0",
-                            "priceCurrency": "USD"
-                        },
-                        "featureList": "Anonymous Posting, Mood Expression, Real-time Updates, Interactive UI, Advanced Filtering, Keyboard Shortcuts, Responsive Design, Accessibility Options, Theme Options, Internationalization"
-                        }
-                    `}
-                </script>
-
-            </Helmet>
+            <AppHead image={newRantId ? `/api/og-image?rantId=${newRantId}` : undefined} />
             <RantErrorBoundary>
                 <div className="min-h-screen bg-background-dark">
                     <div className="flex justify-between items-center w-full">
