@@ -226,15 +226,15 @@ const Navbar: React.FC = () => {
                     </div>
 
                     {/* Push Notification Button */}
-                    {pushSupported && (
+                    {pushSupported && !pushEnabled && (
                         <Button
-                            variant={pushEnabled ? 'secondary' : 'default'}
+                            variant="default"
                             size="sm"
                             className="ml-2"
                             onClick={subscribeToPush}
                             aria-pressed={pushEnabled}
                         >
-                            {pushEnabled ? 'Notifications Enabled' : 'Enable Notifications'}
+                            Enable Notifications
                         </Button>
                     )}
                 </div>
