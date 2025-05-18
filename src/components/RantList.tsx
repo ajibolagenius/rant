@@ -26,29 +26,9 @@ const RantList: React.FC<RantListProps> = ({
         // Get parameters from URL
         const query = searchParams.get('q');
         const mood = searchParams.get('mood');
-        const moodsParam = searchParams.get('moods');
         const sort = searchParams.get('sort');
 
-        // Apply filters based on URL parameters
-        const options: Partial<UseRantsOptions> = {};
-
-        if (moodsParam) {
-            const moods = moodsParam.split(',').filter(Boolean);
-            if (moods.length > 0) {
-                options.moods = moods;
-            }
-        }
-
-        if (sort) {
-            options.sortBy = sort as 'latest' | 'popular';
-        }
-
-        if (query || mood) {
-            options.searchQuery = query || '';
-            options.searchMood = mood as MoodType | null;
-        }
-
-        // Update rants based on options
+        // Only call fetchRants with reset=true when filters change
         fetchRants(true);
     }, [searchParams, fetchRants]);
 
@@ -126,6 +106,7 @@ const RantList: React.FC<RantListProps> = ({
                                 index={index}
                                 searchTerm={searchTerm}
                                 onLike={() => handleLike(rant.id)}
+                                onClick={() => { }}
                             />
                         </motion.div>
                     )}

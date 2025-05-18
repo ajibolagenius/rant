@@ -342,6 +342,7 @@ const RantCard: React.FC<RantCardProps> = ({
                                         src={moodEmojiPath}
                                         alt={`Mood emoji for ${moodText}`}
                                         className="w-full h-full object-contain"
+                                        loading="lazy"
                                         onError={(e) => {
                                             e.currentTarget.src = "/assets/emojis/neutral.gif"; // Fallback emoji
                                         }}
@@ -495,6 +496,7 @@ const RantCard: React.FC<RantCardProps> = ({
                                                 src={moodEmojiPath}
                                                 alt={`Mood emoji for ${moodText}`}
                                                 className="w-full h-full object-contain"
+                                                loading="lazy"
                                                 onError={(e) => {
                                                     e.currentTarget.src = "/assets/emojis/neutral.gif";
                                                 }}

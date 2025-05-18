@@ -1101,6 +1101,7 @@ const Index: React.FC = () => {
                             onLike={() => handleLikeRant(rant.id)}
                             onRemove={() => handleRemoveRant(rant.id)}
                             isNew={isNewRant}
+                            onClick={() => { }}
                         />
                     </div>
                 </motion.div>
