@@ -36,8 +36,15 @@ const MoodSelector: React.FC<MoodSelectorProps> = ({ selectedMood, onMoodSelect 
                 >
                     <img
                         src={getMoodEmoji(mood)}
-                        alt={mood}
+                        srcSet={`
+                            ${getMoodEmoji(mood).replace('.gif', '.webp')} 1x,
+                            ${getMoodEmoji(mood).replace('.gif', '@2x.webp')} 2x,
+                            ${getMoodEmoji(mood).replace('.gif', '@3x.webp')} 3x
+                        `}
+                        alt={getMoodLabel(mood)}
                         className="w-5 h-5"
+                        loading="lazy"
+                        onError={e => { e.currentTarget.src = '/assets/emojis/neutral.gif'; }}
                     />
                     <span className="capitalize">
                         {mood === 'eyeRoll' ? 'Eye Roll' : mood}

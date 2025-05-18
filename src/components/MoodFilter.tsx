@@ -86,8 +86,15 @@ const MoodFilter: React.FC<MoodFilterProps> = ({ selectedMoods, onChange }) => {
                             >
                                 <img
                                     src={getMoodEmoji(mood as MoodType)}
+                                    srcSet={`
+                                        ${getMoodEmoji(mood as MoodType).replace('.gif', '.webp')} 1x,
+                                        ${getMoodEmoji(mood as MoodType).replace('.gif', '@2x.webp')} 2x,
+                                        ${getMoodEmoji(mood as MoodType).replace('.gif', '@3x.webp')} 3x
+                                    `}
                                     alt={getMoodLabel(mood as MoodType)}
                                     className="w-3 h-3 sm:w-4 sm:h-4 object-cover"
+                                    loading="lazy"
+                                    onError={e => { e.currentTarget.src = '/assets/emojis/neutral.gif'; }}
                                 />
                                 <span className="truncate max-w-[80px] sm:max-w-none">{getMoodLabel(mood as MoodType)}</span>
                                 <button

@@ -676,9 +676,16 @@ const SortingBar: React.FC<SortingBarProps> = ({
                                                 {item.query.length > 12 ? item.query.substring(0, 10) + "..." : item.query}
                                                 {item.mood && (
                                                     <img
-                                                        src={getMoodEmoji(item.mood)}
+                                                        src={getMoodEmoji(item.mood as MoodType)}
+                                                        srcSet={`
+                                                            ${getMoodEmoji(item.mood as MoodType).replace('.gif', '.webp')} 1x,
+                                                            ${getMoodEmoji(item.mood as MoodType).replace('.gif', '@2x.webp')} 2x,
+                                                            ${getMoodEmoji(item.mood as MoodType).replace('.gif', '@3x.webp')} 3x
+                                                        `}
                                                         alt={getMoodLabel(item.mood)}
                                                         className="w-3 h-3 ml-1"
+                                                        loading="lazy"
+                                                        onError={e => { e.currentTarget.src = '/assets/emojis/neutral.gif'; }}
                                                     />
                                                 )}
                                             </button>
@@ -705,9 +712,16 @@ const SortingBar: React.FC<SortingBarProps> = ({
                                             `}
                                         >
                                             <img
-                                                src={getMoodEmoji(mood)}
+                                                src={getMoodEmoji(mood as MoodType)}
+                                                srcSet={`
+                                                    ${getMoodEmoji(mood as MoodType).replace('.gif', '.webp')} 1x,
+                                                    ${getMoodEmoji(mood as MoodType).replace('.gif', '@2x.webp')} 2x,
+                                                    ${getMoodEmoji(mood as MoodType).replace('.gif', '@3x.webp')} 3x
+                                                `}
                                                 alt={getMoodLabel(mood)}
                                                 className="w-3 h-3"
+                                                loading="lazy"
+                                                onError={e => { e.currentTarget.src = '/assets/emojis/neutral.gif'; }}
                                             />
                                             <span className="truncate">{getMoodLabel(mood)}</span>
                                         </button>
@@ -744,9 +758,16 @@ const SortingBar: React.FC<SortingBarProps> = ({
                                     `}
                                 >
                                     <img
-                                        src={getMoodEmoji(mood)}
+                                        src={getMoodEmoji(mood as MoodType)}
+                                        srcSet={`
+                                            ${getMoodEmoji(mood as MoodType).replace('.gif', '.webp')} 1x,
+                                            ${getMoodEmoji(mood as MoodType).replace('.gif', '@2x.webp')} 2x,
+                                            ${getMoodEmoji(mood as MoodType).replace('.gif', '@3x.webp')} 3x
+                                        `}
                                         alt={getMoodLabel(mood)}
                                         className="w-3 h-3"
+                                        loading="lazy"
+                                        onError={e => { e.currentTarget.src = '/assets/emojis/neutral.gif'; }}
                                     />
                                     <span className="truncate">{getMoodLabel(mood)}</span>
                                 </button>
@@ -776,6 +797,11 @@ const SortingBar: React.FC<SortingBarProps> = ({
                                 <span key={mood} className="inline-flex items-center gap-1 bg-background-secondary border border-border-subtle px-1 py-0.5 rounded-full">
                                     <img
                                         src={getMoodEmoji(mood as MoodType)}
+                                        srcSet={`
+                                            ${getMoodEmoji(mood).replace('.gif', '.webp')} 1x,
+                                            ${getMoodEmoji(mood).replace('.gif', '@2x.webp')} 2x,
+                                            ${getMoodEmoji(mood).replace('.gif', '@3x.webp')} 3x
+                                        `}
                                         alt={getMoodLabel(mood as MoodType)}
                                         className="w-3 h-3 object-cover"
                                     />
@@ -812,6 +838,11 @@ const SortingBar: React.FC<SortingBarProps> = ({
                                 <span className="inline-flex items-center gap-1 bg-background-secondary border border-border-subtle px-1 py-0.5 rounded-full">
                                     <img
                                         src={getMoodEmoji(searchMood)}
+                                        srcSet={`
+                                            ${getMoodEmoji(searchMood).replace('.gif', '.webp')} 1x,
+                                            ${getMoodEmoji(searchMood).replace('.gif', '@2x.webp')} 2x,
+                                            ${getMoodEmoji(searchMood).replace('.gif', '@3x.webp')} 3x
+                                        `}
                                         alt={getMoodLabel(searchMood)}
                                         className="w-3 h-3 object-cover"
                                     />
@@ -951,9 +982,16 @@ const SortingBar: React.FC<SortingBarProps> = ({
                                             {item.query}
                                             {item.mood && (
                                                 <img
-                                                    src={getMoodEmoji(item.mood)}
+                                                    src={getMoodEmoji(item.mood as MoodType)}
+                                                    srcSet={`
+                                                        ${getMoodEmoji(item.mood as MoodType).replace('.gif', '.webp')} 1x,
+                                                        ${getMoodEmoji(item.mood as MoodType).replace('.gif', '@2x.webp')} 2x,
+                                                        ${getMoodEmoji(item.mood as MoodType).replace('.gif', '@3x.webp')} 3x
+                                                    `}
                                                     alt={getMoodLabel(item.mood)}
                                                     className="w-3 h-3 ml-1"
+                                                    loading="lazy"
+                                                    onError={e => { e.currentTarget.src = '/assets/emojis/neutral.gif'; }}
                                                 />
                                             )}
                                         </button>
@@ -998,9 +1036,16 @@ const SortingBar: React.FC<SortingBarProps> = ({
                                         `}
                                     >
                                         <img
-                                            src={getMoodEmoji(mood)}
+                                            src={getMoodEmoji(mood as MoodType)}
+                                            srcSet={`
+                                                ${getMoodEmoji(mood as MoodType).replace('.gif', '.webp')} 1x,
+                                                ${getMoodEmoji(mood as MoodType).replace('.gif', '@2x.webp')} 2x,
+                                                ${getMoodEmoji(mood as MoodType).replace('.gif', '@3x.webp')} 3x
+                                            `}
                                             alt={getMoodLabel(mood)}
                                             className="w-4 h-4"
+                                            loading="lazy"
+                                            onError={e => { e.currentTarget.src = '/assets/emojis/neutral.gif'; }}
                                         />
                                         {getMoodLabel(mood)}
                                     </button>
@@ -1023,6 +1068,11 @@ const SortingBar: React.FC<SortingBarProps> = ({
                                         <span className="inline-flex items-center gap-2 bg-background-secondary border border-border-subtle px-2 py-1 rounded-full">
                                             <img
                                                 src={getMoodEmoji(localSearchMood)}
+                                                srcSet={`
+                                                    ${getMoodEmoji(localSearchMood).replace('.gif', '.webp')} 1x,
+                                                    ${getMoodEmoji(localSearchMood).replace('.gif', '@2x.webp')} 2x,
+                                                    ${getMoodEmoji(localSearchMood).replace('.gif', '@3x.webp')} 3x
+                                                `}
                                                 alt={getMoodLabel(localSearchMood)}
                                                 className="w-4 h-4 object-cover"
                                             />
@@ -1069,9 +1119,16 @@ const SortingBar: React.FC<SortingBarProps> = ({
                                 `}
                             >
                                 <img
-                                    src={getMoodEmoji(mood)}
+                                    src={getMoodEmoji(mood as MoodType)}
+                                    srcSet={`
+                                        ${getMoodEmoji(mood as MoodType).replace('.gif', '.webp')} 1x,
+                                        ${getMoodEmoji(mood as MoodType).replace('.gif', '@2x.webp')} 2x,
+                                        ${getMoodEmoji(mood as MoodType).replace('.gif', '@3x.webp')} 3x
+                                    `}
                                     alt={getMoodLabel(mood)}
                                     className="w-4 h-4"
+                                    loading="lazy"
+                                    onError={e => { e.currentTarget.src = '/assets/emojis/neutral.gif'; }}
                                 />
                                 {getMoodLabel(mood)}
                             </button>
@@ -1106,6 +1163,11 @@ const SortingBar: React.FC<SortingBarProps> = ({
                                     <span key={mood} className="inline-flex items-center gap-2 bg-background-secondary border border-border-subtle px-2 py-1 rounded-full">
                                         <img
                                             src={getMoodEmoji(mood as MoodType)}
+                                            srcSet={`
+                                                ${getMoodEmoji(mood).replace('.gif', '.webp')} 1x,
+                                                ${getMoodEmoji(mood).replace('.gif', '@2x.webp')} 2x,
+                                                ${getMoodEmoji(mood).replace('.gif', '@3x.webp')} 3x
+                                            `}
                                             alt={getMoodLabel(mood as MoodType)}
                                             className="w-4 h-4 object-cover"
                                         />
@@ -1134,6 +1196,11 @@ const SortingBar: React.FC<SortingBarProps> = ({
                         <span key={mood} className="inline-flex items-center gap-2 bg-background-secondary border border-border-subtle px-2 py-1 rounded-full">
                             <img
                                 src={getMoodEmoji(mood as MoodType)}
+                                srcSet={`
+                                    ${getMoodEmoji(mood).replace('.gif', '.webp')} 1x,
+                                    ${getMoodEmoji(mood).replace('.gif', '@2x.webp')} 2x,
+                                    ${getMoodEmoji(mood).replace('.gif', '@3x.webp')} 3x
+                                `}
                                 alt={getMoodLabel(mood as MoodType)}
                                 className="w-4 h-4 object-cover"
                             />
@@ -1176,6 +1243,11 @@ const SortingBar: React.FC<SortingBarProps> = ({
                         <span className="inline-flex items-center gap-2 bg-background-secondary border border-border-subtle px-2 py-1 rounded-full">
                             <img
                                 src={getMoodEmoji(searchMood)}
+                                srcSet={`
+                                    ${getMoodEmoji(searchMood).replace('.gif', '.webp')} 1x,
+                                    ${getMoodEmoji(searchMood).replace('.gif', '@2x.webp')} 2x,
+                                    ${getMoodEmoji(searchMood).replace('.gif', '@3x.webp')} 3x
+                                `}
                                 alt={getMoodLabel(searchMood)}
                                 className="w-4 h-4 object-cover"
                             />
@@ -1190,8 +1262,6 @@ const SortingBar: React.FC<SortingBarProps> = ({
                     )}
                 </div>
             )}
-
-
         </div>
     );
 };
