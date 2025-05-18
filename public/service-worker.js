@@ -71,3 +71,27 @@ self.addEventListener('notificationclick', function (event) {
     const url = event.notification.data && event.notification.data.url ? event.notification.data.url : '/';
     event.waitUntil(clients.openWindow(url));
 });
+
+const CACHE_VERSION = 'v1-20240518'; // Update this version on each deploy
+const CACHE_WHITELIST = [
+    'static-assets',
+    'rants-api',
+    'pages',
+    // Add any other cache names you use
+];
+
+self.addEventListener('activate', event => {
+    event.waitUntil(
+        caches.keys().then(cacheNames => {
+            return Promise.all(
+                cacheNames.map(cacheName => {
+                    if (!CACHE_WHITELIST.includes(cacheName)) {
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
+        })
+    );
+    // Claim clients immediately so new SW takes control
+    return self.clients.claim();
+});

@@ -99,7 +99,7 @@ const Navbar: React.FC = () => {
             });
 
             setPushEnabled(true);
-            toast({ title: 'Notifications enabled', description: 'You will get notified about trending rants.' });
+            toast({ title: 'Notifications enabled', description: 'You will get notified about rants.' });
         } catch (err) {
             toast({ title: 'Permission denied', description: 'Push notifications were not enabled.' });
         }
@@ -184,7 +184,7 @@ const Navbar: React.FC = () => {
                     variants={logoVariants}
                     drag
                     dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-                    dragElastic={0.3} // the higher the value, the more "bouncy" the drag
+                    dragElastic={0.3}
                 >
                     <Link to="/" aria-label="Go to Home" tabIndex={0} className="outline-none focus:outline-none">
                         rant:
@@ -193,17 +193,29 @@ const Navbar: React.FC = () => {
 
                 <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => { }}
-                            className={iconButtonClass}
-                            aria-label="Toggle Theme"
-                            title="Toggle Theme"
-                        >
-                            <ThemeToggle />
-                        </Button>
+                        {/* 1. Notifications (most important for engagement) */}
+                        {pushSupported && (
+                            <div className="relative">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={!pushEnabled ? subscribeToPush : undefined}
+                                    className={iconButtonClass}
+                                    aria-label={pushEnabled ? "Notifications Enabled" : "Enable Notifications"}
+                                    title={pushEnabled ? "Notifications Enabled" : "Enable Notifications"}
+                                >
+                                    <BellIcon size={16} />
+                                </Button>
+                                {pushEnabled && (
+                                    <span
+                                        className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-500 border-2 border-background-dark shadow"
+                                        aria-label="Notifications enabled"
+                                    />
+                                )}
+                            </div>
+                        )}
 
+                        {/* 2. My Rants (user's own content) */}
                         <Button
                             variant="ghost"
                             size="icon"
@@ -215,6 +227,19 @@ const Navbar: React.FC = () => {
                             <FileTextIcon size={16} />
                         </Button>
 
+                        {/* 3. Theme Toggle (personalization) */}
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => { }}
+                            className={iconButtonClass}
+                            aria-label="Toggle Theme"
+                            title="Toggle Theme"
+                        >
+                            <ThemeToggle />
+                        </Button>
+
+                        {/* 4. Settings (least frequent) */}
                         <Button
                             variant="ghost"
                             size="icon"
@@ -226,28 +251,6 @@ const Navbar: React.FC = () => {
                             <SettingsIcon size={16} />
                         </Button>
                     </div>
-
-                    {/* Push Notification Icon with Red Dot if Enabled */}
-                    {pushSupported && (
-                        <div className="relative">
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={!pushEnabled ? subscribeToPush : undefined}
-                                className={iconButtonClass}
-                                aria-label={pushEnabled ? "Notifications Enabled" : "Enable Notifications"}
-                                title={pushEnabled ? "Notifications Enabled" : "Enable Notifications"}
-                            >
-                                <BellIcon size={16} />
-                            </Button>
-                            {pushEnabled && (
-                                <span
-                                    className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-500 border-2 border-background-dark shadow"
-                                    aria-label="Notifications enabled"
-                                />
-                            )}
-                        </div>
-                    )}
                 </div>
             </motion.nav>
 
