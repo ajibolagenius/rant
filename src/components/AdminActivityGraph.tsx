@@ -4,8 +4,8 @@ import { ChartContainer } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 interface WeeklyRantData {
-  week: string;
-  count: number;
+    week: string;
+    count: number;
 }
 
 const AdminActivityGraph: React.FC = () => {
@@ -30,7 +30,7 @@ const AdminActivityGraph: React.FC = () => {
             data.forEach((rant: { created_at: string }) => {
                 const date = new Date(rant.created_at);
                 // Get ISO week string (YYYY-WW)
-                const week = `${date.getFullYear()}-W${String(Math.ceil(((date.getTime() - new Date(date.getFullYear(),0,1).getTime())/86400000 + new Date(date.getFullYear(),0,1).getDay()+1)/7)).padStart(2,'0')}`;
+                const week = `${date.getFullYear()}-W${String(Math.ceil(((date.getTime() - new Date(date.getFullYear(), 0, 1).getTime()) / 86400000 + new Date(date.getFullYear(), 0, 1).getDay() + 1) / 7)).padStart(2, '0')}`;
                 weekMap[week] = (weekMap[week] || 0) + 1;
             });
             const weeklyArr = Object.entries(weekMap).map(([week, count]) => ({ week, count }));

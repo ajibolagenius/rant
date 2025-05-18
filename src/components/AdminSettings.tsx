@@ -3,12 +3,12 @@ import { supabase } from "@/lib/supabase";
 import { toast } from '@/hooks/use-toast';
 
 interface Setting {
-  key: string;
-  value: string;
+    key: string;
+    value: string;
 }
 interface AdminUser {
-  id: string;
-  email: string;
+    id: string;
+    email: string;
 }
 
 const AdminSettings: React.FC = () => {
