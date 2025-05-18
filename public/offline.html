@@ -120,10 +120,18 @@
 <body>
   <div class="offline-container">
     <div class="logo">rant:</div>
-    <div class="offline-icon">📡</div>
+    <div class="offline-icon" style="color:var(--primary);background:none;-webkit-background-clip:initial;-webkit-text-fill-color:initial;background-clip:initial;filter:none;">📡</div>
     <div class="offline-title">You are offline</div>
     <div class="offline-message">Sorry, you’ve lost connection.<br>Check your internet and try again.<br>You can still browse previously loaded rants.</div>
-    <a href="/" class="retry-btn">Return Home</a>
+    <button class="retry-btn" onclick="window.location.reload()" id="retryBtn">Return Home</button>
+    <script>
+      function updateRetryBtn() {
+        document.getElementById('retryBtn').disabled = !navigator.onLine;
+      }
+      window.addEventListener('online', updateRetryBtn);
+      window.addEventListener('offline', updateRetryBtn);
+      updateRetryBtn();
+    </script>
   </div>
 </body>
 </html>
