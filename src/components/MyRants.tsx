@@ -271,6 +271,7 @@ const MyRants: React.FC<MyRantsProps> = ({ onClose, onLike }) => {
                                                             onRemove={(id) => {
                                                                 setMyRants((prev) => prev.filter(r => r.id !== id));
                                                             }}
+                                                            onClick={() => { }}
                                                         />
                                                     </motion.div>
                                                 ))}
@@ -309,6 +310,7 @@ const MyRants: React.FC<MyRantsProps> = ({ onClose, onLike }) => {
                                                             index={index}
                                                             onLike={() => onLike(rant.id)}
                                                             currentUserId={currentUserId}
+                                                            onClick={() => { }}
                                                         />
                                                     </motion.div>
                                                 ))}
