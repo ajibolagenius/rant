@@ -5,15 +5,125 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Offline - Rant App</title>
   <style>
-    body { font-family: system-ui, sans-serif; background: #18181b; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
-    .offline-icon { font-size: 4rem; margin-bottom: 1rem; }
-    .offline-message { font-size: 1.5rem; margin-bottom: 0.5rem; }
-    .offline-tip { color: #a1a1aa; }
+    :root {
+      --primary: #00C2FF;
+      --accent-teal: #6DD19F;
+      --purple: #904FFF;
+      --background-dark: #09090B;
+      --text-primary: #fff;
+      --text-muted: #a1a1aa;
+      --gradient: linear-gradient(90deg, var(--primary) 0%, var(--purple) 100%);
+    }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--background-dark);
+      color: var(--text-primary);
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      padding: 0;
+    }
+    .offline-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100vw;
+      padding: 2rem 1rem;
+    }
+    .offline-icon {
+      font-size: 7rem;
+      font-weight: bold;
+      color: var(--primary);
+      background: none;
+      -webkit-background-clip: initial;
+      -webkit-text-fill-color: initial;
+      background-clip: initial;
+      text-fill-color: initial;
+      filter: none;
+      margin-bottom: 0.5rem;
+      animation: bounceIn 1.2s cubic-bezier(.68,-0.55,.27,1.55);
+    }
+    @keyframes bounceIn {
+      0% { transform: translateY(-100px); opacity: 0; }
+      60% { transform: translateY(20px); opacity: 1; }
+      80% { transform: translateY(-10px); }
+      100% { transform: translateY(0); }
+    }
+    .offline-title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+      letter-spacing: -1px;
+    }
+    .offline-message {
+      font-size: 1.25rem;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+      font-weight: 400;
+      letter-spacing: 0.1px;
+      text-align: center;
+      line-height: 1.6;
+    }
+    .retry-btn {
+      display: inline-block;
+      padding: 0.75rem 2.5rem;
+      font-size: 1.1rem;
+      font-weight: 700;
+      border-radius: 999px;
+      border: 2px solid var(--primary);
+      background: transparent;
+      color: var(--primary);
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, border 0.2s;
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+      text-align: center;
+      text-decoration: none;
+    }
+    .retry-btn:hover, .retry-btn:focus {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .logo {
+      font-size: 1.3rem;
+      font-family: 'Inter', system-ui, sans-serif;
+      font-weight: 700;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-fill-color: transparent;
+      letter-spacing: 0.5px;
+      opacity: 0.7;
+      margin-bottom: 2.5rem;
+    }
+    @media (max-width: 480px) {
+      .offline-icon { font-size: 4.5rem; }
+      .offline-title { font-size: 1.5rem; }
+      .offline-message { font-size: 1rem; }
+      .logo { font-size: 1rem; }
+    }
   </style>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
 </head>
 <body>
-  <div class="offline-icon">📡</div>
-  <div class="offline-message">You are offline</div>
-  <div class="offline-tip">Please check your internet connection.<br/>You can still browse previously loaded rants.</div>
+  <div class="offline-container">
+    <div class="logo">rant:</div>
+    <div class="offline-icon">📡</div>
+    <div class="offline-title">You are offline</div>
+    <div class="offline-message">Sorry, you’ve lost connection.<br>Check your internet and try again.<br>You can still browse previously loaded rants.</div>
+    <a href="/" class="retry-btn">Return Home</a>
+  </div>
 </body>
 </html>

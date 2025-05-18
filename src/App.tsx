@@ -86,7 +86,7 @@ const createQueryClient = () => {
 };
 
 // Router component that selects between BrowserRouter and HashRouter
-const AppRouter: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const AppRouter: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
     // Detect if we should use hash-based routing
     const [useHashRouter, setUseHashRouter] = useState(() => {
         return window.location.hash.startsWith('#/') ||
@@ -117,151 +117,78 @@ const AppRouter: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         };
     }, [useHashRouter]);
 
-    // Render the appropriate router with future flags to address warnings
-    return useHashRouter ? (
-        <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    const RouterComponent = useHashRouter ? HashRouter : BrowserRouter;
+
+    return (
+        <RouterComponent future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <Routes>
+                <Route path="/" element={
+                    <ErrorBoundary>
+                        <PreloaderRouteWrapper>
+                            <Index />
+                        </PreloaderRouteWrapper>
+                    </ErrorBoundary>
+                } />
+                <Route path="/my-rants" element={
+                    <ErrorBoundary>
+                        <MyRantsPage />
+                    </ErrorBoundary>
+                } />
+                <Route path="/rant/:id" element={
+                    <ErrorBoundary>
+                        <RantPage />
+                    </ErrorBoundary>
+                } />
+                <Route path="*" element={
+                    <ErrorBoundary>
+                        <NotFound />
+                    </ErrorBoundary>
+                } />
+            </Routes>
             {children}
-        </HashRouter>
+        </RouterComponent>
+    );
+};
+
+// PreloaderRouteWrapper: Only show Preloader for the root route
+const PreloaderRouteWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const [showPreloader, setShowPreloader] = useState(true);
+    const [preloaderDone, setPreloaderDone] = useState(false);
+    const handlePreloaderDone = () => setPreloaderDone(true);
+    useEffect(() => {
+        if (preloaderDone) setShowPreloader(false);
+    }, [preloaderDone]);
+    return showPreloader ? (
+        <Preloader show onDone={handlePreloaderDone} />
     ) : (
-        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-            {children}
-        </BrowserRouter>
+        <>{children}</>
     );
 };
 
 const App = () => {
     // Create query client with error handling
     const [queryClient] = useState(() => createQueryClient());
-    const [showPreloader, setShowPreloader] = useState(true);
-    const [preloaderDone, setPreloaderDone] = useState(false);
-
-    // Remove timer-based hiding, rely on Preloader's completion
-    // Handler to be called when Preloader finishes
-    const handlePreloaderDone = () => setPreloaderDone(true);
-
-    // Only hide preloader when preloaderDone is true
-    useEffect(() => {
-        if (preloaderDone) setShowPreloader(false);
-    }, [preloaderDone]);
-
-    // Monitor for unhandled errors
-    useEffect(() => {
-        const handleError = (event: ErrorEvent) => {
-            // console.error("Unhandled error:", event.error);
-            // We don't show UI here as the ErrorBoundary will catch render errors
-        };
-
-        window.addEventListener('error', handleError);
-        return () => window.removeEventListener('error', handleError);
-    }, []);
-
-    // Monitor for unhandled promise rejections
-    useEffect(() => {
-        const handleRejection = (event: PromiseRejectionEvent) => {
-            // console.error("Unhandled promise rejection:", event.reason);
-            // We don't show UI here as it might be handled by query client
-        };
-
-        window.addEventListener('unhandledrejection', handleRejection);
-        return () => window.removeEventListener('unhandledrejection', handleRejection);
-    }, []);
-
-    // Listen for system preference changes for accessibility and theme
-    useEffect(() => {
-        const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-        const reducedMotionMediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-
-        const handleDarkModeChange = (e: MediaQueryListEvent) => {
-            if (localStorage.getItem('theme') === 'system') {
-                document.documentElement.classList.toggle('dark', e.matches);
-                // Apply our theme classes
-                if (e.matches) {
-                    document.documentElement.classList.remove('theme-light');
-                    document.documentElement.classList.add('theme-dark');
-                } else {
-                    document.documentElement.classList.remove('theme-dark');
-                    document.documentElement.classList.add('theme-light');
-                }
-            }
-        };
-
-        const handleReducedMotionChange = (e: MediaQueryListEvent) => {
-            if (!localStorage.getItem('reducedMotion')) {
-                document.documentElement.classList.toggle('reduce-motion', e.matches);
-            }
-        };
-
-        darkModeMediaQuery.addEventListener('change', handleDarkModeChange);
-        reducedMotionMediaQuery.addEventListener('change', handleReducedMotionChange);
-
-        // Initialize theme based on saved preference or system preference
-        const savedTheme = localStorage.getItem('theme');
-        const prefersDark = darkModeMediaQuery.matches;
-
-        if (savedTheme === 'light') {
-            document.documentElement.classList.remove('theme-dark');
-            document.documentElement.classList.add('theme-light');
-        } else if (savedTheme === 'dark' || prefersDark) {
-            document.documentElement.classList.remove('theme-light');
-            document.documentElement.classList.add('theme-dark');
-        }
-
-        return () => {
-            darkModeMediaQuery.removeEventListener('change', handleDarkModeChange);
-            reducedMotionMediaQuery.removeEventListener('change', handleReducedMotionChange);
-        };
-    }, []);
 
     return (
-        showPreloader ? (
-            <Preloader show onDone={handlePreloaderDone} />
-        ) : (
-            <HelmetProvider>
-                <ErrorBoundary>
-                    <AccessibilityProvider>
-                        <QueryClientProvider client={queryClient}>
-                            <TooltipProvider>
-                                <RantStoreProvider>
-                                    <div className="theme-dark">
-                                        <Toaster />
-                                        <Sonner />
-                                        <ErrorBoundary>
-                                            <AppRouter>
-                                                <Suspense fallback={null}>
-                                                    <Routes>
-                                                        <Route path="/" element={
-                                                            <ErrorBoundary>
-                                                                <Index />
-                                                            </ErrorBoundary>
-                                                        } />
-                                                        <Route path="/my-rants" element={
-                                                            <ErrorBoundary>
-                                                                <MyRantsPage />
-                                                            </ErrorBoundary>
-                                                        } />
-                                                        <Route path="/rant/:id" element={
-                                                            <ErrorBoundary>
-                                                                <RantPage />
-                                                            </ErrorBoundary>
-                                                        } />
-                                                        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                                                        <Route path="*" element={
-                                                            <ErrorBoundary>
-                                                                <NotFound />
-                                                            </ErrorBoundary>
-                                                        } />
-                                                    </Routes>
-                                                </Suspense>
-                                            </AppRouter>
-                                        </ErrorBoundary>
-                                    </div>
-                                </RantStoreProvider>
-                            </TooltipProvider>
-                        </QueryClientProvider>
-                    </AccessibilityProvider>
-                </ErrorBoundary>
-            </HelmetProvider>
-        )
+        <HelmetProvider>
+            <ErrorBoundary>
+                <AccessibilityProvider>
+                    <QueryClientProvider client={queryClient}>
+                        <TooltipProvider>
+                            <RantStoreProvider>
+                                <div className="theme-dark">
+                                    <Toaster />
+                                    <Sonner />
+                                    <ErrorBoundary>
+                                        <AppRouter />
+                                    </ErrorBoundary>
+                                </div>
+                            </RantStoreProvider>
+                        </TooltipProvider>
+                    </QueryClientProvider>
+                </AccessibilityProvider>
+            </ErrorBoundary>
+        </HelmetProvider>
     );
     // <Analytics />
 };
