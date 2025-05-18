@@ -3,13 +3,13 @@ import { supabase } from "@/lib/supabase";
 import { toast } from '@/hooks/use-toast';
 
 interface Rant {
-  id: string;
-  content: string;
-  mood: string;
-  created_at: string;
-  likes: number;
-  flagged?: boolean;
-  featured?: boolean;
+    id: string;
+    content: string;
+    mood: string;
+    created_at: string;
+    likes: number;
+    flagged?: boolean;
+    featured?: boolean;
 }
 
 const AdminRantManagement: React.FC = () => {
@@ -25,7 +25,7 @@ const AdminRantManagement: React.FC = () => {
         async function fetchRants() {
             setLoading(true);
             setError(null);
-            let query = supabase.from("rants").select("id, content, mood, created_at, likes, flagged, featured").order("created_at", { ascending: false }).range((page-1)*PAGE_SIZE, page*PAGE_SIZE-1);
+            let query = supabase.from("rants").select("id, content, mood, created_at, likes, flagged, featured").order("created_at", { ascending: false }).range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
             if (filter) {
                 query = query.ilike("content", `%${filter}%`);
             }
@@ -79,8 +79,8 @@ const AdminRantManagement: React.FC = () => {
             <div className="flex justify-between items-center mb-2">
                 <span className="text-xs text-gray-500">Page {page}</span>
                 <div className="flex gap-2">
-                    <button disabled={page===1} onClick={()=>setPage(p=>Math.max(1,p-1))} className="px-2 py-1 text-xs border rounded disabled:opacity-50">Prev</button>
-                    <button disabled={!hasMore} onClick={()=>setPage(p=>p+1)} className="px-2 py-1 text-xs border rounded disabled:opacity-50">Next</button>
+                    <button disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))} className="px-2 py-1 text-xs border rounded disabled:opacity-50">Prev</button>
+                    <button disabled={!hasMore} onClick={() => setPage(p => p + 1)} className="px-2 py-1 text-xs border rounded disabled:opacity-50">Next</button>
                 </div>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 overflow-x-auto">

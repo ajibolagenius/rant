@@ -3,16 +3,16 @@ import { supabase } from "@/lib/supabase";
 import { toast } from '@/hooks/use-toast';
 
 interface BlogPost {
-  id: string;
-  title: string;
-  content: string;
-  published: boolean;
-  created_at: string;
+    id: string;
+    title: string;
+    content: string;
+    published: boolean;
+    created_at: string;
 }
 interface Mood {
-  id: string;
-  name: string;
-  emoji: string;
+    id: string;
+    name: string;
+    emoji: string;
 }
 
 const AdminContentTools: React.FC = () => {
@@ -125,21 +125,21 @@ const AdminContentTools: React.FC = () => {
                                     <tr key={post.id} className="border-b">
                                         <td className="px-2 py-1 max-w-xs truncate" title={post.title}>
                                             {editingPost === post.id ? (
-                                                <input value={editTitle} onChange={e=>setEditTitle(e.target.value)} className="border rounded px-1 text-xs w-full" />
+                                                <input value={editTitle} onChange={e => setEditTitle(e.target.value)} className="border rounded px-1 text-xs w-full" />
                                             ) : post.title}
                                         </td>
                                         <td className="px-2 py-1 text-center">{post.published ? "Yes" : "No"}</td>
                                         <td className="px-2 py-1 flex gap-1">
                                             {editingPost === post.id ? (
                                                 <>
-                                                    <button className="text-green-600 hover:underline" onClick={()=>handleSaveEditPost(post.id)} aria-label="Save edits">Save</button>
-                                                    <button className="text-gray-500 hover:underline" onClick={()=>setEditingPost(null)} aria-label="Cancel edit">Cancel</button>
+                                                    <button className="text-green-600 hover:underline" onClick={() => handleSaveEditPost(post.id)} aria-label="Save edits">Save</button>
+                                                    <button className="text-gray-500 hover:underline" onClick={() => setEditingPost(null)} aria-label="Cancel edit">Cancel</button>
                                                 </>
                                             ) : (
                                                 <>
-                                                    <button className="text-yellow-500 hover:underline" onClick={()=>handleEditPost(post)} aria-label="Edit post">Edit</button>
-                                                    <button className="text-green-600 hover:underline" onClick={()=>handlePublish(post.id, post.published)} aria-label={post.published ? "Unpublish" : "Publish"}>{post.published ? "Unpublish" : "Publish"}</button>
-                                                    <button className="text-red-500 hover:underline" onClick={()=>handleDeletePost(post.id)} aria-label="Delete post">Delete</button>
+                                                    <button className="text-yellow-500 hover:underline" onClick={() => handleEditPost(post)} aria-label="Edit post">Edit</button>
+                                                    <button className="text-green-600 hover:underline" onClick={() => handlePublish(post.id, post.published)} aria-label={post.published ? "Unpublish" : "Publish"}>{post.published ? "Unpublish" : "Publish"}</button>
+                                                    <button className="text-red-500 hover:underline" onClick={() => handleDeletePost(post.id)} aria-label="Delete post">Delete</button>
                                                 </>
                                             )}
                                         </td>
@@ -168,24 +168,24 @@ const AdminContentTools: React.FC = () => {
                                     <tr key={mood.id} className="border-b">
                                         <td className="px-2 py-1">
                                             {editingMood === mood.id ? (
-                                                <input value={editMoodName} onChange={e=>setEditMoodName(e.target.value)} className="border rounded px-1 text-xs" />
+                                                <input value={editMoodName} onChange={e => setEditMoodName(e.target.value)} className="border rounded px-1 text-xs" />
                                             ) : mood.name}
                                         </td>
                                         <td className="px-2 py-1 text-center">
                                             {editingMood === mood.id ? (
-                                                <input value={editMoodEmoji} onChange={e=>setEditMoodEmoji(e.target.value)} className="border rounded px-1 text-xs w-12" />
+                                                <input value={editMoodEmoji} onChange={e => setEditMoodEmoji(e.target.value)} className="border rounded px-1 text-xs w-12" />
                                             ) : mood.emoji}
                                         </td>
                                         <td className="px-2 py-1">
                                             {editingMood === mood.id ? (
                                                 <>
-                                                    <button className="text-green-600 hover:underline" onClick={()=>handleSaveEditMood(mood.id)} aria-label="Save edits">Save</button>
-                                                    <button className="text-gray-500 hover:underline" onClick={()=>setEditingMood(null)} aria-label="Cancel edit">Cancel</button>
+                                                    <button className="text-green-600 hover:underline" onClick={() => handleSaveEditMood(mood.id)} aria-label="Save edits">Save</button>
+                                                    <button className="text-gray-500 hover:underline" onClick={() => setEditingMood(null)} aria-label="Cancel edit">Cancel</button>
                                                 </>
                                             ) : (
                                                 <>
-                                                    <button className="text-yellow-500 hover:underline" onClick={()=>handleEditMood(mood)} aria-label="Edit mood">Edit</button>
-                                                    <button className="text-red-500 hover:underline" onClick={()=>handleDeleteMood(mood.id)} aria-label="Delete mood">Delete</button>
+                                                    <button className="text-yellow-500 hover:underline" onClick={() => handleEditMood(mood)} aria-label="Edit mood">Edit</button>
+                                                    <button className="text-red-500 hover:underline" onClick={() => handleDeleteMood(mood.id)} aria-label="Delete mood">Delete</button>
                                                 </>
                                             )}
                                         </td>

@@ -3,14 +3,14 @@ import { supabase } from "@/lib/supabase";
 import { toast } from '@/hooks/use-toast';
 
 interface FlaggedRant {
-  id: string;
-  content: string;
-  created_at: string;
+    id: string;
+    content: string;
+    created_at: string;
 }
 interface Feedback {
-  id: string;
-  message: string;
-  created_at: string;
+    id: string;
+    message: string;
+    created_at: string;
 }
 
 const AdminModeration: React.FC = () => {

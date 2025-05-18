@@ -3,11 +3,11 @@ import { supabase } from "@/lib/supabase";
 import { toast } from '@/hooks/use-toast';
 
 interface ShortLink {
-  id: string;
-  slug: string;
-  url: string;
-  clicks: number;
-  created_at: string;
+    id: string;
+    slug: string;
+    url: string;
+    clicks: number;
+    created_at: string;
 }
 
 const AdminLinkShortener: React.FC = () => {
@@ -126,14 +126,14 @@ const AdminLinkShortener: React.FC = () => {
                                 <tr key={link.id} className="border-b hover:bg-gray-100 dark:hover:bg-gray-700">
                                     <td className="px-2 py-1 font-mono">
                                         {editing === link.id ? (
-                                            <input value={editSlug} onChange={e=>setEditSlug(e.target.value)} className="border rounded px-1 text-xs" />
+                                            <input value={editSlug} onChange={e => setEditSlug(e.target.value)} className="border rounded px-1 text-xs" />
                                         ) : (
                                             <span>{link.slug}</span>
                                         )}
                                     </td>
                                     <td className="px-2 py-1 max-w-xs truncate" title={link.url}>
                                         {editing === link.id ? (
-                                            <input value={editUrl} onChange={e=>setEditUrl(e.target.value)} className="border rounded px-1 text-xs w-full" />
+                                            <input value={editUrl} onChange={e => setEditUrl(e.target.value)} className="border rounded px-1 text-xs w-full" />
                                         ) : (
                                             <span>{link.url}</span>
                                         )}
@@ -143,14 +143,14 @@ const AdminLinkShortener: React.FC = () => {
                                     <td className="px-2 py-1 flex gap-1">
                                         {editing === link.id ? (
                                             <>
-                                                <button className="text-green-600 hover:underline" onClick={()=>handleSaveEdit(link.id)} aria-label="Save edits">Save</button>
-                                                <button className="text-gray-500 hover:underline" onClick={()=>setEditing(null)} aria-label="Cancel edit">Cancel</button>
+                                                <button className="text-green-600 hover:underline" onClick={() => handleSaveEdit(link.id)} aria-label="Save edits">Save</button>
+                                                <button className="text-gray-500 hover:underline" onClick={() => setEditing(null)} aria-label="Cancel edit">Cancel</button>
                                             </>
                                         ) : (
                                             <>
-                                                <button className="text-blue-500 hover:underline" onClick={()=>handleCopy(link.slug)} aria-label="Copy link">Copy</button>
-                                                <button className="text-yellow-500 hover:underline" onClick={()=>handleEdit(link)} aria-label="Edit link">Edit</button>
-                                                <button className="text-red-500 hover:underline" onClick={()=>handleDelete(link.id)} aria-label="Delete link">Delete</button>
+                                                <button className="text-blue-500 hover:underline" onClick={() => handleCopy(link.slug)} aria-label="Copy link">Copy</button>
+                                                <button className="text-yellow-500 hover:underline" onClick={() => handleEdit(link)} aria-label="Edit link">Edit</button>
+                                                <button className="text-red-500 hover:underline" onClick={() => handleDelete(link.id)} aria-label="Delete link">Delete</button>
                                             </>
                                         )}
                                     </td>
