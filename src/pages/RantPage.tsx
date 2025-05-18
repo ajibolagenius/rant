@@ -46,14 +46,14 @@ const RantPage: React.FC = () => {
     const [relatedRants, setRelatedRants] = useState<Rant[]>([]);
     useEffect(() => {
         if (!rant) return;
-        // Fetch more related rants by mood (show up to 4)
+        // Fetch more related rants by mood (show up to 6)
         supabase
             .from("rants")
             .select("*")
             .eq("mood", rant.mood)
             .neq("id", rant.id)
             .order('created_at', { ascending: false })
-            .limit(4)
+            .limit(6)
             .then(({ data }) => {
                 if (Array.isArray(data) && data.length > 0) setRelatedRants(data as Rant[]);
                 else setRelatedRants([]);
@@ -77,28 +77,27 @@ const RantPage: React.FC = () => {
     return (
         <>
             <Navbar />
-            <div className="min-h-screen bg-background-dark bg-gradient-to-br from-[#23272f] via-[#18181b] to-[#18181b]">
+            <div className="min-h-screen bg-[#121225]">
                 <AppHead
-                    title={`Rant | ${moodText}`}
+                    title={`Rant - ${moodText} - ${highlightText(rant.content.slice(0, 32), "")}...`}
                     description={rant.content.slice(0, 120)}
                     image={`${window.location.origin}/api/og-image.ts?rantId=${rant.id}`}
                     url={`${window.location.origin}/rant/${rant.id}`}
                     type="article"
                 />
-                <div className="container mx-auto px-2 sm:px-8 pt-4 flex justify-center">
+                <div className="container mx-auto px-0 sm:px-0 flex justify-center">
                     <div
                         className={cn(
-                            "w-full max-w-3xl bg-background-secondary rounded-2xl shadow-xl p-4 sm:p-8 border-0",
+                            "w-full bg-[#121225] shadow-xl p-4 sm:p-8 border-0",
                             "relative backdrop-blur-sm flex flex-col"
                         )}
                         style={{
-                            backgroundColor: "var(--background-secondary)",
+                            backgroundColor: "#121225",
                             position: 'relative',
                         }}
                     >
-                        {/* Mood gradient header */}
-                        <div className="h-2 w-full relative z-10 rounded-t-2xl" style={{ background: moodGradient }} />
-                        <div className="flex flex-col h-full relative z-10 pt-4 sm:pt-6" style={{ minWidth: 0 }}>
+                        {/* Removed mood gradient header for a clean top */}
+                        <div className="flex flex-col h-full relative z-10 pt-0 sm:pt-0" style={{ minWidth: 0 }}>
                             {/* Back button (to homepage) */}
                             <button
                                 className="mb-4 text-xs text-primary font-ui hover:underline w-fit"
