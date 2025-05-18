@@ -1377,7 +1377,7 @@ const Index: React.FC = () => {
                             )}
 
                             <AnimatePresence mode="wait">
-                                {loading && page === 0 ? (
+                                {loading && page === 0 && location.pathname === '/' ? (
                                     <motion.div
                                         key="loading"
                                         initial={{ opacity: 0 }}

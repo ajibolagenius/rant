@@ -8,7 +8,7 @@ import { getAnonymousUserId } from "@/utils/authorId";
 import { toast } from "@/hooks/use-toast";
 import { FileTextIcon, SettingsIcon, BellIcon } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const Navbar: React.FC = () => {
     const [showMyRants, setShowMyRants] = useState(false);
@@ -186,7 +186,9 @@ const Navbar: React.FC = () => {
                     dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
                     dragElastic={0.3} // the higher the value, the more "bouncy" the drag
                 >
-                    rant:
+                    <Link to="/" aria-label="Go to Home" tabIndex={0} className="outline-none focus:outline-none">
+                        rant:
+                    </Link>
                 </motion.div>
 
                 <div className="flex items-center gap-3">
