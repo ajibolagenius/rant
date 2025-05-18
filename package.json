@@ -7,6 +7,7 @@
     "prebuild": "node scripts/bump-sw-cache-version.js",
     "dev": "vite",
     "build": "vite build",
+    "build:prerender": "vite build --config vite.config.prerender.ts",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -113,6 +114,7 @@
     "tailwindcss": "^3.4.11",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
-    "vite": "^5.4.1"
+    "vite": "^5.4.1",
+    "vite-plugin-prerender": "^1.0.8"
   }
 }

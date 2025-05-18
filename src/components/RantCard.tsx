@@ -340,6 +340,11 @@ const RantCard: React.FC<RantCardProps> = ({
                                 <div className={`${isMobile ? 'w-5 h-5' : 'w-6 h-6'} flex items-center justify-center`}>
                                     <img
                                         src={moodEmojiPath}
+                                        srcSet={`
+                                            ${moodEmojiPath.replace('.gif', '.webp')} 1x,
+                                            ${moodEmojiPath.replace('.gif', '@2x.webp')} 2x,
+                                            ${moodEmojiPath.replace('.gif', '@3x.webp')} 3x
+                                        `}
                                         alt={`Mood emoji for ${moodText}`}
                                         className="w-full h-full object-contain"
                                         loading="lazy"
@@ -494,6 +499,11 @@ const RantCard: React.FC<RantCardProps> = ({
                                         <div className={'w-7 h-7 flex items-center justify-center'}>
                                             <img
                                                 src={moodEmojiPath}
+                                                srcSet={`
+                                                    ${moodEmojiPath.replace('.gif', '.webp')} 1x,
+                                                    ${moodEmojiPath.replace('.gif', '@2x.webp')} 2x,
+                                                    ${moodEmojiPath.replace('.gif', '@3x.webp')} 3x
+                                                `}
                                                 alt={`Mood emoji for ${moodText}`}
                                                 className="w-full h-full object-contain"
                                                 loading="lazy"
