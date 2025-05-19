@@ -59,10 +59,14 @@ const AdminUserMonitoring: React.FC = () => {
 
     async function handleBan(id: string, banned: boolean) {
         if (!window.confirm(banned ? "Unban this device?" : "Ban this device?")) return;
-        const { error } = await supabase.from("anonymous_users").update({ banned: !banned }).eq("id", id);
-        if (error) { toast({ title: 'Error', description: 'Failed to update ban status', variant: 'error' }); return; }
-        setUsers(users => users.map(u => u.id === id ? { ...u, banned: !banned } : u));
-        toast({ title: banned ? 'Device unbanned' : 'Device banned', variant: 'success' });
+        try {
+            const { error } = await supabase.from("anonymous_users").update({ banned: !banned }).eq("id", id);
+            if (error) throw new Error(error.message);
+            setUsers(users => users.map(u => u.id === id ? { ...u, banned: !banned } : u));
+            toast({ title: banned ? 'Device unbanned' : 'Device banned', variant: 'success' });
+        } catch (err) {
+            toast({ title: 'Error', description: 'Failed to update ban status', variant: 'error' });
+        }
     }
 
     return (

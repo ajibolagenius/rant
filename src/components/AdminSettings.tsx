@@ -36,32 +36,48 @@ const AdminSettings: React.FC = () => {
     }, []);
 
     async function handleToggleMaintenance() {
-        const { error } = await supabase.from("settings").update({ value: (!maintenance).toString() }).eq("key", "maintenance_mode");
-        if (error) { toast({ title: 'Error', description: 'Failed to update maintenance mode', variant: 'error' }); return; }
-        setMaintenance(m => !m);
-        toast({ title: maintenance ? 'Maintenance disabled' : 'Maintenance enabled', variant: 'success' });
+        try {
+            const { error } = await supabase.from("settings").update({ value: (!maintenance).toString() }).eq("key", "maintenance_mode");
+            if (error) throw new Error(error.message);
+            setMaintenance(m => !m);
+            toast({ title: maintenance ? 'Maintenance disabled' : 'Maintenance enabled', variant: 'success' });
+        } catch (err) {
+            toast({ title: 'Error', description: 'Failed to update maintenance mode', variant: 'error' });
+        }
     }
     async function handleUpdateMetadata() {
-        const { error: err1 } = await supabase.from("settings").update({ value: siteTitle }).eq("key", "site_title");
-        const { error: err2 } = await supabase.from("settings").update({ value: ogImage }).eq("key", "og_image");
-        if (err1 || err2) { toast({ title: 'Error', description: 'Failed to update metadata', variant: 'error' }); return; }
-        toast({ title: 'Metadata updated', variant: 'success' });
+        try {
+            const { error: err1 } = await supabase.from("settings").update({ value: siteTitle }).eq("key", "site_title");
+            const { error: err2 } = await supabase.from("settings").update({ value: ogImage }).eq("key", "og_image");
+            if (err1 || err2) throw new Error(err1?.message || err2?.message);
+            toast({ title: 'Metadata updated', variant: 'success' });
+        } catch (err) {
+            toast({ title: 'Error', description: 'Failed to update metadata', variant: 'error' });
+        }
     }
     async function handleAddAdmin(e: React.FormEvent) {
         e.preventDefault();
-        const { error } = await supabase.from("admins").insert([{ email: newAdmin }]);
-        if (error) { toast({ title: 'Error', description: 'Failed to add admin', variant: 'error' }); return; }
-        setNewAdmin("");
-        const { data: adminsData } = await supabase.from("admins").select("id, email");
-        setAdmins(adminsData || []);
-        toast({ title: 'Admin added', variant: 'success' });
+        try {
+            const { error } = await supabase.from("admins").insert([{ email: newAdmin }]);
+            if (error) throw new Error(error.message);
+            setNewAdmin("");
+            const { data: adminsData } = await supabase.from("admins").select("id, email");
+            setAdmins(adminsData || []);
+            toast({ title: 'Admin added', variant: 'success' });
+        } catch (err) {
+            toast({ title: 'Error', description: 'Failed to add admin', variant: 'error' });
+        }
     }
     async function handleRemoveAdmin(id: string) {
         if (!window.confirm("Remove this admin?")) return;
-        const { error } = await supabase.from("admins").delete().eq("id", id);
-        if (error) { toast({ title: 'Error', description: 'Failed to remove admin', variant: 'error' }); return; }
-        setAdmins(admins => admins.filter(a => a.id !== id));
-        toast({ title: 'Admin removed', variant: 'success' });
+        try {
+            const { error } = await supabase.from("admins").delete().eq("id", id);
+            if (error) throw new Error(error.message);
+            setAdmins(admins => admins.filter(a => a.id !== id));
+            toast({ title: 'Admin removed', variant: 'success' });
+        } catch (err) {
+            toast({ title: 'Error', description: 'Failed to remove admin', variant: 'error' });
+        }
     }
 
     return (

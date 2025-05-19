@@ -40,20 +40,27 @@ const AdminLinkShortener: React.FC = () => {
     async function handleCreate(e: React.FormEvent) {
         e.preventDefault();
         setCreating(true);
-        const { error } = await supabase
-            .from("short_links")
-            .insert([{ slug, url }]);
-        if (error) setError("Failed to create link");
-        setSlug("");
-        setUrl("");
-        setCreating(false);
-        // Refresh list
-        const { data } = await supabase
-            .from("short_links")
-            .select("id, slug, url, clicks, created_at")
-            .order("created_at", { ascending: false })
-            .limit(50);
-        setLinks(data || []);
+        try {
+            const { error } = await supabase
+                .from("short_links")
+                .insert([{ slug, url }]);
+            if (error) throw new Error(error.message);
+            setSlug("");
+            setUrl("");
+            // Refresh list
+            const { data } = await supabase
+                .from("short_links")
+                .select("id, slug, url, clicks, created_at")
+                .order("created_at", { ascending: false })
+                .limit(50);
+            setLinks(data || []);
+            toast({ title: 'Link created', variant: 'success' });
+        } catch (err) {
+            setError("Failed to create link");
+            toast({ title: 'Error', description: 'Failed to create link', variant: 'error' });
+        } finally {
+            setCreating(false);
+        }
     }
 
     async function handleEdit(link: ShortLink) {
@@ -62,18 +69,26 @@ const AdminLinkShortener: React.FC = () => {
         setEditUrl(link.url);
     }
     async function handleSaveEdit(id: string) {
-        const { error } = await supabase.from("short_links").update({ slug: editSlug, url: editUrl }).eq("id", id);
-        if (error) { toast({ title: 'Error', description: 'Failed to update link', variant: 'error' }); return; }
-        setLinks(links => links.map(l => l.id === id ? { ...l, slug: editSlug, url: editUrl } : l));
-        setEditing(null);
-        toast({ title: 'Link updated', variant: 'success' });
+        try {
+            const { error } = await supabase.from("short_links").update({ slug: editSlug, url: editUrl }).eq("id", id);
+            if (error) throw new Error(error.message);
+            setLinks(links => links.map(l => l.id === id ? { ...l, slug: editSlug, url: editUrl } : l));
+            setEditing(null);
+            toast({ title: 'Link updated', variant: 'success' });
+        } catch (err) {
+            toast({ title: 'Error', description: 'Failed to update link', variant: 'error' });
+        }
     }
     async function handleDelete(id: string) {
         if (!window.confirm("Delete this short link?")) return;
-        const { error } = await supabase.from("short_links").delete().eq("id", id);
-        if (error) { toast({ title: 'Error', description: 'Failed to delete link', variant: 'error' }); return; }
-        setLinks(links => links.filter(l => l.id !== id));
-        toast({ title: 'Link deleted', variant: 'success' });
+        try {
+            const { error } = await supabase.from("short_links").delete().eq("id", id);
+            if (error) throw new Error(error.message);
+            setLinks(links => links.filter(l => l.id !== id));
+            toast({ title: 'Link deleted', variant: 'success' });
+        } catch (err) {
+            toast({ title: 'Error', description: 'Failed to delete link', variant: 'error' });
+        }
     }
     function handleCopy(slug: string) {
         navigator.clipboard.writeText(`${window.location.origin}/out/${slug}`);

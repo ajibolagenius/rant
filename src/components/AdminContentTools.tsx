@@ -56,29 +56,54 @@ const AdminContentTools: React.FC = () => {
 
     async function handleAddPost(e: React.FormEvent) {
         e.preventDefault();
-        await supabase.from("blog_posts").insert([{ title: postTitle, content: postContent, published: false }]);
-        setPostTitle(""); setPostContent("");
-        const { data } = await supabase.from("blog_posts").select("id, title, content, published, created_at").order("created_at", { ascending: false });
-        setPosts(data || []);
+        try {
+            await supabase.from("blog_posts").insert([{ title: postTitle, content: postContent, published: false }]);
+            setPostTitle(""); setPostContent("");
+            const { data } = await supabase.from("blog_posts").select("id, title, content, published, created_at").order("created_at", { ascending: false });
+            setPosts(data || []);
+            toast({ title: 'Post added', variant: 'success' });
+        } catch (err) {
+            toast({ title: 'Error', description: 'Failed to add post', variant: 'error' });
+        }
     }
     async function handlePublish(id: string, published: boolean) {
-        await supabase.from("blog_posts").update({ published: !published }).eq("id", id);
-        setPosts(posts => posts.map(p => p.id === id ? { ...p, published: !published } : p));
+        try {
+            await supabase.from("blog_posts").update({ published: !published }).eq("id", id);
+            setPosts(posts => posts.map(p => p.id === id ? { ...p, published: !published } : p));
+            toast({ title: published ? 'Post unpublished' : 'Post published', variant: 'success' });
+        } catch (err) {
+            toast({ title: 'Error', description: 'Failed to update publish status', variant: 'error' });
+        }
     }
     async function handleDeletePost(id: string) {
-        await supabase.from("blog_posts").delete().eq("id", id);
-        setPosts(posts => posts.filter(p => p.id !== id));
+        try {
+            await supabase.from("blog_posts").delete().eq("id", id);
+            setPosts(posts => posts.filter(p => p.id !== id));
+            toast({ title: 'Post deleted', variant: 'success' });
+        } catch (err) {
+            toast({ title: 'Error', description: 'Failed to delete post', variant: 'error' });
+        }
     }
     async function handleAddMood(e: React.FormEvent) {
         e.preventDefault();
-        await supabase.from("moods").insert([{ name: moodName, emoji: moodEmoji }]);
-        setMoodName(""); setMoodEmoji("");
-        const { data } = await supabase.from("moods").select("id, name, emoji");
-        setMoods(data || []);
+        try {
+            await supabase.from("moods").insert([{ name: moodName, emoji: moodEmoji }]);
+            setMoodName(""); setMoodEmoji("");
+            const { data } = await supabase.from("moods").select("id, name, emoji");
+            setMoods(data || []);
+            toast({ title: 'Mood added', variant: 'success' });
+        } catch (err) {
+            toast({ title: 'Error', description: 'Failed to add mood', variant: 'error' });
+        }
     }
     async function handleDeleteMood(id: string) {
-        await supabase.from("moods").delete().eq("id", id);
-        setMoods(moods => moods.filter(m => m.id !== id));
+        try {
+            await supabase.from("moods").delete().eq("id", id);
+            setMoods(moods => moods.filter(m => m.id !== id));
+            toast({ title: 'Mood deleted', variant: 'success' });
+        } catch (err) {
+            toast({ title: 'Error', description: 'Failed to delete mood', variant: 'error' });
+        }
     }
     async function handleEditPost(post: BlogPost) {
         setEditingPost(post.id);

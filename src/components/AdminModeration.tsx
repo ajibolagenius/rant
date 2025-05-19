@@ -42,17 +42,25 @@ const AdminModeration: React.FC = () => {
     }, []);
 
     async function handleApprove(id: string) {
-        const { error } = await supabase.from("rants").update({ flagged: false }).eq("id", id);
-        if (error) { toast({ title: 'Error', description: 'Failed to approve rant', variant: 'error' }); return; }
-        setFlagged(flagged => flagged.filter(r => r.id !== id));
-        toast({ title: 'Rant approved', variant: 'success' });
+        try {
+            const { error } = await supabase.from("rants").update({ flagged: false }).eq("id", id);
+            if (error) throw new Error(error.message);
+            setFlagged(flagged => flagged.filter(r => r.id !== id));
+            toast({ title: 'Rant approved', variant: 'success' });
+        } catch (err) {
+            toast({ title: 'Error', description: 'Failed to approve rant', variant: 'error' });
+        }
     }
     async function handleDelete(id: string) {
         if (!window.confirm("Delete this rant?")) return;
-        const { error } = await supabase.from("rants").delete().eq("id", id);
-        if (error) { toast({ title: 'Error', description: 'Failed to delete rant', variant: 'error' }); return; }
-        setFlagged(flagged => flagged.filter(r => r.id !== id));
-        toast({ title: 'Rant deleted', variant: 'success' });
+        try {
+            const { error } = await supabase.from("rants").delete().eq("id", id);
+            if (error) throw new Error(error.message);
+            setFlagged(flagged => flagged.filter(r => r.id !== id));
+            toast({ title: 'Rant deleted', variant: 'success' });
+        } catch (err) {
+            toast({ title: 'Error', description: 'Failed to delete rant', variant: 'error' });
+        }
     }
 
     return (

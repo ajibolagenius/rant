@@ -40,22 +40,34 @@ const AdminRantManagement: React.FC = () => {
 
     async function handleDelete(id: string) {
         if (!window.confirm("Delete this rant?")) return;
-        const { error } = await supabase.from("rants").delete().eq("id", id);
-        if (error) { toast({ title: 'Error', description: 'Failed to delete rant', variant: 'error' }); return; }
-        setRants(rants => rants.filter(r => r.id !== id));
-        toast({ title: 'Rant deleted', variant: 'success' });
+        try {
+            const { error } = await supabase.from("rants").delete().eq("id", id);
+            if (error) throw new Error(error.message);
+            setRants(rants => rants.filter(r => r.id !== id));
+            toast({ title: 'Rant deleted', variant: 'success' });
+        } catch (err) {
+            toast({ title: 'Error', description: 'Failed to delete rant', variant: 'error' });
+        }
     }
     async function handleFeature(id: string) {
-        const { error } = await supabase.from("rants").update({ featured: true }).eq("id", id);
-        if (error) { toast({ title: 'Error', description: 'Failed to feature rant', variant: 'error' }); return; }
-        setRants(rants => rants.map(r => r.id === id ? { ...r, featured: true } : r));
-        toast({ title: 'Rant featured', variant: 'success' });
+        try {
+            const { error } = await supabase.from("rants").update({ featured: true }).eq("id", id);
+            if (error) throw new Error(error.message);
+            setRants(rants => rants.map(r => r.id === id ? { ...r, featured: true } : r));
+            toast({ title: 'Rant featured', variant: 'success' });
+        } catch (err) {
+            toast({ title: 'Error', description: 'Failed to feature rant', variant: 'error' });
+        }
     }
     async function handleHide(id: string) {
-        const { error } = await supabase.from("rants").update({ flagged: true }).eq("id", id);
-        if (error) { toast({ title: 'Error', description: 'Failed to hide rant', variant: 'error' }); return; }
-        setRants(rants => rants.map(r => r.id === id ? { ...r, flagged: true } : r));
-        toast({ title: 'Rant hidden', variant: 'success' });
+        try {
+            const { error } = await supabase.from("rants").update({ flagged: true }).eq("id", id);
+            if (error) throw new Error(error.message);
+            setRants(rants => rants.map(r => r.id === id ? { ...r, flagged: true } : r));
+            toast({ title: 'Rant hidden', variant: 'success' });
+        } catch (err) {
+            toast({ title: 'Error', description: 'Failed to hide rant', variant: 'error' });
+        }
     }
 
     return (
