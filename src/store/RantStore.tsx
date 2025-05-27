@@ -1,61 +1,39 @@
-import React, { createContext, useState, ReactNode, Dispatch, SetStateAction } from 'react';
+import { create } from 'zustand';
 import { Rant } from '@/lib/types/rant';
 import { MoodType } from '@/lib/utils/mood';
 
-// Use the same SortOption type as the app
 export type SortOption = 'latest' | 'popular' | 'filter' | 'search';
 
-// Define the shape of the store
 interface RantStoreState {
     rants: Rant[];
-    setRants: Dispatch<SetStateAction<Rant[]>>;
+    setRants: (rants: Rant[]) => void;
     sortOption: SortOption;
-    setSortOption: Dispatch<SetStateAction<SortOption>>;
+    setSortOption: (option: SortOption) => void;
     selectedMoods: string[];
-    setSelectedMoods: Dispatch<SetStateAction<string[]>>;
+    setSelectedMoods: (moods: string[]) => void;
     searchQuery: string;
-    setSearchQuery: Dispatch<SetStateAction<string>>;
+    setSearchQuery: (query: string) => void;
     searchMood: MoodType | null;
-    setSearchMood: Dispatch<SetStateAction<MoodType | null>>;
+    setSearchMood: (mood: MoodType | null) => void;
     loading: boolean;
-    setLoading: Dispatch<SetStateAction<boolean>>;
+    setLoading: (loading: boolean) => void;
     error: string | null;
-    setError: Dispatch<SetStateAction<string | null>>;
+    setError: (error: string | null) => void;
 }
 
-const RantStoreContext = createContext<RantStoreState | undefined>(undefined);
-
-export const RantStoreProvider = ({ children }: { children: ReactNode }) => {
-    const [rants, setRants] = useState<Rant[]>([]);
-    const [sortOption, setSortOption] = useState<SortOption>('latest');
-    const [selectedMoods, setSelectedMoods] = useState<string[]>([]);
-    const [searchQuery, setSearchQuery] = useState<string>('');
-    const [searchMood, setSearchMood] = useState<MoodType | null>(null);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
-
-    const value: RantStoreState = {
-        rants,
-        setRants,
-        sortOption,
-        setSortOption,
-        selectedMoods,
-        setSelectedMoods,
-        searchQuery,
-        setSearchQuery,
-        searchMood,
-        setSearchMood,
-        loading,
-        setLoading,
-        error,
-        setError,
-    };
-
-    return (
-        <RantStoreContext.Provider value={value}>
-            {children}
-        </RantStoreContext.Provider>
-    );
-};
-
-export { RantStoreContext };
+export const useRantStore = create<RantStoreState>((set) => ({
+    rants: [],
+    setRants: (rants) => set({ rants }),
+    sortOption: 'latest',
+    setSortOption: (option) => set({ sortOption: option }),
+    selectedMoods: [],
+    setSelectedMoods: (moods) => set({ selectedMoods: moods }),
+    searchQuery: '',
+    setSearchQuery: (query) => set({ searchQuery: query }),
+    searchMood: null,
+    setSearchMood: (mood) => set({ searchMood: mood }),
+    loading: true,
+    setLoading: (loading) => set({ loading }),
+    error: null,
+    setError: (error) => set({ error }),
+}));

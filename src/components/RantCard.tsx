@@ -1,6 +1,20 @@
+/**
+ * RantCard component displays a single rant with actions like like, bookmark, and delete.
+ * @param {Object} props - Component props.
+ * @param {Rant} props.rant - The rant object to display.
+ * @param {number} props.index - Index of the rant in the list.
+ * @param {function} [props.onRemove] - Callback for removing the rant.
+ * @param {function} [props.onClick] - Callback for clicking the rant.
+ * @param {string} [props.searchTerm] - Search term for highlighting.
+ * @param {function} [props.onLike] - Callback for liking the rant.
+ * @param {boolean} [props.isNew] - Whether the rant is new.
+ * @param {string} [props.currentUserId] - ID of the current user.
+ * @param {boolean} [props.showRemove] - Whether to show the remove button.
+ */
+
 import React, { useEffect, useState } from "react";
 import { Rant } from "@/lib/types/rant";
-import { getMoodColor, getMoodEmoji, getMoodAnimation, getMoodUnicodeEmoji, getMoodGradient } from "@/lib/utils/mood";
+import { getMoodColor, getMoodEmoji, getMoodAnimation, getMoodUnicodeEmoji, getMoodGradient, MoodType } from "@/lib/utils/mood";
 import { motion } from "framer-motion";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import {
@@ -20,24 +34,57 @@ import { cn } from "@/lib/utils";
 import { highlightText } from "@/lib/utils/highlight";
 import { supabase } from '@/lib/supabase';
 import { addDeletedRant } from '@/utils/userStorage';
+import { useBookmark } from '@/hooks/useBookmark';
+import { useRelatedRants } from '@/hooks/useRelatedRants';
 
-// function to manage bookmarks in localStorage
-const getBookmarks = (): string[] => {
-    try {
-        const bookmarks = localStorage.getItem('rant_bookmarks');
-        return bookmarks ? JSON.parse(bookmarks) : [];
-    } catch (error) {
-        console.error("Failed to get bookmarks:", error);
-        return [];
-    }
+// Custom hook for managing bookmarks
+export const useBookmark = (rantId: string) => {
+    const [isBookmarked, setIsBookmarked] = useState(false);
+
+    useEffect(() => {
+        const bookmarks = JSON.parse(localStorage.getItem('rant_bookmarks') || '[]');
+        setIsBookmarked(bookmarks.includes(rantId));
+    }, [rantId]);
+
+    const toggleBookmark = () => {
+        const bookmarks = JSON.parse(localStorage.getItem('rant_bookmarks') || '[]');
+        if (isBookmarked) {
+            const updatedBookmarks = bookmarks.filter((id: string) => id !== rantId);
+            localStorage.setItem('rant_bookmarks', JSON.stringify(updatedBookmarks));
+            setIsBookmarked(false);
+        } else {
+            const updatedBookmarks = [...bookmarks, rantId];
+            localStorage.setItem('rant_bookmarks', JSON.stringify(updatedBookmarks));
+            setIsBookmarked(true);
+        }
+    };
+
+    return { isBookmarked, toggleBookmark };
 };
 
-const saveBookmarks = (bookmarks: string[]): void => {
-    try {
-        localStorage.setItem('rant_bookmarks', JSON.stringify(bookmarks));
-    } catch (error) {
-        console.error("Failed to save bookmarks:", error);
-    }
+// Custom hook for fetching related rants
+export const useRelatedRants = (rant: Rant, isModalOpen: boolean) => {
+    const [relatedRants, setRelatedRants] = useState<Rant[]>([]);
+
+    useEffect(() => {
+        if (!isModalOpen) return;
+
+        const fetchRelatedRants = async () => {
+            const { data } = await supabase
+                .from('rants')
+                .select('*')
+                .eq('mood', rant.mood)
+                .neq('id', rant.id)
+                .order('created_at', { ascending: false })
+                .limit(4);
+
+            setRelatedRants(data || []);
+        };
+
+        fetchRelatedRants();
+    }, [rant, isModalOpen]);
+
+    return relatedRants;
 };
 
 interface RantCardProps {
@@ -64,6 +111,234 @@ const arePropsEqual = (prevProps: RantCardProps, nextProps: RantCardProps) => {
     );
 };
 
+// MoodTag Component
+const MoodTag: React.FC<{ mood: MoodType; isMobile: boolean }> = ({ mood, isMobile }) => {
+    const moodColor = getMoodColor(mood);
+    const moodEmojiPath = getMoodEmoji(mood);
+    const moodText = `${mood.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}`;
+
+    return (
+        <div className="flex items-center gap-2">
+            <div
+                className={`${isMobile ? 'w-7 h-7' : 'w-9 h-9'} flex items-center justify-center rounded-md overflow-hidden`}
+                style={{
+                    backgroundColor: `${moodColor}22`,
+                    border: `1px solid ${moodColor}`,
+                }}
+                aria-hidden="true"
+            >
+                <div className={`${isMobile ? 'w-5 h-5' : 'w-6 h-6'} flex items-center justify-center`}>
+                    <img
+                        src={moodEmojiPath}
+                        srcSet={`
+                            ${moodEmojiPath.replace('.gif', '.webp')} 1x,
+                            ${moodEmojiPath.replace('.gif', '@2x.webp')} 2x,
+                            ${moodEmojiPath.replace('.gif', '@3x.webp')} 3x
+                        `}
+                        alt={`Mood emoji for ${moodText}`}
+                        className="w-full h-full object-contain"
+                        loading="lazy"
+                        onError={(e) => {
+                            e.currentTarget.src = "/assets/emojis/neutral.gif"; // Fallback emoji
+                        }}
+                    />
+                </div>
+            </div>
+            <span className="text-xs sm:text-sm font-ui" style={{ color: moodColor }}>
+                {moodText}
+            </span>
+        </div>
+    );
+};
+
+// RantActions Component
+const RantActions: React.FC<{
+    rantId: string;
+    isLiked: boolean;
+    isBookmarked: boolean;
+    handleLikeClick: (e: React.MouseEvent) => void;
+    handleBookmarkClick: (e: React.MouseEvent) => void;
+}> = ({ rantId, isLiked, isBookmarked, handleLikeClick, handleBookmarkClick }) => {
+    return (
+        <div className="flex items-center gap-2">
+            {/* Like Button */}
+            <button
+                className="hover:scale-110 transition-transform text-text-muted hover:text-red-500"
+                onClick={handleLikeClick}
+                aria-label={isLiked ? "Unlike rant" : "Like rant"}
+            >
+                {isLiked ? <HeartFilledIcon className="w-4 h-4" /> : <HeartIcon className="w-4 h-4" />}
+            </button>
+
+            {/* Bookmark Button */}
+            <button
+                className="hover:scale-110 transition-transform text-text-muted hover:text-yellow-500"
+                onClick={handleBookmarkClick}
+                aria-label={isBookmarked ? "Remove bookmark" : "Add bookmark"}
+            >
+                {isBookmarked ? <BookmarkFilledIcon className="w-4 h-4" /> : <BookmarkIcon className="w-4 h-4" />}
+            </button>
+
+            {/* Share Button */}
+            <button
+                className="hover:scale-110 transition-transform text-text-muted hover:text-[#6DD19F]"
+                onClick={() => {
+                    const url = `${window.location.origin}/rant/${rantId}`;
+                    navigator.clipboard.writeText(url);
+                    toast({ title: 'Copied to Clipboard', description: 'Rant link has been copied to clipboard.' });
+                }}
+                aria-label="Copy rant link"
+            >
+                <Share1Icon className="w-4 h-4" />
+            </button>
+        </div>
+    );
+};
+
+// RantModal Component
+const RantModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    rant: Rant;
+    isAutoNew: boolean;
+    isHighlighted: boolean;
+    reducedMotion: boolean;
+    relatedRants: Rant[]; // Add related rants prop
+}> = ({ isOpen, onClose, rant, isAutoNew, isHighlighted, reducedMotion, relatedRants }) => {
+    const moodColor = getMoodColor(rant.mood);
+    const moodEmojiPath = getMoodEmoji(rant.mood);
+    const moodText = `${rant.mood.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}`;
+    const moodGradient = getMoodGradient ? getMoodGradient(rant.mood) : `linear-gradient(to right, ${moodColor}22, ${moodColor}44)`;
+
+    return isOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60" onClick={onClose}>
+            <motion.div
+                className={cn(
+                    "rounded-xl overflow-hidden shadow-medium hover:shadow-high transition-all duration-200",
+                    "cursor-default relative backdrop-blur-sm flex flex-col h-full",
+                    "bg-background-dark w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl min-h-[120px] max-h-[60vh]"
+                )}
+                style={{
+                    backgroundColor: "var(--background-secondary)",
+                    width: '100%',
+                    maxWidth: '480px',
+                    minHeight: '120px',
+                    maxHeight: '60vh',
+                    display: 'flex',
+                    flexDirection: 'column',
+                }}
+                onClick={e => e.stopPropagation()}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                tabIndex={-1}
+                role="dialog"
+                aria-modal="true"
+            >
+                {/* Mood gradient header */}
+                <div className="h-2 w-full" style={{ background: moodGradient }} />
+                {/* Close button */}
+                <button className="absolute top-2 right-2 text-text-muted hover:text-white text-2xl sm:text-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-full z-10" onClick={onClose} aria-label="Close modal">&times;</button>
+                {/* Modal content */}
+                <div className="p-4 sm:p-6 flex flex-col h-full">
+                    {/* New indicator */}
+                    {(isAutoNew || isHighlighted) && (
+                        <div className="absolute top-2 right-10">
+                            <motion.div
+                                initial={reducedMotion ? { scale: 1 } : { scale: 0 }}
+                                animate={reducedMotion ? undefined : { scale: 1 }}
+                                className={cn(
+                                    "text-xs px-2 py-0.5 rounded-full font-medium font-ui",
+                                    isHighlighted ? "bg-blue-500 text-white" : "bg-accent-teal text-background-dark"
+                                )}
+                                aria-live="polite"
+                            >
+                                New
+                            </motion.div>
+                        </div>
+                    )}
+                    {/* Header with mood and author info */}
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                            <div
+                                className={'w-10 h-10 flex items-center justify-center rounded-md overflow-hidden'}
+                                style={{
+                                    backgroundColor: `${moodColor}22`,
+                                    border: `1px solid ${moodColor}`,
+                                }}
+                                aria-hidden="true"
+                            >
+                                <div className={'w-7 h-7 flex items-center justify-center'}>
+                                    <img
+                                        src={moodEmojiPath}
+                                        srcSet={`
+                                            ${moodEmojiPath.replace('.gif', '.webp')} 1x,
+                                            ${moodEmojiPath.replace('.gif', '@2x.webp')} 2x,
+                                            ${moodEmojiPath.replace('.gif', '@3x.webp')} 3x
+                                        `}
+                                        alt={`Mood emoji for ${moodText}`}
+                                        className="w-full h-full object-contain"
+                                        loading="lazy"
+                                        onError={(e) => {
+                                            e.currentTarget.src = "/assets/emojis/neutral.gif";
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                            <span className="text-base sm:text-lg font-ui" style={{ color: moodColor }}>
+                                {moodText}
+                            </span>
+                        </div>
+                        <div className="text-xs text-text-muted font-ui">
+                            {`Anonymous ${rant.anonymous_user_id?.slice(-3).toUpperCase() || "🫣"}`}
+                        </div>
+                    </div>
+                    {/* Rant content */}
+                    <div
+                        className={cn(
+                            "text-text-primary leading-relaxed mb-4 font-body break-words flex-grow overflow-y-auto"
+                        )}
+                        aria-label={`Rant content`}
+                        style={{ minHeight: '120px' }}
+                    >
+                        {rant.content}
+                    </div>
+
+                    {/* Related rants section - show only if there are related rants */}
+                    {relatedRants.length > 0 && (
+                        <div className="mt-4">
+                            <div className="text-sm font-medium text-text-primary mb-2">
+                                Related Rants
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                {relatedRants.map((relatedRant) => (
+                                    <div
+                                        key={relatedRant.id}
+                                        className="p-3 rounded-lg bg-background-secondary hover:bg-background-tertiary transition-colors cursor-pointer"
+                                        onClick={() => {
+                                            // Close modal and open selected rant in new tab
+                                            onClose();
+                                            window.open(`/rant/${relatedRant.id}`, '_blank');
+                                        }}
+                                    >
+                                        <div className="text-text-primary font-ui">
+                                            {relatedRant.content}
+                                        </div>
+                                        <div className="text-xs text-text-muted font-ui mt-1">
+                                            {`Anonymous ${relatedRant.anonymous_user_id?.slice(-3).toUpperCase() || "🫣"}`}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </motion.div>
+        </div>
+    ) : null;
+};
+
 const RantCard: React.FC<RantCardProps> = ({
     rant,
     onClick,
@@ -84,14 +359,14 @@ const RantCard: React.FC<RantCardProps> = ({
     const [isOptimistic, setIsOptimistic] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     // Add state for bookmarked status
-    const [isBookmarked, setIsBookmarked] = useState(false);
+    const { isBookmarked, toggleBookmark } = useBookmark(rant.id);
     // Add state for highlight animation
     const [isHighlighted, setIsHighlighted] = useState(isNew);
     // 2. Modal state for opening the rant in a modal
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     // Related rants for modal
-    const [relatedRants, setRelatedRants] = useState<Rant[]>([]);
+    const relatedRants = useRelatedRants(rant, isModalOpen);
 
     // Check if current user is the owner of this rant
     const isOwner = currentUserId && rant.anonymous_user_id === currentUserId;
@@ -101,7 +376,7 @@ const RantCard: React.FC<RantCardProps> = ({
     const canRemove = isOwner || isAnonymousOwner;
 
     // Use the useLikeStatus hook to manage like status
-    const { isLiked, likeCount, setLikeStatus, isLoading } = useLikeStatus(rant.id);
+    const { isLiked, isLoading, toggleLike } = useLikeStatus(rant.id);
 
     // Animation based on mood - respect reduced motion preference
     const moodAnimation = reducedMotion
@@ -139,12 +414,6 @@ const RantCard: React.FC<RantCardProps> = ({
         }
     }, [rant.created_at, rant.is_optimistic]);
 
-    // Check if the rant is bookmarked
-    useEffect(() => {
-        const bookmarks = getBookmarks();
-        setIsBookmarked(bookmarks.includes(rant.id));
-    }, [rant.id]);
-
     // Handle highlight effect for new rants
     useEffect(() => {
         setIsHighlighted(isNew);
@@ -164,39 +433,20 @@ const RantCard: React.FC<RantCardProps> = ({
         ? formatDistanceToNow(new Date(rant.created_at), { addSuffix: true })
         : '';
 
+    // Highlight search term in rant content
+    const highlightedContent = searchTerm ? highlightText(rant.content, searchTerm) : rant.content;
+
+    // Determine if the current user is the owner of the rant
+    const isOwner = currentUserId && rant.anonymous_user_id === currentUserId;
+
+    // Handle like button click
     const handleLikeClick = async (e: React.MouseEvent) => {
         e.stopPropagation();
         if (!isLiked) {
-            await setLikeStatus(true);
+            await toggleLike();
             if (onLike) {
                 onLike();
             }
-        }
-    };
-
-    // Add bookmark toggle handler
-    const handleBookmarkClick = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        const bookmarks = getBookmarks();
-
-        if (isBookmarked) {
-            // Remove from bookmarks
-            const updatedBookmarks = bookmarks.filter(id => id !== rant.id);
-            saveBookmarks(updatedBookmarks);
-            setIsBookmarked(false);
-            toast({
-                title: 'Bookmark Removed',
-                description: 'This rant has been removed from your bookmarks.',
-            });
-        } else {
-            // Add to bookmarks
-            const updatedBookmarks = [...bookmarks, rant.id];
-            saveBookmarks(updatedBookmarks);
-            setIsBookmarked(true);
-            toast({
-                title: 'Bookmark Added',
-                description: 'This rant has been added to your bookmarks.',
-            });
         }
     };
 
@@ -253,23 +503,6 @@ const RantCard: React.FC<RantCardProps> = ({
     };
 
     const handleModalClose = () => setIsModalOpen(false);
-
-    // Fetch related rants by mood when modal opens
-    useEffect(() => {
-        if (!isModalOpen) return;
-        // Fetch related rants by mood (exclude current, show up to 4)
-        supabase
-            .from("rants")
-            .select("*")
-            .eq("mood", rant.mood)
-            .neq("id", rant.id)
-            .order('created_at', { ascending: false })
-            .limit(4)
-            .then(({ data }) => {
-                if (Array.isArray(data) && data.length > 0) setRelatedRants(data as Rant[]);
-                else setRelatedRants([]);
-            });
-    }, [isModalOpen, rant.mood, rant.id]);
 
     return (
         <>
@@ -328,36 +561,7 @@ const RantCard: React.FC<RantCardProps> = ({
                     {/* Header with mood and author info */}
                     <div className="flex items-center justify-between mb-4">
                         {/* Mood Tag with dynamic outline - smaller on mobile */}
-                        <div className="flex items-center gap-2">
-                            <div
-                                className={`${isMobile ? 'w-7 h-7' : 'w-9 h-9'} flex items-center justify-center rounded-md overflow-hidden`}
-                                style={{
-                                    backgroundColor: `${moodColor}22`,
-                                    border: `1px solid ${moodColor}`,
-                                }}
-                                aria-hidden="true"
-                            >
-                                <div className={`${isMobile ? 'w-5 h-5' : 'w-6 h-6'} flex items-center justify-center`}>
-                                    <img
-                                        src={moodEmojiPath}
-                                        srcSet={`
-                                            ${moodEmojiPath.replace('.gif', '.webp')} 1x,
-                                            ${moodEmojiPath.replace('.gif', '@2x.webp')} 2x,
-                                            ${moodEmojiPath.replace('.gif', '@3x.webp')} 3x
-                                        `}
-                                        alt={`Mood emoji for ${moodText}`}
-                                        className="w-full h-full object-contain"
-                                        loading="lazy"
-                                        onError={(e) => {
-                                            e.currentTarget.src = "/assets/emojis/neutral.gif"; // Fallback emoji
-                                        }}
-                                    />
-                                </div>
-                            </div>
-                            <span className="text-xs sm:text-sm font-ui" style={{ color: moodColor }}>
-                                {moodText}
-                            </span>
-                        </div>
+                        <MoodTag mood={rant.mood as MoodType} isMobile={isMobile} />
 
                         {/* Author info */}
                         <div className="text-xs text-text-muted font-ui">
@@ -374,7 +578,7 @@ const RantCard: React.FC<RantCardProps> = ({
                         className={`${getFontSizeClass()} text-text-primary leading-relaxed mb-4 font-body break-words flex-grow`}
                         aria-label={`Rant content`}
                     >
-                        {highlightText(rant.content, searchTerm)}
+                        {highlightedContent}
                     </div>
 
                     {/* Footer with timestamp and actions */}
@@ -384,33 +588,13 @@ const RantCard: React.FC<RantCardProps> = ({
                             <div className="text-xs text-text-muted">
                                 {formattedTime}
                             </div>
-                            <div className="flex items-center gap-2">
-                                {/* Share: Copy link */}
-                                <button
-                                    className="hover:scale-110 transition-transform text-text-muted hover:text-[#6DD19F] ml-2"
-                                    onClick={e => {
-                                        e.stopPropagation();
-                                        const url = `${window.location.origin}/rant/${rant.id}`;
-                                        navigator.clipboard.writeText(url);
-                                        toast({ title: 'Copied to Clipboard', description: 'Rant link has been copied to clipboard.' });
-                                    }}
-                                    aria-label="Copy rant link"
-                                >
-                                    <Share1Icon className="w-4 h-4" />
-                                </button>
-                                {/* Share: Twitter */}
-                                <button
-                                    className="hover:scale-110 transition-transform text-text-muted hover:text-[#1DA1F2]"
-                                    onClick={e => {
-                                        e.stopPropagation();
-                                        const url = `${window.location.origin}/rant/${rant.id}`;
-                                        window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(rant.content.slice(0, 120))}`, '_blank');
-                                    }}
-                                    aria-label="Share on Twitter"
-                                >
-                                    <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M22.46 5.924c-.793.352-1.646.59-2.54.698a4.48 4.48 0 0 0 1.965-2.475 8.94 8.94 0 0 1-2.828 1.082 4.48 4.48 0 0 0-7.635 4.085A12.72 12.72 0 0 1 3.11 4.86a4.48 4.48 0 0 0 1.388 5.976 4.47 4.47 0 0 1-2.03-.56v.057a4.48 4.48 0 0 0 3.594 4.393 4.48 4.48 0 0 1-2.025.077 4.48 4.48 0 0 0 4.184 3.11A8.98 8.98 0 0 1 2 19.54a12.7 12.7 0 0 0 6.88 2.017c8.26 0 12.78-6.84 12.78-12.77 0-.195-.004-.39-.013-.583A9.22 9.22 0 0 0 24 4.59a8.93 8.93 0 0 1-2.54.698z" /></svg>
-                                </button>
-                            </div>
+                            <RantActions
+                                rantId={rant.id}
+                                isLiked={!!isLiked} // Ensure boolean type
+                                isBookmarked={isBookmarked}
+                                handleLikeClick={handleLikeClick}
+                                handleBookmarkClick={toggleBookmark}
+                            />
                         </div>
                     </div>
                 </div>
@@ -433,175 +617,22 @@ const RantCard: React.FC<RantCardProps> = ({
                 )}
             </motion.div>
             {/* Modal for rant details */}
-            {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60" onClick={handleModalClose}>
-                    <motion.div
-                        className={cn(
-                            "rounded-xl overflow-hidden shadow-medium hover:shadow-high transition-all duration-200",
-                            "cursor-default relative backdrop-blur-sm flex flex-col h-full",
-                            isOptimistic ? "border-2 border-accent-teal" : "border border-border-subtle",
-                            highContrast ? "high-contrast-card" : "",
-                            isHighlighted ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-background-dark" : "",
-                            "bg-background-dark w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl min-h-[120px] max-h-[60vh]"
-                        )}
-                        style={{
-                            backgroundColor: highContrast ? "var(--background-dark)" : "var(--background-secondary)",
-                            width: '100%',
-                            maxWidth: '480px', // constant size
-                            minHeight: '120px', // further reduced height
-                            maxHeight: '60vh', // further reduced max height
-                            display: 'flex',
-                            flexDirection: 'column',
-                        }}
-                        onClick={e => e.stopPropagation()}
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ duration: 0.2 }}
-                        tabIndex={-1}
-                        role="dialog"
-                        aria-modal="true"
-                    >
-                        {/* Mood gradient header */}
-                        <div className="h-2 w-full" style={{ background: moodGradient }} />
-                        {/* Close button */}
-                        <button className="absolute top-2 right-2 text-text-muted hover:text-white text-2xl sm:text-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-full z-10" onClick={handleModalClose} aria-label="Close modal">&times;</button>
-                        {/* Modal content (same as card, but larger) */}
-                        <div className="p-4 sm:p-6 flex flex-col h-full">
-                            {/* New indicator with proper live region for screen readers */}
-                            {(isAutoNew || isHighlighted) && (
-                                <div className="absolute top-2 right-10">
-                                    <motion.div
-                                        initial={reducedMotion ? { scale: 1 } : { scale: 0 }}
-                                        animate={reducedMotion ? undefined : { scale: 1 }}
-                                        className={cn(
-                                            "text-xs px-2 py-0.5 rounded-full font-medium font-ui",
-                                            isHighlighted ? "bg-blue-500 text-white" : "bg-accent-teal text-background-dark"
-                                        )}
-                                        aria-live="polite"
-                                    >
-                                        New
-                                    </motion.div>
-                                </div>
-                            )}
-                            {/* Header with mood and author info */}
-                            <div className="flex items-center justify-between mb-4">
-                                {/* Mood Tag with dynamic outline - larger in modal */}
-                                <div className="flex items-center gap-2">
-                                    <div
-                                        className={'w-10 h-10 flex items-center justify-center rounded-md overflow-hidden'}
-                                        style={{
-                                            backgroundColor: `${moodColor}22`,
-                                            border: `1px solid ${moodColor}`,
-                                        }}
-                                        aria-hidden="true"
-                                    >
-                                        <div className={'w-7 h-7 flex items-center justify-center'}>
-                                            <img
-                                                src={moodEmojiPath}
-                                                srcSet={`
-                                                    ${moodEmojiPath.replace('.gif', '.webp')} 1x,
-                                                    ${moodEmojiPath.replace('.gif', '@2x.webp')} 2x,
-                                                    ${moodEmojiPath.replace('.gif', '@3x.webp')} 3x
-                                                `}
-                                                alt={`Mood emoji for ${moodText}`}
-                                                className="w-full h-full object-contain"
-                                                loading="lazy"
-                                                onError={(e) => {
-                                                    e.currentTarget.src = "/assets/emojis/neutral.gif";
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-                                    <span className="text-base sm:text-lg font-ui" style={{ color: moodColor }}>
-                                        {moodText}
-                                    </span>
-                                </div>
-                                {/* Author info */}
-                                <div className="text-xs text-text-muted font-ui">
-                                    {`Anonymous ${rant.anonymous_user_id?.slice(-3).toUpperCase() || "🫣"}`}
-                                </div>
-                            </div>
-                            {/* Accessible label for mood (screen reader only) */}
-                            <span className="sr-only">{`Mood is ${moodText}`}</span>
-                            {/* Rant content with search term highlighting and accessible font size */}
-                            <div
-                                className={cn(
-                                    getFontSizeClass(),
-                                    "text-text-primary leading-relaxed mb-4 font-body break-words flex-grow overflow-y-auto"
-                                )}
-                                aria-label={`Rant content`}
-                                style={{ minHeight: '120px' }}
-                            >
-                                {highlightText(rant.content, searchTerm)}
-                            </div>
-                            {/* Footer with timestamp and actions */}
-                            <div className="mt-auto pt-2">
-                                {/* Timestamp and share icon inline */}
-                                <div className="flex items-center justify-between mb-3 font-ui">
-                                    <div className="text-xs text-text-muted">
-                                        {rant.created_at ? new Date(rant.created_at).toLocaleString(undefined, { dateStyle: 'full', timeStyle: 'short' }) : ''} ({formattedTime})
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        {/* Share: Copy link */}
-                                        <button
-                                            className="hover:scale-110 transition-transform text-text-muted hover:text-[#6DD19F] ml-2"
-                                            onClick={e => {
-                                                e.stopPropagation();
-                                                const url = `${window.location.origin}/rant/${rant.id}`;
-                                                navigator.clipboard.writeText(url);
-                                                toast({ title: 'Copied to Clipboard', description: 'Rant link has been copied to clipboard.' });
-                                            }}
-                                            aria-label="Copy rant link"
-                                        >
-                                            <Share1Icon className="w-4 h-4" />
-                                        </button>
-                                        {/* Share: Twitter */}
-                                        <button
-                                            className="hover:scale-110 transition-transform text-text-muted hover:text-[#1DA1F2]"
-                                            onClick={e => {
-                                                e.stopPropagation();
-                                                const url = `${window.location.origin}/rant/${rant.id}`;
-                                                window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(rant.content.slice(0, 120))}`, '_blank');
-                                            }}
-                                            aria-label="Share on Twitter"
-                                        >
-                                            <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M22.46 5.924c-.793.352-1.646.59-2.54.698a4.48 4.48 0 0 0 1.965-2.475 8.94 8.94 0 0 1-2.828 1.082 4.48 4.48 0 0 0-7.635 4.085A12.72 12.72 0 0 1 3.11 4.86a4.48 4.48 0 0 0 1.388 5.976 4.47 4.47 0 0 1-2.03-.56v.057a4.48 4.48 0 0 0 3.594 4.393 4.48 4.48 0 0 1-2.025.077 4.48 4.48 0 0 0 4.184 3.11A8.98 8.98 0 0 1 2 19.54a12.7 12.7 0 0 0 6.88 2.017c8.26 0 12.78-6.84 12.78-12.77 0-.195-.004-.39-.013-.583A9.22 9.22 0 0 0 24 4.59a8.93 8.93 0 0 1-2.54.698z" /></svg>
-                                        </button>
-                                    </div>
-                                </div>
-                                {/* Related rants section */}
-                                {relatedRants && relatedRants.length > 0 && (
-                                    <div className="mt-6">
-                                        <div className="text-xs text-text-muted font-ui mb-2">
-                                            Related rants with mood{' '}
-                                            <button
-                                                className="underline text-primary font-semibold hover:text-primary/80 transition-colors"
-                                                style={{ color: moodColor, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
-                                                onClick={() => window.location.href = `/?mood=${encodeURIComponent(rant.mood)}`}
-                                                aria-label={`Filter rants by mood: ${moodText}`}
-                                            >
-                                                {moodText}
-                                            </button>:
-                                        </div>
-                                        <div className="flex flex-col gap-2">
-                                            {relatedRants.map(r => (
-                                                <div key={r.id} className="rounded-lg border border-border-subtle bg-background-secondary px-3 py-2 text-xs text-text-primary cursor-pointer hover:bg-background-dark/80 transition"
-                                                    onClick={() => window.location.href = `/rant/${r.id}`}
-                                                >
-                                                    <span className="font-bold" style={{ color: getMoodColor(r.mood) }}>{getMoodUnicodeEmoji(r.mood)} {r.mood}</span> · {r.content.slice(0, 60)}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </motion.div>
-                </div>
-            )}
+            <RantModal
+                isOpen={isModalOpen}
+                onClose={handleModalClose}
+                rant={rant}
+                isAutoNew={isAutoNew}
+                isHighlighted={isHighlighted}
+                reducedMotion={reducedMotion}
+                relatedRants={relatedRants}
+            />
         </>
     );
+};
+
+RantCard.defaultProps = {
+    isNew: false,
+    showRemove: false,
 };
 
 export default React.memo(RantCard, arePropsEqual);

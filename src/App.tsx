@@ -16,6 +16,15 @@ import '@/styles/theme.css';
 import { Analytics } from "@vercel/analytics/react";
 import { HelmetProvider } from 'react-helmet-async';
 import Preloader from './components/Preloader';
+import * as Sentry from '@sentry/react';
+import { BrowserRouter as DefaultBrowserRouter, HashRouter as DefaultHashRouter } from 'react-router-dom';
+
+// Sentry configuration for error tracking
+Sentry.init({
+    dsn: 'https://examplePublicKey@o0.ingest.sentry.io/0',
+    integrations: [new Sentry.BrowserTracing()],
+    tracesSampleRate: 1.0,
+});
 
 // Error boundary component for catching rendering errors
 class ErrorBoundary extends React.Component<
@@ -118,7 +127,11 @@ const AppRouter: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
         };
     }, [useHashRouter]);
 
-    const RouterComponent = useHashRouter ? HashRouter : BrowserRouter;
+    /**
+     * The app dynamically switches between BrowserRouter and HashRouter based on the environment.
+     * HashRouter is used as a fallback for environments where server-side routing is not supported.
+     */
+    const RouterComponent = useHashRouter ? DefaultHashRouter : DefaultBrowserRouter;
 
     return (
         <RouterComponent future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
