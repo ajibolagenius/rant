@@ -35,58 +35,8 @@ import { highlightText } from "@/lib/utils/highlight";
 import { supabase } from '@/lib/supabase';
 import { addDeletedRant } from '@/utils/userStorage';
 import { useBookmark } from '@/hooks/useBookmark';
-import { useRelatedRants } from '@/hooks/useRelatedRants';
 
-// Custom hook for managing bookmarks
-export const useBookmark = (rantId: string) => {
-    const [isBookmarked, setIsBookmarked] = useState(false);
-
-    useEffect(() => {
-        const bookmarks = JSON.parse(localStorage.getItem('rant_bookmarks') || '[]');
-        setIsBookmarked(bookmarks.includes(rantId));
-    }, [rantId]);
-
-    const toggleBookmark = () => {
-        const bookmarks = JSON.parse(localStorage.getItem('rant_bookmarks') || '[]');
-        if (isBookmarked) {
-            const updatedBookmarks = bookmarks.filter((id: string) => id !== rantId);
-            localStorage.setItem('rant_bookmarks', JSON.stringify(updatedBookmarks));
-            setIsBookmarked(false);
-        } else {
-            const updatedBookmarks = [...bookmarks, rantId];
-            localStorage.setItem('rant_bookmarks', JSON.stringify(updatedBookmarks));
-            setIsBookmarked(true);
-        }
-    };
-
-    return { isBookmarked, toggleBookmark };
-};
-
-// Custom hook for fetching related rants
-export const useRelatedRants = (rant: Rant, isModalOpen: boolean) => {
-    const [relatedRants, setRelatedRants] = useState<Rant[]>([]);
-
-    useEffect(() => {
-        if (!isModalOpen) return;
-
-        const fetchRelatedRants = async () => {
-            const { data } = await supabase
-                .from('rants')
-                .select('*')
-                .eq('mood', rant.mood)
-                .neq('id', rant.id)
-                .order('created_at', { ascending: false })
-                .limit(4);
-
-            setRelatedRants(data || []);
-        };
-
-        fetchRelatedRants();
-    }, [rant, isModalOpen]);
-
-    return relatedRants;
-};
-
+// RantCardProps interface definition
 interface RantCardProps {
     rant: Rant;
     index: number;
@@ -99,6 +49,7 @@ interface RantCardProps {
     showRemove?: boolean; // Add this prop
 }
 
+// Memoization function for props equality
 const arePropsEqual = (prevProps: RantCardProps, nextProps: RantCardProps) => {
     return (
         prevProps.rant.id === nextProps.rant.id &&
@@ -365,9 +316,6 @@ const RantCard: React.FC<RantCardProps> = ({
     // 2. Modal state for opening the rant in a modal
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    // Related rants for modal
-    const relatedRants = useRelatedRants(rant, isModalOpen);
-
     // Check if current user is the owner of this rant
     const isOwner = currentUserId && rant.anonymous_user_id === currentUserId;
     // For anonymous rants, check if the anonymous ID matches the user's anonymous ID
@@ -437,7 +385,7 @@ const RantCard: React.FC<RantCardProps> = ({
     const highlightedContent = searchTerm ? highlightText(rant.content, searchTerm) : rant.content;
 
     // Determine if the current user is the owner of the rant
-    const isOwner = currentUserId && rant.anonymous_user_id === currentUserId;
+    // const isOwner = currentUserId && rant.anonymous_user_id === currentUserId;
 
     // Handle like button click
     const handleLikeClick = async (e: React.MouseEvent) => {
@@ -624,7 +572,7 @@ const RantCard: React.FC<RantCardProps> = ({
                 isAutoNew={isAutoNew}
                 isHighlighted={isHighlighted}
                 reducedMotion={reducedMotion}
-                relatedRants={relatedRants}
+                relatedRants={[]}
             />
         </>
     );
