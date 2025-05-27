@@ -84,6 +84,7 @@
     "sonner": "^1.5.0",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
+    "theme-change": "^2.5.0",
     "uuid": "^11.1.0",
     "vaul": "^0.9.3",
     "web-push": "^3.6.7",

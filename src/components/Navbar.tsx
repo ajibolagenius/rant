@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
+import Button from '@/components/ui/button';
 import Settings from '@/components/Settings';
 import MyRants from '@/components/MyRants';
 import { AnimatePresence, motion } from "framer-motion";
@@ -217,27 +217,17 @@ const Navbar: React.FC = () => {
 
                         {/* 2. My Rants (user's own content) */}
                         <Button
-                            variant="ghost"
-                            size="icon"
+                            variant="primary"
+                            size="medium"
                             onClick={handleMyRantsClick}
                             className={iconButtonClass}
                             aria-label="My Rants"
-                            title="My Rants"
                         >
                             <FileTextIcon size={16} />
                         </Button>
 
                         {/* 3. Theme Toggle (personalization) */}
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => { }}
-                            className={iconButtonClass}
-                            aria-label="Toggle Theme"
-                            title="Toggle Theme"
-                        >
-                            <ThemeToggle />
-                        </Button>
+                        <ThemeToggle className="h-8 w-8 rounded-full text-primary hover:bg-primary/10 hover:text-primary focus:ring-2 focus:ring-accent-teal focus:ring-offset-1 focus:ring-offset-background-dark transition-colors" />
 
                         {/* 4. Settings (least frequent) */}
                         <Button

@@ -1,46 +1,34 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { SunIcon, MoonIcon } from 'lucide-react';
-import { useAccessibility } from '@/components/AccessibilityContext';
+import { themeChange } from 'theme-change';
 
 interface ThemeToggleProps {
     className?: string;
 }
 
 const ThemeToggle: React.FC<ThemeToggleProps> = ({ className }) => {
-    // Use the theme state and setTheme function from AccessibilityContext
-    const { theme, setTheme } = useAccessibility();
+    const [theme, setTheme] = useState<'light' | 'dark'>(
+        localStorage.getItem('theme') === 'light' ? 'light' : 'dark'
+    );
+
+    useEffect(() => {
+        themeChange(false);
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+    }, [theme]);
 
     const toggleTheme = () => {
-        // Toggle between light and dark themes
-        const newTheme = theme === 'dark' ? 'light' : 'dark';
-
-        // Use the context's setTheme function which should handle:
-        // - Updating the theme state
-        // - Updating DOM classes
-        // - Saving to localStorage
-        setTheme(newTheme);
+        setTheme((prevTheme) => (prevTheme === 'dark' ? 'light' : 'dark'));
     };
 
     return (
-        <div
+        <button
             onClick={toggleTheme}
-            className={className}
-            role="button"
-            aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
-            tabIndex={0}
-            onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    toggleTheme();
-                }
-            }}
+            className={`flex items-center justify-center p-2 rounded-full transition-colors ${className}`}
+            aria-label="Toggle Theme"
         >
-            {theme === 'dark' ? (
-                <SunIcon size={16} />
-            ) : (
-                <MoonIcon size={16} />
-            )}
-        </div>
+            {theme === 'dark' ? <SunIcon size={16} /> : <MoonIcon size={16} />}
+        </button>
     );
 };
 
