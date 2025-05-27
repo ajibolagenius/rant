@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, HashRouter, useNavigate } from "react-router-dom";
 import { AccessibilityProvider } from "@/components/AccessibilityContext";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import Button from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import { RantStoreProvider } from "@/store/RantStore";
 import '@/lib/i18n';
@@ -57,7 +57,7 @@ class ErrorBoundary extends React.Component<
                             {this.state.error?.message || "An unexpected error occurred"}
                         </AlertDescription>
                         <Button
-                            variant="outline"
+                            variant="primary"
                             className="mt-4"
                             onClick={() => {
                                 this.setState({ hasError: false, error: null });
@@ -79,7 +79,7 @@ const Index = lazy(() => import("./pages/Index"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const MyRantsPage = lazy(() => import("./pages/MyRantsPage"));
 const RantPage = lazy(() => import("./pages/RantPage"));
-const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const AdminDashboard = /*#__PURE__*/ lazy(() => import("./admin/AdminDashboard"));
 
 // Create a query client with error handling
 const createQueryClient = () => {

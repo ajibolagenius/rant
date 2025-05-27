@@ -6,10 +6,11 @@ interface ButtonProps {
     size?: 'small' | 'medium' | 'large';
     onClick?: () => void;
     disabled?: boolean;
+    className?: string;
     children: React.ReactNode;
 }
 
-const Button: React.FC<ButtonProps> = ({ variant = 'primary', size = 'medium', onClick, disabled, children }) => {
+const Button: React.FC<ButtonProps> = ({ variant = 'primary', size = 'medium', onClick, disabled, className, children }) => {
     const baseStyles = 'inline-flex items-center justify-center rounded-md font-medium transition-colors';
     const variantStyles = {
         primary: 'bg-blue-500 text-white hover:bg-blue-600',
@@ -24,7 +25,7 @@ const Button: React.FC<ButtonProps> = ({ variant = 'primary', size = 'medium', o
 
     return (
         <button
-            className={cn(baseStyles, variantStyles[variant], sizeStyles[size])}
+            className={cn(baseStyles, variantStyles[variant], sizeStyles[size], className)}
             onClick={onClick}
             disabled={disabled}
         >
