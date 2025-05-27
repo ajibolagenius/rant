@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, HashRouter, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, HashRouter, useNavigate, BrowserRouter as DefaultBrowserRouter, HashRouter as DefaultHashRouter } from "react-router-dom";
 import { AccessibilityProvider } from "@/components/AccessibilityContext";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Button from "@/components/ui/button";
@@ -16,13 +16,15 @@ import { Analytics } from "@vercel/analytics/react";
 import { HelmetProvider } from 'react-helmet-async';
 import Preloader from './components/Preloader';
 import * as Sentry from '@sentry/react';
-import { BrowserRouter as DefaultBrowserRouter, HashRouter as DefaultHashRouter } from 'react-router-dom';
 
 // Sentry configuration for error tracking
 Sentry.init({
-    dsn: 'https://examplePublicKey@o0.ingest.sentry.io/0',
-    integrations: [new Sentry.BrowserTracing()],
-    tracesSampleRate: 1.0,
+    dsn: "https://e3b4199c7a4192047c5ad12ea23d9a72@o4509397123203072.ingest.de.sentry.io/4509397124841552",
+    integrations: [
+        Sentry.browserTracingIntegration(),
+        Sentry.replayIntegration(), // Optional, for session replay
+    ],
+    tracesSampleRate: 1.0, // Adjust as needed
 });
 
 // Error boundary component for catching rendering errors
@@ -223,13 +225,13 @@ const App = () => {
                 <AccessibilityProvider>
                     <QueryClientProvider client={queryClient}>
                         <TooltipProvider>
-                                <div className="theme-dark">
-                                    <Toaster />
-                                    <Sonner />
-                                    <ErrorBoundary>
-                                        <AppRouter />
-                                    </ErrorBoundary>
-                                </div>
+                            <div className="theme-dark">
+                                <Toaster />
+                                <Sonner />
+                                <ErrorBoundary>
+                                    <AppRouter />
+                                </ErrorBoundary>
+                            </div>
                         </TooltipProvider>
                     </QueryClientProvider>
                 </AccessibilityProvider>

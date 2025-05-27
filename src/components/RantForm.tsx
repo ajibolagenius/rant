@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
+import Button from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { getMoodColor, MoodType, getMoodUnicodeEmoji } from '@/lib/utils/mood';
 import MoodSelector from './MoodSelector';
@@ -41,7 +41,7 @@ const TYPEWRITER_SPEED = 50;
 const PLACEHOLDER_DISPLAY_TIME = 3000;
 
 interface RantFormProps {
-    onSubmit: (content: string, mood: MoodType) => Promise<any>;
+    onSubmit: (content: string, mood: MoodType) => Promise<{ id: string }>;
 }
 
 const RantForm: React.FC<RantFormProps> = ({ onSubmit }) => {
