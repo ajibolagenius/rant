@@ -8,7 +8,6 @@ import { AccessibilityProvider } from "@/components/AccessibilityContext";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Button from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
-import { RantStoreProvider } from "@/store/RantStore";
 import '@/lib/i18n';
 import '@/styles/accessibility.css';
 import '@/styles/fonts.css';
@@ -224,7 +223,6 @@ const App = () => {
                 <AccessibilityProvider>
                     <QueryClientProvider client={queryClient}>
                         <TooltipProvider>
-                            <RantStoreProvider>
                                 <div className="theme-dark">
                                     <Toaster />
                                     <Sonner />
@@ -232,7 +230,6 @@ const App = () => {
                                         <AppRouter />
                                     </ErrorBoundary>
                                 </div>
-                            </RantStoreProvider>
                         </TooltipProvider>
                     </QueryClientProvider>
                 </AccessibilityProvider>
