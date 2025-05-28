@@ -10,9 +10,6 @@ DOMPurify.setConfig({
     FORBID_ATTR: ['style', 'onerror', 'onload'] // Forbid event handler attributes
 });
 
-// Log successful initialization
-// console.debug('DOMPurify initialized for XSS protection');
-
 createRoot(document.getElementById("root")!).render(<App />);
 
 // Register service worker for offline support (allow in dev for push notification testing)
