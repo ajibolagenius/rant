@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
+import Button from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { headingContents, colorSchemes } from '@/utils/introContent';
 import TypewriterText from '@/components/TypewriterText';
