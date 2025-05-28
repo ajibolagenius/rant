@@ -8,7 +8,7 @@ import {
     MagnifyingGlassIcon,
     Cross1Icon
 } from "@radix-ui/react-icons";
-import { Button } from "@/components/ui/button";
+import Button from '@/components/ui/button';
 import { Input } from "@/components/ui/input";
 import { useSearchHistory } from "@/hooks/useSearchHistory";
 import { useSearchSuggestions } from "@/hooks/useSearchSuggestions";
