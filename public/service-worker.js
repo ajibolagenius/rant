@@ -12,38 +12,20 @@ if (self.__WB_MANIFEST) {
     workbox.precaching.precacheAndRoute(self.__WB_MANIFEST);
 }
 
-// Cache static assets (images, fonts, styles, scripts)
-workbox.routing.registerRoute(
-    ({ request }) => ['image', 'font', 'style', 'script'].includes(request.destination),
-    new workbox.strategies.CacheFirst({
-        cacheName: 'static-assets',
-    })
-);
+// Disable caching strategies by removing Workbox routes
+workbox.routing.setDefaultHandler(() => {
+    return fetch(event.request);
+});
 
-// Cache API requests for rants (NetworkFirst)
-workbox.routing.registerRoute(
-    ({ url }) => url.pathname.startsWith('/api/rants') || url.pathname.includes('/rest/v1/rants'),
-    new workbox.strategies.NetworkFirst({
-        cacheName: 'rants-api',
-        networkTimeoutSeconds: 3,
-    })
-);
-
-// Cache HTML navigation requests (for SPA routes)
-workbox.routing.registerRoute(
-    ({ request }) => request.mode === 'navigate',
-    new workbox.strategies.NetworkFirst({
-        cacheName: 'pages',
-        networkTimeoutSeconds: 3,
-    })
-);
-
-// Offline fallback for navigation requests
-workbox.routing.setCatchHandler(async ({ event }) => {
-    if (event.request.destination === 'document') {
-        return caches.match('/offline.html', { ignoreSearch: true });
-    }
-    return Response.error();
+// Clear all caches during activation
+self.addEventListener('activate', (event) => {
+    event.waitUntil(
+        caches.keys().then((cacheNames) => {
+            return Promise.all(
+                cacheNames.map((cacheName) => caches.delete(cacheName))
+            );
+        })
+    );
 });
 
 // Push notification event
