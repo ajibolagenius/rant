@@ -33,6 +33,7 @@ export default defineConfig(({ mode }) => ({
           return '[name].js';
         },
       },
+      external: ['/dist/main.js'],
     },
   },
 }));

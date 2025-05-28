@@ -71,7 +71,7 @@ self.addEventListener('notificationclick', function (event) {
     event.waitUntil(clients.openWindow(url));
 });
 
-const CACHE_VERSION = 'v20250528102304'; // Update this version on each deploy
+const CACHE_VERSION = 'v20250528103407'; // Update this version on each deploy
 const CACHE_WHITELIST = [
     'static-assets',
     'rants-api',
