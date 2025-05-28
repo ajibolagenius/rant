@@ -43,3 +43,6 @@ CodebaseAnalysis.md
 
 # Other files/directories
 back_files
+
+# Ignore build output
+dist/
