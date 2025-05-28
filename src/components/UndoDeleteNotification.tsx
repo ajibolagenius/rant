@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/button';
+import Button from '@/components/ui/button';
 import { Rant } from '@/lib/types/rant';
 import { restoreDeletedRant } from '@/utils/userStorage';
 import { useTranslation } from 'react-i18next';

@@ -1,6 +1,6 @@
 import React from 'react';
-import { Heart, ArrowUp } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Heart } from 'lucide-react';
+import Button from '@/components/ui/button';
 
 const Footer: React.FC = () => {
     // Function to scroll back to the top of the page with a slight offset

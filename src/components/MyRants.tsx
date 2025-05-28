@@ -7,7 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import RantCard from '@/components/RantCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeftIcon, BookmarkIcon, PenLineIcon, InfoIcon, XIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import Button from '@/components/ui/button';
 import { getAnonymousUserId } from '@/utils/authorId';
 // Import but don't use translation hook for now
 // import { useTranslation } from 'react-i18next';
