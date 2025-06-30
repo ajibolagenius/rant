@@ -23,7 +23,7 @@ import Confetti from "@/components/Confetti";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import KeyboardShortcutsDialog from "@/components/KeyboardShortcutsDialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import Button from "@/components/ui/button";
 import { useMoodKeyboardShortcuts } from '@/hooks/useMoodKeyboardShortcuts';
 import Settings from '@/components/Settings';
 import { useAccessibility } from '@/components/AccessibilityContext';
