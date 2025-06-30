@@ -44,49 +44,7 @@ import { useRantStore } from '@/store/useRantStore';
 // Use the shared SortOption type from the store
 import type { SortOption } from '@/store/RantStore';
 import AppHead from "@/components/AppHead";
-
-// Error boundary component for catching rendering errors
-class RantErrorBoundary extends React.Component<
-    { children: React.ReactNode, fallback?: React.ReactNode },
-    { hasError: boolean, error: Error | null }
-> {
-    constructor(props: { children: React.ReactNode, fallback?: React.ReactNode }) {
-        super(props);
-        this.state = { hasError: false, error: null };
-    }
-
-    static getDerivedStateFromError(error: Error) {
-        return { hasError: true, error };
-    }
-
-    componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-        console.error("Error caught by RantErrorBoundary:", error, errorInfo);
-    }
-
-    render() {
-        if (this.state.hasError) {
-            if (this.props.fallback) {
-                return this.props.fallback;
-            }
-            return (
-                <Alert className="my-4 border-red-200 bg-red-50">
-                    <AlertTitle className="text-red-800">Something went wrong</AlertTitle>
-                    <AlertDescription className="text-red-600">
-                        {this.state.error?.message || "An unexpected error occurred"}
-                    </AlertDescription>
-                    <Button
-                        variant="outline"
-                        className="mt-2"
-                        onClick={() => this.setState({ hasError: false, error: null })}
-                    >
-                        <RefreshCw className="mr-2 h-4 w-4" /> Try again
-                    </Button>
-                </Alert>
-            );
-        }
-        return this.props.children;
-    }
-}
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const Index: React.FC = () => {
     const { theme, setTheme } = useAccessibility();
@@ -1074,7 +1032,7 @@ const Index: React.FC = () => {
         const isNewRant = rant.id === newRantId;
 
         return (
-            <RantErrorBoundary
+            <ErrorBoundary
                 key={rant.id}
                 fallback={
                     <div className="w-full p-4 bg-gray-100 rounded-lg">
@@ -1105,7 +1063,7 @@ const Index: React.FC = () => {
                         />
                     </div>
                 </motion.div>
-            </RantErrorBoundary>
+            </ErrorBoundary>
         );
     };
 
@@ -1247,7 +1205,7 @@ const Index: React.FC = () => {
     return (
         <>
             <AppHead image={newRantId ? `/api/og-image?rantId=${newRantId}` : undefined} />
-            <RantErrorBoundary>
+            <ErrorBoundary>
                 <div className="min-h-screen bg-background-dark">
                     <div className="flex justify-between items-center w-full">
                         <Navbar />
@@ -1315,15 +1273,15 @@ const Index: React.FC = () => {
                             </div>
 
                             <div ref={rantFormRef}>
-                                <RantErrorBoundary>
+                                <ErrorBoundary>
                                     <RantForm onSubmit={handleRantSubmit} />
-                                </RantErrorBoundary>
+                                </ErrorBoundary>
                             </div>
                         </div>
 
                         <div ref={rantsListRef} className="mt-16">
                             <div className="flex items-center justify-between mb-4">
-                                <RantErrorBoundary>
+                                <ErrorBoundary>
                                     <SortingBar
                                         activeOption={sortOption}
                                         onOptionChange={handleSortChange}
@@ -1334,7 +1292,7 @@ const Index: React.FC = () => {
                                         searchMood={searchMood}
                                         rants={rants}
                                     />
-                                </RantErrorBoundary>
+                                </ErrorBoundary>
 
                                 <div className="flex items-center gap-2">
                                     <button
@@ -1401,7 +1359,7 @@ const Index: React.FC = () => {
                                         className="w-full"
                                     >
                                         <section className="w-full px-4 sm:px-8 py-10" aria-label="Rant List">
-                                            <RantErrorBoundary>
+                                            <ErrorBoundary>
                                                 <MasonryGrid
                                                     rants={rants}
                                                     gap={24}
@@ -1415,7 +1373,7 @@ const Index: React.FC = () => {
                                                     newRantId={newRantId}
                                                     onNewRantAppear={() => setNewRantId(null)}
                                                 />
-                                            </RantErrorBoundary>
+                                            </ErrorBoundary>
                                         </section>
                                     </motion.div>
                                 ) : (
@@ -1561,7 +1519,7 @@ const Index: React.FC = () => {
 
                     <Footer />
                 </div>
-            </RantErrorBoundary>
+            </ErrorBoundary>
         </>
     );
 };

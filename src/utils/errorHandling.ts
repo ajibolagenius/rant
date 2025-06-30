@@ -36,9 +36,10 @@ export function getSafeMood(mood: string | null | undefined): string {
 /**
  * Shows error toast with user-friendly message
  */
-export function showErrorToast(error: any, userMessage: string = "Something went wrong") {
-    console.error("Error:", error);
-
+export function showErrorToast(error: unknown, userMessage: string = "Something went wrong") {
+    if (process.env.NODE_ENV !== 'production') {
+        console.error("Error:", error);
+    }
     toast({
         title: "Error",
         description: userMessage,
@@ -49,22 +50,23 @@ export function showErrorToast(error: any, userMessage: string = "Something went
 /**
  * Handles Supabase errors with appropriate user feedback
  */
-export function handleSupabaseError(error: any): string {
+export function handleSupabaseError(error: unknown): string {
     if (!error) return "Unknown error occurred";
+    if (typeof error === 'object' && error !== null && 'code' in error) {
+        // Handle specific error codes
+        if (error.code === "PGRST301") {
+            return "Database connection error. Please try again later.";
+        }
 
-    // Handle specific error codes
-    if (error.code === "PGRST301") {
-        return "Database connection error. Please try again later.";
+        if (error.message?.includes("JWT")) {
+            return "Your session has expired. Please sign in again.";
+        }
     }
-
-    if (error.message?.includes("JWT")) {
-        return "Your session has expired. Please sign in again.";
+    if (error instanceof Error) {
+        if (error.message?.includes("network")) {
+            return "Network error. Please check your connection.";
+        }
+        return error.message;
     }
-
-    if (error.message?.includes("network")) {
-        return "Network error. Please check your connection.";
-    }
-
-    // Default message
-    return error.message || "An unexpected error occurred";
+    return (typeof error === 'string' ? error : 'An unexpected error occurred');
 }

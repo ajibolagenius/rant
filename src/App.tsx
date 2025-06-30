@@ -15,6 +15,7 @@ import '@/styles/theme.css';
 import { Analytics } from "@vercel/analytics/react";
 import { HelmetProvider } from 'react-helmet-async';
 import Preloader from './components/Preloader';
+<<<<<<< HEAD
 import * as Sentry from '@sentry/react';
 
 // Sentry configuration for error tracking
@@ -74,6 +75,9 @@ class ErrorBoundary extends React.Component<
         return this.props.children;
     }
 }
+=======
+import ErrorBoundary from "@/components/ErrorBoundary";
+>>>>>>> d7749cc (refactor: fix code smells, enable strict TypeScript, unify error boundaries, and improve error handling)
 
 // Lazy load pages for better error isolation
 const Index = lazy(() => import("./pages/Index"));

@@ -56,8 +56,10 @@ export function handleSupabaseError(error: PostgrestError | null | unknown): str
  * @param context A string describing the context of the error.
  * @param error The error object to log.
  */
-export function logError(context: string, error: any): void {
-    console.error(`[${context}]`, error);
+export function logError(context: string, error: unknown): void {
+    if (process.env.NODE_ENV !== 'production') {
+        console.error(`[${context}]`, error);
+    }
     // Optionally send the error to a monitoring service like Sentry
     // Sentry.captureException(error, { tags: { context } });
 }
@@ -71,7 +73,7 @@ export function logError(context: string, error: any): void {
  */
 export async function safeSupabaseQuery<T>(
     queryFn: () => Promise<{ data: T | null; error: PostgrestError | null }>,
-    errorHandler?: (error: any) => void,
+    errorHandler?: (error: unknown) => void,
     context: string = "Supabase Query"
 ): Promise<{ data: T | null; error: string | null }> {
     try {

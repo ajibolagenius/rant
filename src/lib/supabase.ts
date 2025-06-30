@@ -4,10 +4,6 @@ import { logError } from "@/utils/supabaseErrorHandler";
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Add logging to verify Supabase client initialization
-// console.log('Supabase URL:', supabaseUrl);
-// console.log('Supabase Anon Key:', supabaseAnonKey);
-
 // Create Supabase client
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
